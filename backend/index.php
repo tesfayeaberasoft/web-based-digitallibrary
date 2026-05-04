@@ -51,6 +51,16 @@ switch (true) {
         require __DIR__ . '/api/users/get.php';
         break;
     
+    case preg_match('#^/users/(\d+)$#', $path, $matches) && $request_method === 'PUT':
+        $_GET['id'] = $matches[1];
+        require __DIR__ . '/api/users/update.php';
+        break;
+    
+    case preg_match('#^/users/(\d+)/password$#', $path, $matches) && $request_method === 'PUT':
+        $_GET['id'] = $matches[1];
+        require __DIR__ . '/api/users/update-password.php';
+        break;
+    
     // Books routes
     case preg_match('#^/books$#', $path) && $request_method === 'GET':
         require __DIR__ . '/api/books/list.php';
