@@ -1,0 +1,27 @@
+{
+  "name": "digital-library-management-system",
+  "version": "1.0.0",
+  "description": "A comprehensive web-based digital library management system",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run frontend\" \"npm run backend\"",
+    "frontend": "cd frontend && npm start",
+    "backend": "cd backend && php -S localhost:8000",
+    "build": "cd frontend && npm run build",
+    "install-all": "npm install && cd frontend && npm install",
+    "test": "cd frontend && npm test"
+  },
+  "keywords": [
+    "library",
+    "management",
+    "system",
+    "react",
+    "php",
+    "mysql"
+  ],
+  "author": "Digital Library Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
