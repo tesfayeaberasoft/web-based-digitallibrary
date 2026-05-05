@@ -87,8 +87,8 @@ try {
     
     // Create loan
     $stmt = $db->prepare("
-        INSERT INTO book_loans (user_id, book_id, issued_by, issue_date, due_date, status)
-        VALUES (?, ?, ?, NOW(), ?, 'active')
+        INSERT INTO book_loans (user_id, book_id, issued_by, loan_date, due_date, status)
+        VALUES (?, ?, ?, CURDATE(), ?, 'active')
     ");
     
     $stmt->execute([
