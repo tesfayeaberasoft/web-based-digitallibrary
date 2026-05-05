@@ -56,9 +56,51 @@ switch (true) {
         require __DIR__ . '/api/books/list.php';
         break;
     
+    case preg_match('#^/books$#', $path) && $request_method === 'POST':
+        require __DIR__ . '/api/books/create.php';
+        break;
+    
     case preg_match('#^/books/(\d+)$#', $path, $matches) && $request_method === 'GET':
         $_GET['id'] = $matches[1];
         require __DIR__ . '/api/books/get.php';
+        break;
+    
+    case preg_match('#^/books/(\d+)$#', $path, $matches) && $request_method === 'PUT':
+        $_GET['id'] = $matches[1];
+        require __DIR__ . '/api/books/update.php';
+        break;
+    
+    case preg_match('#^/books/(\d+)$#', $path, $matches) && $request_method === 'DELETE':
+        $_GET['id'] = $matches[1];
+        require __DIR__ . '/api/books/delete.php';
+        break;
+    
+    // Loans routes
+    case preg_match('#^/loans$#', $path) && $request_method === 'GET':
+        require __DIR__ . '/api/loans/list.php';
+        break;
+    
+    case preg_match('#^/loans$#', $path) && $request_method === 'POST':
+        require __DIR__ . '/api/loans/create.php';
+        break;
+    
+    case preg_match('#^/loans/(\d+)/return$#', $path, $matches) && $request_method === 'PUT':
+        $_GET['id'] = $matches[1];
+        require __DIR__ . '/api/loans/return.php';
+        break;
+    
+    // Reservations routes
+    case preg_match('#^/reservations$#', $path) && $request_method === 'GET':
+        require __DIR__ . '/api/reservations/list.php';
+        break;
+    
+    case preg_match('#^/reservations$#', $path) && $request_method === 'POST':
+        require __DIR__ . '/api/reservations/create.php';
+        break;
+    
+    // Categories routes
+    case preg_match('#^/categories$#', $path) && $request_method === 'GET':
+        require __DIR__ . '/api/categories/list.php';
         break;
     
     // Default - API info
