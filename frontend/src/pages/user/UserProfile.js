@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -22,11 +22,11 @@ import {
   Cancel as CancelIcon
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import { AuthContext } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import axios from 'axios';
 
 const UserProfile = () => {
-  const { user, setUser } = useContext(AuthContext);
+  const { user, updateUser } = useAuth();
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
@@ -106,7 +106,7 @@ const UserProfile = () => {
         setSuccess('Profile updated successfully!');
         setEditing(false);
         // Update user context
-        setUser({ ...user, ...formData });
+        updateUser({ ...user, ...formData });
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update profile');
