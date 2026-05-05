@@ -111,9 +111,11 @@ npm install
 npm start
 ```
 
+**💡 Windows Users:** Double-click `start-backend.bat` and `start-frontend.bat` for easy startup!
+
 The application will open at `http://localhost:3000`
 
-For detailed setup instructions, see [SETUP.md](SETUP.md)
+For detailed setup instructions, see [SETUP.md](SETUP.md) or [START_SERVER.md](START_SERVER.md)
 
 ## 📖 Documentation
 
