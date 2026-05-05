@@ -26,6 +26,7 @@ try {
         exit;
     }
     
+    require_once __DIR__ . '/../../config/database.php';
     $db = Database::getInstance()->getConnection();
     
     // Mark all user's notifications as read

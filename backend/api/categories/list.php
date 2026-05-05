@@ -7,6 +7,7 @@
 header('Content-Type: application/json');
 
 try {
+    require_once __DIR__ . '/../../../config/database.php';
     $db = Database::getInstance()->getConnection();
     
     // Get all categories with book count

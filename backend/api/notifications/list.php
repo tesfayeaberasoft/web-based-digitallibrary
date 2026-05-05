@@ -26,6 +26,7 @@ try {
         exit;
     }
     
+    require_once __DIR__ . '/../../config/database.php';
     $db = Database::getInstance()->getConnection();
     
     // Users can only see their own notifications

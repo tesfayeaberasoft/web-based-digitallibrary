@@ -34,6 +34,7 @@ try {
         exit;
     }
     
+    require_once __DIR__ . '/../../config/database.php';
     $db = Database::getInstance()->getConnection();
     $user_id = $decoded->user_id;
     $book_id = $data['book_id'];
