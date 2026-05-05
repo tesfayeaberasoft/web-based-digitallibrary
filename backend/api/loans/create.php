@@ -101,13 +101,6 @@ try {
     $message = "You have successfully borrowed '{$book['title']}'. Due date: $due_date";
     $stmt->execute([$user_id, $message]);
     
-    // Log activity
-    $stmt = $db->prepare("
-        INSERT INTO audit_logs (user_id, action, entity_type, entity_id, ip_address)
-        VALUES (?, 'issue_book', 'loan', ?, ?)
-    ");
-    $stmt->execute([$decoded['user_id'], $loan_id, $_SERVER['REMOTE_ADDR']]);
-    
     echo json_encode([
         'success' => true,
         'message' => 'Book issued successfully',
