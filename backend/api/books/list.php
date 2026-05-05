@@ -8,8 +8,7 @@ header('Content-Type: application/json');
 require_once __DIR__ . '/../../config/database.php';
 
 try {
-    $database = new Database();
-    $db = $database->getConnection();
+    $db = Database::getInstance()->getConnection();
 
     if (!$db) {
         throw new Exception('Database connection failed');

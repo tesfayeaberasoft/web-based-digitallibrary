@@ -21,8 +21,7 @@ if (!isset($data->email) || !isset($data->password)) {
 }
 
 try {
-    $database = new Database();
-    $db = $database->getConnection();
+    $db = Database::getInstance()->getConnection();
 
     if (!$db) {
         throw new Exception('Database connection failed');
