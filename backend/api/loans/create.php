@@ -7,24 +7,10 @@
 header('Content-Type: application/json');
 
 try {
-    // Verify JWT token
-    $headers = getallheaders();
-    $token = isset($headers['Authorization']) ? str_replace('Bearer ', '', $headers['Authorization']) : '';
-    
-    if (!$token) {
-        http_response_code(401);
-        echo json_encode(['success' => false, 'message' => 'No token provided']);
-        exit;
-    }
-    
     require_once __DIR__ . '/../../utils/jwt.php';
-    $decoded = JWT::decode($token);
+    require_once __DIR__ . '/../../config/config.php';
     
-    if (!$decoded) {
-        http_response_code(401);
-        echo json_encode(['success' => false, 'message' => 'Invalid token']);
-        exit;
-    }
+    $decoded = requireAuth();
     
     $data = json_decode(file_get_contents('php://input'), true);
     
@@ -36,7 +22,7 @@ try {
     }
     
     // Use user_id from JWT token (more secure)
-    $user_id = $decoded->user_id;
+    $user_id = $decoded['user_id'];
     
     require_once __DIR__ . '/../../config/database.php';
     $db = Database::getInstance()->getConnection();
@@ -97,7 +83,7 @@ try {
     $stmt->execute([
         $user_id,
         $data['book_id'],
-        $decoded->user_id,
+        $decoded['user_id'],
         $due_date
     ]);
     
@@ -120,7 +106,7 @@ try {
         INSERT INTO audit_logs (user_id, action, entity_type, entity_id, ip_address)
         VALUES (?, 'issue_book', 'loan', ?, ?)
     ");
-    $stmt->execute([$decoded->user_id, $loan_id, $_SERVER['REMOTE_ADDR']]);
+    $stmt->execute([$decoded['user_id'], $loan_id, $_SERVER['REMOTE_ADDR']]);
     
     echo json_encode([
         'success' => true,
