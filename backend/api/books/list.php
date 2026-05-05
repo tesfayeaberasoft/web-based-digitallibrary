@@ -89,14 +89,12 @@ try {
 
     echo json_encode([
         'success' => true,
-        'data' => [
-            'books' => $books,
-            'pagination' => [
-                'page' => $page,
-                'limit' => $limit,
-                'total' => (int)$total,
-                'pages' => ceil($total / $limit)
-            ]
+        'books' => $books,
+        'pagination' => [
+            'page' => $page,
+            'limit' => $limit,
+            'total' => (int)$total,
+            'pages' => ceil($total / $limit)
         ]
     ]);
 
