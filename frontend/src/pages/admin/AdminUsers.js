@@ -38,7 +38,6 @@ import DashboardLayout from '../../components/layout/DashboardLayout';
 const AdminUsers = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [anchorEl, setAnchorEl] = useState(null);
-  const [selectedUser, setSelectedUser] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
 
   const users = [
@@ -88,9 +87,8 @@ const AdminUsers = () => {
     }
   ];
 
-  const handleMenuOpen = (event, user) => {
+  const handleMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
-    setSelectedUser(user);
   };
 
   const handleMenuClose = () => {
@@ -240,7 +238,7 @@ const AdminUsers = () => {
                       <TableCell align="center">
                         <IconButton
                           size="small"
-                          onClick={(e) => handleMenuOpen(e, user)}
+                          onClick={(e) => handleMenuOpen(e)}
                         >
                           <MoreVert />
                         </IconButton>

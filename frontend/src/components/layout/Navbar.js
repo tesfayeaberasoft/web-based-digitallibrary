@@ -14,7 +14,6 @@ import {
 } from '@mui/material';
 import {
   Notifications as NotificationsIcon,
-  AccountCircle,
   ExitToApp,
   Dashboard,
   Person,

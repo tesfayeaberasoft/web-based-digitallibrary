@@ -19,7 +19,6 @@ import {
   Settings,
   Inventory,
   Assignment,
-  Person,
   History,
   EmojiEvents,
   MenuBook,

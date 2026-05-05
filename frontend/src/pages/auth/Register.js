@@ -97,6 +97,8 @@ const Register = () => {
           return false;
         }
         break;
+      default:
+        break;
     }
     return true;
   };

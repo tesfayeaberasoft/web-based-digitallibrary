@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Box,
   Grid,
@@ -56,15 +56,6 @@ const StatCard = ({ title, value, change, icon, color, bgColor }) => (
 );
 
 const AdminDashboard = () => {
-  const [stats, setStats] = useState({
-    totalUsers: 5234,
-    totalBooks: 10234,
-    activeLoans: 856,
-    revenue: 45678,
-    librarians: 12,
-    finesCollected: 2345
-  });
-
   const recentActivities = [
     { id: 1, user: 'John Doe', action: 'Borrowed a book', time: '5 minutes ago', avatar: 'J' },
     { id: 2, user: 'Jane Smith', action: 'Registered account', time: '15 minutes ago', avatar: 'J' },
