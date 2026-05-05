@@ -29,11 +29,14 @@ try {
     $data = json_decode(file_get_contents('php://input'), true);
     
     // Validate required fields
-    if (!isset($data['book_id']) || !isset($data['user_id'])) {
+    if (!isset($data['book_id'])) {
         http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Missing required fields']);
+        echo json_encode(['success' => false, 'message' => 'Missing book_id']);
         exit;
     }
+    
+    // Use user_id from JWT token (more secure)
+    $user_id = $decoded->user_id;
     
     require_once __DIR__ . '/../../config/database.php';
     $db = Database::getInstance()->getConnection();
@@ -57,7 +60,7 @@ try {
     
     // Check user's active loans count
     $stmt = $db->prepare("SELECT COUNT(*) as count FROM book_loans WHERE user_id = ? AND status = 'active'");
-    $stmt->execute([$data['user_id']]);
+    $stmt->execute([$user_id]);
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
     
     // Get max books per user from settings (default 5)
@@ -74,7 +77,7 @@ try {
     
     // Check if user already has this book
     $stmt = $db->prepare("SELECT id FROM book_loans WHERE user_id = ? AND book_id = ? AND status = 'active'");
-    $stmt->execute([$data['user_id'], $data['book_id']]);
+    $stmt->execute([$user_id, $data['book_id']]);
     if ($stmt->fetch()) {
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'User already has this book']);
@@ -92,7 +95,7 @@ try {
     ");
     
     $stmt->execute([
-        $data['user_id'],
+        $user_id,
         $data['book_id'],
         $decoded->user_id,
         $due_date
@@ -110,7 +113,7 @@ try {
         VALUES (?, 'loan', 'Book Issued', ?)
     ");
     $message = "You have successfully borrowed '{$book['title']}'. Due date: $due_date";
-    $stmt->execute([$data['user_id'], $message]);
+    $stmt->execute([$user_id, $message]);
     
     // Log activity
     $stmt = $db->prepare("

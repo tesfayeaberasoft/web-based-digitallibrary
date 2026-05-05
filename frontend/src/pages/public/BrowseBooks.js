@@ -169,8 +169,7 @@ const BrowseBooks = () => {
         const response = await axios.post(
           'http://localhost:8000/api/loans',
           {
-            book_id: selectedBook.id,
-            user_id: user.id
+            book_id: selectedBook.id
           },
           config
         );
