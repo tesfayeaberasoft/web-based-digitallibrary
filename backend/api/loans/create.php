@@ -28,7 +28,7 @@ try {
     $db = Database::getInstance()->getConnection();
     
     // Check if book is available
-    $stmt = $db->prepare("SELECT * FROM books WHERE id = ? AND status = 'available'");
+    $stmt = $db->prepare("SELECT * FROM books WHERE id = ? AND status = 'active'");
     $stmt->execute([$data['book_id']]);
     $book = $stmt->fetch(PDO::FETCH_ASSOC);
     
