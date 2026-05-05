@@ -24,7 +24,19 @@ $request_method = $_SERVER['REQUEST_METHOD'];
 
 // Remove query string and get path
 $path = parse_url($request_uri, PHP_URL_PATH);
-$path = str_replace('/api', '', $path);
+
+// Remove /api prefix if present
+if (strpos($path, '/api') === 0) {
+    $path = substr($path, 4);
+}
+
+// Ensure path starts with /
+if ($path === '' || $path[0] !== '/') {
+    $path = '/' . $path;
+}
+
+// Log for debugging (remove in production)
+error_log("Request: $request_method $path");
 
 // Route handling
 switch (true) {
@@ -157,9 +169,15 @@ switch (true) {
     default:
         header('HTTP/1.1 404 Not Found');
         header('Content-Type: application/json');
+        error_log("404 Not Found: $request_method $path");
         echo json_encode([
             'success' => false,
-            'message' => 'Endpoint not found'
+            'message' => 'Endpoint not found',
+            'debug' => [
+                'path' => $path,
+                'method' => $request_method,
+                'uri' => $request_uri
+            ]
         ]);
         break;
 }

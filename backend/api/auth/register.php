@@ -73,17 +73,19 @@ try {
 
     // Insert new user
     $insertQuery = "INSERT INTO users (user_id, full_name, email, phone, address, password_hash, role, status) 
-                    VALUES (:user_id, :full_name, :email, :phone, :address, :password_hash, 'user', 'active')";
+                    VALUES (?, ?, ?, ?, ?, ?, 'user', 'active')";
     
     $insertStmt = $db->prepare($insertQuery);
-    $insertStmt->bindParam(':user_id', $userId);
-    $insertStmt->bindParam(':full_name', $data->full_name);
-    $insertStmt->bindParam(':email', $data->email);
-    $insertStmt->bindParam(':phone', $data->phone ?? null);
-    $insertStmt->bindParam(':address', $data->address ?? null);
-    $insertStmt->bindParam(':password_hash', $passwordHash);
-
-    if ($insertStmt->execute()) {
+    
+    // Use execute with array instead of bindParam
+    if ($insertStmt->execute([
+        $userId,
+        $data->full_name,
+        $data->email,
+        $data->phone ?? null,
+        $data->address ?? null,
+        $passwordHash
+    ])) {
         http_response_code(201);
         echo json_encode([
             'success' => true,
