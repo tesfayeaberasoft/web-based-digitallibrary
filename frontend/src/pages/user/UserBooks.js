@@ -20,11 +20,9 @@ import {
   Warning as WarningIcon
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import { useAuth } from '../../contexts/AuthContext';
 import axios from 'axios';
 
 const UserBooks = () => {
-  const { user } = useAuth();
   const [tabValue, setTabValue] = useState(0);
   const [loans, setLoans] = useState([]);
   const [reservations, setReservations] = useState([]);

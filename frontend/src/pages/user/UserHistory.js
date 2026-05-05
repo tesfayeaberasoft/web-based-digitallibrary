@@ -16,8 +16,7 @@ import {
   Grid,
   Pagination,
   CircularProgress,
-  Alert,
-  Rating
+  Alert
 } from '@mui/material';
 import {
   CheckCircle as CheckIcon,
@@ -25,11 +24,9 @@ import {
   Schedule as ScheduleIcon
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import { useAuth } from '../../contexts/AuthContext';
 import axios from 'axios';
 
 const UserHistory = () => {
-  const { user } = useAuth();
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -45,6 +42,7 @@ const UserHistory = () => {
 
   useEffect(() => {
     fetchHistory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, statusFilter, yearFilter]);
 
   const fetchHistory = async () => {
