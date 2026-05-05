@@ -426,7 +426,7 @@ mysql -u root -p < database/schema.sql
 mysql -u root -p < database/sample_data.sql
 
 # 3. Start backend
-cd backend && php -S localhost:8000
+cd backend && php -S localhost:8000 router.php
 
 # 4. Start frontend (new terminal)
 cd frontend && npm install && npm start

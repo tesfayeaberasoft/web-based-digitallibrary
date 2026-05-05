@@ -94,7 +94,7 @@ npm install
 # 5. Start development servers
 # Terminal 1: Backend
 cd backend
-php -S localhost:8000
+php -S localhost:8000 router.php
 
 # Terminal 2: Frontend
 cd frontend

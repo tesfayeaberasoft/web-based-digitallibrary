@@ -4,7 +4,7 @@
 
 ```bash
 # Start Backend
-cd backend && php -S localhost:8000
+cd backend && php -S localhost:8000 router.php
 
 # Start Frontend (new terminal)
 cd frontend && npm start
@@ -174,8 +174,8 @@ npm test             # Run tests
 
 ### Backend
 ```bash
-php -S localhost:8000              # Start server
-php -S localhost:8000 -t backend   # Start from root
+php -S localhost:8000 router.php      # Start server (from backend dir)
+php -S localhost:8000 -t backend      # Start from root (not recommended)
 ```
 
 ### Database

@@ -204,7 +204,7 @@ mysql -u root -p < database/sample_data.sql
 
 # Start backend (Terminal 1)
 cd backend
-php -S localhost:8000
+php -S localhost:8000 router.php
 
 # Start frontend (Terminal 2)
 cd frontend

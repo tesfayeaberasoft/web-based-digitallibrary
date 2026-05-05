@@ -41,9 +41,9 @@ private $password = "your_password";
 cd backend
 ```
 
-2. Start the PHP development server:
+2. Start the PHP development server with the router:
 ```bash
-php -S localhost:8000
+php -S localhost:8000 router.php
 ```
 
 The API will be available at `http://localhost:8000`

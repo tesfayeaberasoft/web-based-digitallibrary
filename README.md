@@ -103,7 +103,7 @@ cd backend
 # Edit config/database.php with your MySQL credentials
 
 # 4. Start Backend Server
-php -S localhost:8000
+php -S localhost:8000 router.php
 
 # 5. Setup Frontend (in new terminal)
 cd frontend
