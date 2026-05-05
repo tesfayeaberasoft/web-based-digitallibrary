@@ -4,6 +4,12 @@
  * This file handles routing for the PHP built-in development server
  */
 
+// Get the requested URI
+$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+
+// Log all requests for debugging
+error_log("Router received: {$_SERVER['REQUEST_METHOD']} $uri");
+
 // Handle CORS preflight requests
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     header('Access-Control-Allow-Origin: http://localhost:3000');
@@ -14,20 +20,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
 }
 
-// Get the requested URI
-$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-
-// Serve static files directly
-if ($uri !== '/' && file_exists(__DIR__ . $uri)) {
+// Serve static files directly (if they exist and are not API routes)
+if ($uri !== '/' && !preg_match('#^/api#', $uri) && file_exists(__DIR__ . $uri)) {
+    error_log("Serving static file: $uri");
     return false;
 }
 
-// Route all API requests through index.php
-if (strpos($uri, '/api') === 0) {
-    require __DIR__ . '/index.php';
-    exit(0);
-}
-
-// Default route
+// Route all requests through index.php (including API and non-API)
+error_log("Routing to index.php: $uri");
 require __DIR__ . '/index.php';
+exit(0);
 ?>

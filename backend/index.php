@@ -42,19 +42,23 @@ error_log("Request: $request_method $path");
 switch (true) {
     // Auth routes
     case preg_match('#^/auth/login$#', $path) && $request_method === 'POST':
+        error_log("Matched: POST /auth/login");
         require __DIR__ . '/api/auth/login.php';
         break;
     
     case preg_match('#^/auth/register$#', $path) && $request_method === 'POST':
+        error_log("Matched: POST /auth/register");
         require __DIR__ . '/api/auth/register.php';
         break;
     
     case preg_match('#^/auth/verify$#', $path) && $request_method === 'GET':
+        error_log("Matched: GET /auth/verify");
         require __DIR__ . '/api/auth/verify.php';
         break;
     
     // Users routes
     case preg_match('#^/users$#', $path) && $request_method === 'GET':
+        error_log("Matched: GET /users");
         require __DIR__ . '/api/users/list.php';
         break;
     
