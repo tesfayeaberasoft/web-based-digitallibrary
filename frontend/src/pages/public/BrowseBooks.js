@@ -37,8 +37,6 @@ import axios from 'axios';
 const BrowseBooks = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const navigate = useNavigate();
   
   const [books, setBooks] = useState([]);
   const [categories, setCategories] = useState([]);
