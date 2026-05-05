@@ -16,7 +16,12 @@ import {
   InputAdornment,
   Pagination,
   CircularProgress,
-  Alert
+  Alert,
+  Snackbar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -25,13 +30,26 @@ import {
   Category as CategoryIcon
 } from '@mui/icons-material';
 import Navbar from '../../components/layout/Navbar';
+import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const BrowseBooks = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  
   const [books, setBooks] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  
+  // Borrow/Reserve state
+  const [borrowing, setBorrowing] = useState(false);
+  const [selectedBook, setSelectedBook] = useState(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -118,6 +136,93 @@ const BrowseBooks = () => {
     const colors = ['#4a9b8e', '#e91e63', '#9c27b0', '#3f51b5', '#00bcd4', '#4caf50'];
     const colorIndex = book.category_id % colors.length;
     return `https://via.placeholder.com/300x400/${colors[colorIndex].substring(1)}/ffffff?text=${encodeURIComponent(book.title.substring(0, 20))}`;
+  };
+
+  const handleBorrowClick = (book) => {
+    // Check if user is logged in
+    if (!user) {
+      setSnackbar({
+        open: true,
+        message: 'Please login to borrow books',
+        severity: 'warning'
+      });
+      setTimeout(() => navigate('/login'), 2000);
+      return;
+    }
+
+    setSelectedBook(book);
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirmBorrow = async () => {
+    if (!selectedBook) return;
+
+    setBorrowing(true);
+    setShowConfirmDialog(false);
+
+    try {
+      const token = localStorage.getItem('token');
+      const config = {
+        headers: { Authorization: `Bearer ${token}` }
+      };
+
+      if (selectedBook.available_copies > 0) {
+        // Borrow the book (create loan)
+        const response = await axios.post(
+          'http://localhost:8000/api/loans',
+          {
+            book_id: selectedBook.id,
+            user_id: user.id
+          },
+          config
+        );
+
+        if (response.data.success) {
+          setSnackbar({
+            open: true,
+            message: `Successfully borrowed "${selectedBook.title}"!`,
+            severity: 'success'
+          });
+          // Refresh books to update availability
+          fetchBooks();
+        } else {
+          throw new Error(response.data.message || 'Failed to borrow book');
+        }
+      } else {
+        // Reserve the book
+        const response = await axios.post(
+          'http://localhost:8000/api/reservations',
+          {
+            book_id: selectedBook.id
+          },
+          config
+        );
+
+        if (response.data.success) {
+          setSnackbar({
+            open: true,
+            message: `Successfully reserved "${selectedBook.title}"! You're in position ${response.data.queue_position || 1}`,
+            severity: 'success'
+          });
+        } else {
+          throw new Error(response.data.message || 'Failed to reserve book');
+        }
+      }
+    } catch (err) {
+      console.error('Error borrowing/reserving book:', err);
+      setSnackbar({
+        open: true,
+        message: err.response?.data?.message || err.message || 'Failed to process request',
+        severity: 'error'
+      });
+    } finally {
+      setBorrowing(false);
+      setSelectedBook(null);
+    }
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
   };
 
   return (
@@ -307,7 +412,8 @@ const BrowseBooks = () => {
                       <Button 
                         fullWidth 
                         variant="contained"
-                        disabled={book.available_copies === 0}
+                        disabled={borrowing}
+                        onClick={() => handleBorrowClick(book)}
                         sx={{
                           bgcolor: '#4a9b8e',
                           '&:hover': { bgcolor: '#3d8276' }
@@ -336,6 +442,48 @@ const BrowseBooks = () => {
           </>
         )}
       </Container>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={showConfirmDialog} onClose={() => setShowConfirmDialog(false)}>
+        <DialogTitle>
+          {selectedBook?.available_copies > 0 ? 'Confirm Borrow' : 'Confirm Reservation'}
+        </DialogTitle>
+        <DialogContent>
+          <Typography>
+            {selectedBook?.available_copies > 0
+              ? `Are you sure you want to borrow "${selectedBook?.title}"?`
+              : `This book is currently unavailable. Would you like to reserve "${selectedBook?.title}"?`
+            }
+          </Typography>
+          {selectedBook?.available_copies > 0 && (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+              You will have 14 days to return this book.
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowConfirmDialog(false)}>Cancel</Button>
+          <Button 
+            onClick={handleConfirmBorrow} 
+            variant="contained"
+            sx={{ bgcolor: '#4a9b8e', '&:hover': { bgcolor: '#3d8276' } }}
+          >
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
