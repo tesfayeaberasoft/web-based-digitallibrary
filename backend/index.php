@@ -113,6 +113,50 @@ switch (true) {
         require __DIR__ . '/api/categories/list.php';
         break;
     
+    // Fines routes
+    case preg_match('#^/fines$#', $path) && $request_method === 'GET':
+        require __DIR__ . '/api/fines/list.php';
+        break;
+    
+    case preg_match('#^/fines/(\d+)/pay$#', $path, $matches) && $request_method === 'PUT':
+        $_GET['id'] = $matches[1];
+        require __DIR__ . '/api/fines/pay.php';
+        break;
+    
+    // Notifications routes
+    case preg_match('#^/notifications$#', $path) && $request_method === 'GET':
+        require __DIR__ . '/api/notifications/list.php';
+        break;
+    
+    case preg_match('#^/notifications/(\d+)/read$#', $path, $matches) && $request_method === 'PUT':
+        $_GET['id'] = $matches[1];
+        require __DIR__ . '/api/notifications/mark-read.php';
+        break;
+    
+    case preg_match('#^/notifications/mark-all-read$#', $path) && $request_method === 'PUT':
+        require __DIR__ . '/api/notifications/mark-all-read.php';
+        break;
+    
+    // Notifications routes
+    case preg_match('#^/notifications$#', $path) && $request_method === 'GET':
+        require __DIR__ . '/api/notifications/list.php';
+        break;
+    
+    case preg_match('#^/notifications/(\d+)/read$#', $path, $matches) && $request_method === 'PUT':
+        $_GET['id'] = $matches[1];
+        require __DIR__ . '/api/notifications/mark-read.php';
+        break;
+    
+    // Fines routes
+    case preg_match('#^/fines$#', $path) && $request_method === 'GET':
+        require __DIR__ . '/api/fines/list.php';
+        break;
+    
+    case preg_match('#^/fines/(\d+)/pay$#', $path, $matches) && $request_method === 'PUT':
+        $_GET['id'] = $matches[1];
+        require __DIR__ . '/api/fines/pay.php';
+        break;
+    
     // Default - API info
     case $path === '/' || $path === '':
         header('Content-Type: application/json');
