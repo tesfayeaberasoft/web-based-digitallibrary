@@ -78,10 +78,14 @@ const BrowseBooks = () => {
       const response = await axios.get('http://localhost:8000/api/books', { params });
       
       if (response.data.success) {
-        setBooks(response.data.books);
-        setTotalPages(response.data.pagination.pages);
+        setBooks(response.data.books || []);
+        setTotalPages(response.data.pagination?.pages || 1);
+      } else {
+        setBooks([]);
+        setError('Failed to load books. Please try again.');
       }
     } catch (err) {
+      setBooks([]);
       setError('Failed to load books. Please try again.');
       console.error('Error fetching books:', err);
     } finally {
@@ -195,7 +199,7 @@ const BrowseBooks = () => {
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
             <CircularProgress />
           </Box>
-        ) : books.length === 0 ? (
+        ) : !books || books.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 8 }}>
             <BookIcon sx={{ fontSize: 80, color: 'text.secondary', mb: 2 }} />
             <Typography variant="h6" color="text.secondary">

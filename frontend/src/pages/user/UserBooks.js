@@ -46,17 +46,24 @@ const UserBooks = () => {
       // Fetch active loans
       const loansResponse = await axios.get('http://localhost:8000/api/loans?status=active', config);
       if (loansResponse.data.success) {
-        setLoans(loansResponse.data.loans);
+        setLoans(loansResponse.data.loans || []);
+      } else {
+        setLoans([]);
       }
       
       // Fetch reservations
       const reservationsResponse = await axios.get('http://localhost:8000/api/reservations', config);
       if (reservationsResponse.data.success) {
-        setReservations(reservationsResponse.data.reservations.filter(r => 
+        const allReservations = reservationsResponse.data.reservations || [];
+        setReservations(allReservations.filter(r => 
           r.status === 'pending' || r.status === 'available'
         ));
+      } else {
+        setReservations([]);
       }
     } catch (err) {
+      setLoans([]);
+      setReservations([]);
       setError('Failed to load your books. Please try again.');
       console.error('Error fetching user books:', err);
     } finally {
