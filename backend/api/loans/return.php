@@ -7,24 +7,9 @@
 header('Content-Type: application/json');
 
 try {
-    // Verify JWT token
-    $headers = getallheaders();
-    $token = isset($headers['Authorization']) ? str_replace('Bearer ', '', $headers['Authorization']) : '';
-    
-    if (!$token) {
-        http_response_code(401);
-        echo json_encode(['success' => false, 'message' => 'No token provided']);
-        exit;
-    }
-    
+    require_once __DIR__ . '/../../config/config.php';
     require_once __DIR__ . '/../../utils/jwt.php';
-    $decoded = JWT::decode($token);
-    
-    if (!$decoded) {
-        http_response_code(401);
-        echo json_encode(['success' => false, 'message' => 'Invalid token']);
-        exit;
-    }
+    $decoded = requireAuth();
     
     $loan_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
     
@@ -73,7 +58,7 @@ try {
             returned_to = ?
         WHERE id = ?
     ");
-    $stmt->execute([$return_date, $decoded->user_id, $loan_id]);
+    $stmt->execute([$return_date, $decoded['user_id'], $loan_id]);
     
     // Update book availability
     $stmt = $db->prepare("UPDATE books SET available_copies = available_copies + 1 WHERE id = ?");
@@ -133,7 +118,7 @@ try {
         INSERT INTO audit_logs (user_id, action, entity_type, entity_id, ip_address)
         VALUES (?, 'return_book', 'loan', ?, ?)
     ");
-    $stmt->execute([$decoded->user_id, $loan_id, $_SERVER['REMOTE_ADDR']]);
+    $stmt->execute([$decoded['user_id'], $loan_id, $_SERVER['REMOTE_ADDR']]);
     
     echo json_encode([
         'success' => true,

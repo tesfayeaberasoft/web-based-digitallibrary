@@ -7,24 +7,9 @@
 header('Content-Type: application/json');
 
 try {
-    // Verify JWT token
-    $headers = getallheaders();
-    $token = isset($headers['Authorization']) ? str_replace('Bearer ', '', $headers['Authorization']) : '';
-    
-    if (!$token) {
-        http_response_code(401);
-        echo json_encode(['success' => false, 'message' => 'No token provided']);
-        exit;
-    }
-    
+    require_once __DIR__ . '/../../config/config.php';
     require_once __DIR__ . '/../../utils/jwt.php';
-    $decoded = JWT::decode($token);
-    
-    if (!$decoded) {
-        http_response_code(401);
-        echo json_encode(['success' => false, 'message' => 'Invalid token']);
-        exit;
-    }
+    $decoded = requireAuth();
     
     require_once __DIR__ . '/../../config/database.php';
     $db = Database::getInstance()->getConnection();
@@ -34,13 +19,13 @@ try {
     $params = [];
     
     // Regular users can only see their own loans
-    if ($decoded->role === 'user') {
+    if ($decoded['role'] === 'user') {
         $where[] = "l.user_id = ?";
-        $params[] = $decoded->user_id;
+        $params[] = $decoded['user_id'];
     }
     
     // Filter by user_id if provided (admin/librarian only)
-    if (isset($_GET['user_id']) && in_array($decoded->role, ['admin', 'librarian'])) {
+    if (isset($_GET['user_id']) && in_array($decoded['role'], ['admin', 'librarian'])) {
         $where[] = "l.user_id = ?";
         $params[] = intval($_GET['user_id']);
     }
@@ -94,13 +79,20 @@ try {
         LEFT JOIN users issuer ON l.issued_by = issuer.id
         LEFT JOIN users returner ON l.returned_to = returner.id
         $where_clause
-        ORDER BY l.issue_date DESC
+        ORDER BY l.loan_date DESC
         LIMIT ? OFFSET ?
     ");
     
-    $params[] = $limit;
-    $params[] = $offset;
-    $stmt->execute($params);
+    // Bind parameters with correct types
+    $paramIndex = 1;
+    foreach ($params as $param) {
+        $stmt->bindValue($paramIndex++, $param);
+    }
+    // Bind LIMIT and OFFSET as integers
+    $stmt->bindValue($paramIndex++, $limit, PDO::PARAM_INT);
+    $stmt->bindValue($paramIndex++, $offset, PDO::PARAM_INT);
+    
+    $stmt->execute();
     $loans = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     echo json_encode([

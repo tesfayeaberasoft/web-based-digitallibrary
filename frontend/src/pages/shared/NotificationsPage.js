@@ -64,8 +64,13 @@ const NotificationsPage = () => {
         setUnreadCount(response.data.unread_count);
       }
     } catch (err) {
-      setError('Failed to load notifications. Please try again.');
       console.error('Error fetching notifications:', err);
+      console.error('Error response:', err.response?.data);
+      console.error('Error status:', err.response?.status);
+      
+      // Show actual error message from backend
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to load notifications. Please try again.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -218,12 +223,12 @@ const NotificationsPage = () => {
                   <React.Fragment key={notification.id}>
                     <ListItem
                       sx={{
-                        bgcolor: notification.is_read ? 'transparent' : 'action.hover',
+                        bgcolor: notification.status === 'unread' ? 'action.hover' : 'transparent',
                         '&:hover': { bgcolor: 'action.selected' },
                         cursor: 'pointer'
                       }}
                       secondaryAction={
-                        !notification.is_read && (
+                        notification.status === 'unread' && (
                           <IconButton
                             edge="end"
                             onClick={() => handleMarkAsRead(notification.id)}
@@ -240,10 +245,10 @@ const NotificationsPage = () => {
                       <ListItemText
                         primary={
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography variant="body1" fontWeight={notification.is_read ? 400 : 600}>
+                            <Typography variant="body1" fontWeight={notification.status === 'unread' ? 600 : 400}>
                               {notification.title}
                             </Typography>
-                            {!notification.is_read && (
+                            {notification.status === 'unread' && (
                               <Chip label="New" size="small" color="primary" />
                             )}
                           </Box>
@@ -254,7 +259,7 @@ const NotificationsPage = () => {
                               {notification.message}
                             </Typography>
                             <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                              {formatDate(notification.created_at)}
+                              {formatDate(notification.sent_at)}
                             </Typography>
                           </Box>
                         }

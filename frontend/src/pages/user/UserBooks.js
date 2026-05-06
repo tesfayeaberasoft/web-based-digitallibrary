@@ -64,8 +64,13 @@ const UserBooks = () => {
     } catch (err) {
       setLoans([]);
       setReservations([]);
-      setError('Failed to load your books. Please try again.');
       console.error('Error fetching user books:', err);
+      console.error('Error response:', err.response?.data);
+      console.error('Error status:', err.response?.status);
+      
+      // Show actual error message from backend
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to load your books. Please try again.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -168,7 +173,7 @@ const UserBooks = () => {
                         Issued Date
                       </Typography>
                       <Typography variant="body2" fontWeight={600}>
-                        {new Date(loan.issue_date).toLocaleDateString()}
+                        {new Date(loan.loan_date).toLocaleDateString()}
                       </Typography>
                     </Grid>
                     <Grid item xs={6}>

@@ -68,7 +68,7 @@ const UserHistory = () => {
         // Filter by year if selected
         if (yearFilter !== 'all') {
           loans = loans.filter(loan => 
-            new Date(loan.issue_date).getFullYear().toString() === yearFilter
+            new Date(loan.loan_date).getFullYear().toString() === yearFilter
           );
         }
         
@@ -76,8 +76,13 @@ const UserHistory = () => {
         setTotalPages(response.data.pagination.pages);
       }
     } catch (err) {
-      setError('Failed to load reading history. Please try again.');
       console.error('Error fetching history:', err);
+      console.error('Error response:', err.response?.data);
+      console.error('Error status:', err.response?.status);
+      
+      // Show actual error message from backend
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to load reading history. Please try again.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -134,7 +139,7 @@ const UserHistory = () => {
   const getYears = () => {
     const years = new Set();
     history.forEach(loan => {
-      years.add(new Date(loan.issue_date).getFullYear().toString());
+      years.add(new Date(loan.loan_date).getFullYear().toString());
     });
     return Array.from(years).sort().reverse();
   };
@@ -242,7 +247,7 @@ const UserHistory = () => {
                           </TableCell>
                           <TableCell>
                             <Typography variant="body2">
-                              {new Date(loan.issue_date).toLocaleDateString()}
+                              {new Date(loan.loan_date).toLocaleDateString()}
                             </Typography>
                           </TableCell>
                           <TableCell>
@@ -255,7 +260,7 @@ const UserHistory = () => {
                           </TableCell>
                           <TableCell>
                             <Typography variant="body2">
-                              {calculateDuration(loan.issue_date, loan.return_date)} days
+                              {calculateDuration(loan.loan_date, loan.return_date)} days
                             </Typography>
                           </TableCell>
                           <TableCell>
@@ -322,7 +327,7 @@ const UserHistory = () => {
                     {Math.round(
                       history
                         .filter(l => l.status === 'returned')
-                        .reduce((acc, l) => acc + calculateDuration(l.issue_date, l.return_date), 0) /
+                        .reduce((acc, l) => acc + calculateDuration(l.loan_date, l.return_date), 0) /
                       history.filter(l => l.status === 'returned').length || 0
                     )} days
                   </Typography>

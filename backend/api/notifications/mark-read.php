@@ -7,24 +7,9 @@
 header('Content-Type: application/json');
 
 try {
-    // Verify JWT token
-    $headers = getallheaders();
-    $token = isset($headers['Authorization']) ? str_replace('Bearer ', '', $headers['Authorization']) : '';
-    
-    if (!$token) {
-        http_response_code(401);
-        echo json_encode(['success' => false, 'message' => 'No token provided']);
-        exit;
-    }
-    
+    require_once __DIR__ . '/../../config/config.php';
     require_once __DIR__ . '/../../utils/jwt.php';
-    $decoded = JWT::decode($token);
-    
-    if (!$decoded) {
-        http_response_code(401);
-        echo json_encode(['success' => false, 'message' => 'Invalid token']);
-        exit;
-    }
+    $decoded = requireAuth();
     
     $notification_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
     
@@ -40,10 +25,10 @@ try {
     // Update notification (only if it belongs to the user)
     $stmt = $db->prepare("
         UPDATE notifications 
-        SET is_read = 1, read_at = NOW()
+        SET status = 'read', read_at = NOW()
         WHERE id = ? AND user_id = ?
     ");
-    $stmt->execute([$notification_id, $decoded->user_id]);
+    $stmt->execute([$notification_id, $decoded['user_id']]);
     
     if ($stmt->rowCount() === 0) {
         http_response_code(404);

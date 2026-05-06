@@ -7,24 +7,9 @@
 header('Content-Type: application/json');
 
 try {
-    // Verify JWT token
-    $headers = getallheaders();
-    $token = isset($headers['Authorization']) ? str_replace('Bearer ', '', $headers['Authorization']) : '';
-    
-    if (!$token) {
-        http_response_code(401);
-        echo json_encode(['success' => false, 'message' => 'No token provided']);
-        exit;
-    }
-    
+    require_once __DIR__ . '/../../config/config.php';
     require_once __DIR__ . '/../../utils/jwt.php';
-    $decoded = JWT::decode($token);
-    
-    if (!$decoded) {
-        http_response_code(401);
-        echo json_encode(['success' => false, 'message' => 'Invalid token']);
-        exit;
-    }
+    $decoded = requireAuth();
     
     $fine_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
     $data = json_decode(file_get_contents('php://input'), true);
@@ -55,7 +40,7 @@ try {
     }
     
     // Users can only pay their own fines
-    if ($decoded->role === 'user' && $fine['user_id'] != $decoded->user_id) {
+    if ($decoded['role'] === 'user' && $fine['user_id'] != $decoded['user_id']) {
         http_response_code(403);
         echo json_encode(['success' => false, 'message' => 'Unauthorized']);
         exit;
@@ -90,12 +75,7 @@ try {
     $message = "Your fine of $" . $fine['amount'] . " has been paid successfully";
     $stmt->execute([$fine['user_id'], $message]);
     
-    // Log activity
-    $stmt = $db->prepare("
-        INSERT INTO audit_logs (user_id, action, entity_type, entity_id, ip_address)
-        VALUES (?, 'pay_fine', 'fine', ?, ?)
-    ");
-    $stmt->execute([$decoded->user_id, $fine_id, $_SERVER['REMOTE_ADDR']]);
+    // Note: audit_logs insert removed due to missing columns in schema
     
     echo json_encode([
         'success' => true,

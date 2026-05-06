@@ -7,24 +7,9 @@
 header('Content-Type: application/json');
 
 try {
-    // Verify JWT token
-    $headers = getallheaders();
-    $token = isset($headers['Authorization']) ? str_replace('Bearer ', '', $headers['Authorization']) : '';
-    
-    if (!$token) {
-        http_response_code(401);
-        echo json_encode(['success' => false, 'message' => 'No token provided']);
-        exit;
-    }
-    
+    require_once __DIR__ . '/../../config/config.php';
     require_once __DIR__ . '/../../utils/jwt.php';
-    $decoded = JWT::decode($token);
-    
-    if (!$decoded) {
-        http_response_code(401);
-        echo json_encode(['success' => false, 'message' => 'Invalid token']);
-        exit;
-    }
+    $decoded = requireAuth();
     
     require_once __DIR__ . '/../../config/database.php';
     $db = Database::getInstance()->getConnection();
@@ -32,10 +17,10 @@ try {
     // Mark all user's notifications as read
     $stmt = $db->prepare("
         UPDATE notifications 
-        SET is_read = 1, read_at = NOW()
-        WHERE user_id = ? AND is_read = 0
+        SET status = 'read', read_at = NOW()
+        WHERE user_id = ? AND status = 'unread'
     ");
-    $stmt->execute([$decoded->user_id]);
+    $stmt->execute([$decoded['user_id']]);
     
     $count = $stmt->rowCount();
     

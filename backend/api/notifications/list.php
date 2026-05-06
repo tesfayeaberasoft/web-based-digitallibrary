@@ -7,38 +7,24 @@
 header('Content-Type: application/json');
 
 try {
-    // Verify JWT token
-    $headers = getallheaders();
-    $token = isset($headers['Authorization']) ? str_replace('Bearer ', '', $headers['Authorization']) : '';
-    
-    if (!$token) {
-        http_response_code(401);
-        echo json_encode(['success' => false, 'message' => 'No token provided']);
-        exit;
-    }
-    
+    require_once __DIR__ . '/../../config/config.php';
     require_once __DIR__ . '/../../utils/jwt.php';
-    $decoded = JWT::decode($token);
-    
-    if (!$decoded) {
-        http_response_code(401);
-        echo json_encode(['success' => false, 'message' => 'Invalid token']);
-        exit;
-    }
+    $decoded = requireAuth();
     
     require_once __DIR__ . '/../../config/database.php';
     $db = Database::getInstance()->getConnection();
     
     // Users can only see their own notifications
-    $user_id = $decoded->user_id;
+    $user_id = $decoded['user_id'];
     
     // Filter by read status
     $where = ["user_id = ?"];
     $params = [$user_id];
     
     if (isset($_GET['is_read'])) {
-        $where[] = "is_read = ?";
-        $params[] = $_GET['is_read'] === 'true' ? 1 : 0;
+        $isRead = $_GET['is_read'] === 'true';
+        $where[] = "status = ?";
+        $params[] = $isRead ? 'read' : 'unread';
     }
     
     // Filter by type
@@ -67,7 +53,7 @@ try {
     $stmt = $db->prepare("
         SELECT COUNT(*) as unread
         FROM notifications
-        WHERE user_id = ? AND is_read = 0
+        WHERE user_id = ? AND status = 'unread'
     ");
     $stmt->execute([$user_id]);
     $unread_count = $stmt->fetch(PDO::FETCH_ASSOC)['unread'];
@@ -77,13 +63,20 @@ try {
         SELECT *
         FROM notifications
         $where_clause
-        ORDER BY created_at DESC
+        ORDER BY sent_at DESC
         LIMIT ? OFFSET ?
     ");
     
-    $params[] = $limit;
-    $params[] = $offset;
-    $stmt->execute($params);
+    // Bind parameters with correct types
+    $paramIndex = 1;
+    foreach ($params as $param) {
+        $stmt->bindValue($paramIndex++, $param);
+    }
+    // Bind LIMIT and OFFSET as integers
+    $stmt->bindValue($paramIndex++, $limit, PDO::PARAM_INT);
+    $stmt->bindValue($paramIndex++, $offset, PDO::PARAM_INT);
+    
+    $stmt->execute();
     $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     echo json_encode([

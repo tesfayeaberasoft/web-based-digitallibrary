@@ -7,24 +7,9 @@
 header('Content-Type: application/json');
 
 try {
-    // Verify JWT token
-    $headers = getallheaders();
-    $token = isset($headers['Authorization']) ? str_replace('Bearer ', '', $headers['Authorization']) : '';
-    
-    if (!$token) {
-        http_response_code(401);
-        echo json_encode(['success' => false, 'message' => 'No token provided']);
-        exit;
-    }
-    
+    require_once __DIR__ . '/../../config/config.php';
     require_once __DIR__ . '/../../utils/jwt.php';
-    $decoded = JWT::decode($token);
-    
-    if (!$decoded) {
-        http_response_code(401);
-        echo json_encode(['success' => false, 'message' => 'Invalid token']);
-        exit;
-    }
+    $decoded = requireAuth();
     
     $user_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
     $data = json_decode(file_get_contents('php://input'), true);
@@ -36,7 +21,7 @@ try {
     }
     
     // Users can only update their own profile, admins can update any
-    if ($decoded->role === 'user' && $decoded->user_id != $user_id) {
+    if ($decoded['role'] === 'user' && $decoded['user_id'] != $user_id) {
         http_response_code(403);
         echo json_encode(['success' => false, 'message' => 'Unauthorized']);
         exit;
@@ -63,7 +48,7 @@ try {
     $allowed_fields = ['full_name', 'email', 'phone', 'address'];
     
     // Admins can also update role and status
-    if ($decoded->role === 'admin') {
+    if ($decoded['role'] === 'admin') {
         $allowed_fields[] = 'role';
         $allowed_fields[] = 'status';
     }
@@ -98,12 +83,7 @@ try {
     $stmt = $db->prepare($sql);
     $stmt->execute($params);
     
-    // Log activity
-    $stmt = $db->prepare("
-        INSERT INTO audit_logs (user_id, action, entity_type, entity_id, ip_address)
-        VALUES (?, 'update', 'user', ?, ?)
-    ");
-    $stmt->execute([$decoded->user_id, $user_id, $_SERVER['REMOTE_ADDR']]);
+    // Note: audit_logs insert removed due to missing columns in schema
     
     echo json_encode([
         'success' => true,

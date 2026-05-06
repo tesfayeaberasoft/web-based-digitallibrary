@@ -77,6 +77,11 @@ switch (true) {
         require __DIR__ . '/api/users/update-password.php';
         break;
     
+    case preg_match('#^/users/(\d+)/stats$#', $path, $matches) && $request_method === 'GET':
+        $_GET['id'] = $matches[1];
+        require __DIR__ . '/api/users/stats.php';
+        break;
+    
     // Books routes
     case preg_match('#^/books$#', $path) && $request_method === 'GET':
         require __DIR__ . '/api/books/list.php';
