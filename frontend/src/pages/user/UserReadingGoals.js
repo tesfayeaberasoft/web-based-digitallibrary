@@ -676,7 +676,8 @@ const UserReadingGoals = () => {
             </Button>
           </DialogActions>
         </Dialog>
-      </Box>
+        </Box>
+      </Fade>
     </DashboardLayout>
   );
 };

@@ -736,8 +736,6 @@ const UserBooks = () => {
               {tabValue === 1 && renderReservations()}
             </>
           )}
-        </Box>
-      </Fade>
 
         {/* Return Book Confirmation Dialog */}
         <Dialog
@@ -838,7 +836,8 @@ const UserBooks = () => {
             </Button>
           </DialogActions>
         </Dialog>
-      </Box>
+        </Box>
+      </Fade>
     </DashboardLayout>
   );
 };
