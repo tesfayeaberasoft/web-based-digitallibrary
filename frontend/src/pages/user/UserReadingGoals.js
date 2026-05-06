@@ -550,8 +550,6 @@ const UserReadingGoals = () => {
               })}
             </Grid>
           )}
-        </Box>
-      </Fade>
 
         {/* Create/Edit Goal Dialog */}
         <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
