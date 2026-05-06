@@ -16,14 +16,20 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  DialogContentText
+  DialogContentText,
+  Fade,
+  Grow,
+  Avatar,
+  Paper
 } from '@mui/material';
 import {
   MenuBook as BookIcon,
   Schedule as ScheduleIcon,
   CheckCircle as CheckIcon,
   Warning as WarningIcon,
-  AssignmentReturn as ReturnIcon
+  AssignmentReturn as ReturnIcon,
+  AutoStories as ReadingIcon,
+  CalendarToday as CalendarIcon
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import axios from 'axios';
@@ -218,123 +224,223 @@ const UserBooks = () => {
   const renderLoans = () => {
     if (loans.length === 0) {
       return (
-        <Box sx={{ textAlign: 'center', py: 8 }}>
-          <BookIcon sx={{ fontSize: 80, color: 'text.secondary', mb: 2 }} />
-          <Typography variant="h6" color="text.secondary">
-            No borrowed books
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Visit our library to borrow your first book
-          </Typography>
-          <Button 
-            variant="contained" 
-            href="/browse"
-            sx={{ bgcolor: '#4a9b8e', '&:hover': { bgcolor: '#3d8276' } }}
+        <Fade in={true} timeout={800}>
+          <Paper 
+            elevation={0}
+            sx={{ 
+              textAlign: 'center', 
+              py: 8,
+              background: 'linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%)',
+              borderRadius: 2
+            }}
           >
-            Browse Books
-          </Button>
-        </Box>
+            <Avatar sx={{ 
+              width: 100, 
+              height: 100, 
+              bgcolor: '#4a9b8e', 
+              margin: '0 auto',
+              mb: 3
+            }}>
+              <BookIcon sx={{ fontSize: 60 }} />
+            </Avatar>
+            <Typography variant="h5" fontWeight={600} gutterBottom>
+              No borrowed books
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+              Visit our library to borrow your first book and start your reading journey! 📚
+            </Typography>
+            <Button 
+              variant="contained" 
+              size="large"
+              startIcon={<ReadingIcon />}
+              href="/browse"
+              sx={{ 
+                bgcolor: '#4a9b8e', 
+                '&:hover': { bgcolor: '#3d8276' },
+                px: 4,
+                py: 1.5,
+                fontSize: '1.1rem'
+              }}
+            >
+              Browse Books
+            </Button>
+          </Paper>
+        </Fade>
       );
     }
 
     return (
       <Grid container spacing={3}>
-        {loans.map((loan) => {
+        {loans.map((loan, index) => {
           const daysUntilDue = getDaysUntilDue(loan.due_date);
           const progress = Math.max(0, Math.min(100, ((14 - daysUntilDue) / 14) * 100));
           
+          // Determine card gradient based on status
+          let cardGradient = 'linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%)';
+          let borderColor = '#4a9b8e';
+          
+          if (daysUntilDue < 0) {
+            cardGradient = 'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)';
+            borderColor = '#f44336';
+          } else if (daysUntilDue <= 3) {
+            cardGradient = 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)';
+            borderColor = '#ff9800';
+          }
+          
           return (
-            <Grid item xs={12} md={6} key={loan.id}>
-              <Card>
-                <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                    <Box sx={{ flex: 1 }}>
-                      <Typography variant="h6" fontWeight={600} gutterBottom>
-                        {loan.book_title}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" gutterBottom>
-                        by {loan.book_author}
-                      </Typography>
+            <Grid item xs={12} md={6} lg={4} key={loan.id}>
+              <Grow in={true} timeout={600 + (index * 200)}>
+                <Card 
+                  sx={{ 
+                    height: '100%',
+                    background: cardGradient,
+                    border: `2px solid ${borderColor}`,
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-8px)',
+                      boxShadow: `0 12px 24px ${borderColor}40`
+                    }
+                  }}
+                >
+                  <CardContent>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                      <Avatar sx={{ 
+                        bgcolor: borderColor,
+                        width: 48,
+                        height: 48
+                      }}>
+                        <ReadingIcon />
+                      </Avatar>
+                      {getStatusChip(loan)}
                     </Box>
-                    {getStatusChip(loan)}
-                  </Box>
-                  
-                  <Box sx={{ mb: 2 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Reading Progress
-                      </Typography>
-                      <Typography variant="body2" fontWeight={600}>
-                        {Math.round(progress)}%
-                      </Typography>
+                    
+                    <Typography variant="h6" fontWeight={700} gutterBottom sx={{ 
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical'
+                    }}>
+                      {loan.book_title}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" gutterBottom sx={{ mb: 2 }}>
+                      by {loan.book_author}
+                    </Typography>
+                    
+                    <Box sx={{ mb: 2 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                        <Typography variant="body2" fontWeight={600} color={borderColor}>
+                          Reading Progress
+                        </Typography>
+                        <Typography variant="body2" fontWeight={700} color={borderColor}>
+                          {Math.round(progress)}%
+                        </Typography>
+                      </Box>
+                      <LinearProgress 
+                        variant="determinate" 
+                        value={progress} 
+                        sx={{
+                          height: 10,
+                          borderRadius: 5,
+                          bgcolor: 'rgba(0,0,0,0.1)',
+                          '& .MuiLinearProgress-bar': {
+                            bgcolor: borderColor,
+                            borderRadius: 5
+                          }
+                        }}
+                      />
                     </Box>
-                    <LinearProgress 
-                      variant="determinate" 
-                      value={progress} 
-                      sx={{
-                        height: 8,
-                        borderRadius: 4,
-                        bgcolor: 'grey.200',
-                        '& .MuiLinearProgress-bar': {
-                          bgcolor: daysUntilDue < 0 ? 'error.main' : daysUntilDue <= 3 ? 'warning.main' : 'success.main'
-                        }
-                      }}
-                    />
-                  </Box>
-                  
-                  <Grid container spacing={2} sx={{ mb: 2 }}>
-                    <Grid item xs={6}>
-                      <Typography variant="caption" color="text.secondary">
-                        Issued Date
-                      </Typography>
-                      <Typography variant="body2" fontWeight={600}>
-                        {new Date(loan.loan_date).toLocaleDateString()}
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <Typography variant="caption" color="text.secondary">
-                        Due Date
-                      </Typography>
-                      <Typography variant="body2" fontWeight={600}>
-                        {new Date(loan.due_date).toLocaleDateString()}
-                      </Typography>
-                    </Grid>
-                  </Grid>
-                  
-                  {daysUntilDue >= 0 ? (
-                    <Alert severity={daysUntilDue <= 3 ? 'warning' : 'info'} sx={{ mb: 2 }}>
-                      {daysUntilDue === 0 ? 'Due today!' : `${daysUntilDue} day${daysUntilDue !== 1 ? 's' : ''} remaining`}
-                    </Alert>
-                  ) : (
-                    <Alert severity="error" sx={{ mb: 2 }}>
-                      Overdue by {Math.abs(daysUntilDue)} day{Math.abs(daysUntilDue) !== 1 ? 's' : ''}
-                    </Alert>
-                  )}
-                  
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button 
-                      fullWidth 
-                      variant="contained"
-                      startIcon={<ReturnIcon />}
-                      onClick={() => handleOpenReturnDialog(loan)}
-                      sx={{ 
-                        bgcolor: '#4a9b8e', 
-                        '&:hover': { bgcolor: '#3d8276' }
-                      }}
-                    >
-                      Return Book
-                    </Button>
-                    <Button 
-                      fullWidth 
-                      variant="outlined"
-                      onClick={() => handleOpenRenewDialog(loan)}
-                      sx={{ borderColor: '#4a9b8e', color: '#4a9b8e' }}
-                    >
-                      Renew
-                    </Button>
-                  </Box>
-                </CardContent>
-              </Card>
+                    
+                    <Paper elevation={0} sx={{ p: 2, bgcolor: 'rgba(255,255,255,0.7)', borderRadius: 2, mb: 2 }}>
+                      <Grid container spacing={2}>
+                        <Grid item xs={6}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                            <CalendarIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                            <Typography variant="caption" color="text.secondary">
+                              Issued
+                            </Typography>
+                          </Box>
+                          <Typography variant="body2" fontWeight={600}>
+                            {new Date(loan.loan_date).toLocaleDateString()}
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={6}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                            <ScheduleIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                            <Typography variant="caption" color="text.secondary">
+                              Due Date
+                            </Typography>
+                          </Box>
+                          <Typography variant="body2" fontWeight={600}>
+                            {new Date(loan.due_date).toLocaleDateString()}
+                          </Typography>
+                        </Grid>
+                      </Grid>
+                    </Paper>
+                    
+                    {daysUntilDue >= 0 ? (
+                      <Alert 
+                        severity={daysUntilDue <= 3 ? 'warning' : 'info'} 
+                        sx={{ 
+                          mb: 2,
+                          fontWeight: 600,
+                          '& .MuiAlert-icon': {
+                            fontSize: 24
+                          }
+                        }}
+                      >
+                        {daysUntilDue === 0 ? '⏰ Due today!' : `📅 ${daysUntilDue} day${daysUntilDue !== 1 ? 's' : ''} remaining`}
+                      </Alert>
+                    ) : (
+                      <Alert 
+                        severity="error" 
+                        sx={{ 
+                          mb: 2,
+                          fontWeight: 600,
+                          '& .MuiAlert-icon': {
+                            fontSize: 24
+                          }
+                        }}
+                      >
+                        ⚠️ Overdue by {Math.abs(daysUntilDue)} day{Math.abs(daysUntilDue) !== 1 ? 's' : ''}
+                      </Alert>
+                    )}
+                    
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Button 
+                        fullWidth 
+                        variant="contained"
+                        startIcon={<ReturnIcon />}
+                        onClick={() => handleOpenReturnDialog(loan)}
+                        sx={{ 
+                          bgcolor: '#4a9b8e', 
+                          '&:hover': { bgcolor: '#3d8276' },
+                          fontWeight: 600
+                        }}
+                      >
+                        Return
+                      </Button>
+                      <Button 
+                        fullWidth 
+                        variant="outlined"
+                        startIcon={<ScheduleIcon />}
+                        onClick={() => handleOpenRenewDialog(loan)}
+                        sx={{ 
+                          borderColor: '#4a9b8e', 
+                          color: '#4a9b8e',
+                          fontWeight: 600,
+                          '&:hover': {
+                            borderColor: '#3d8276',
+                            bgcolor: 'rgba(74, 155, 142, 0.08)'
+                          }
+                        }}
+                      >
+                        Renew
+                      </Button>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grow>
             </Grid>
           );
         })}
@@ -345,131 +451,293 @@ const UserBooks = () => {
   const renderReservations = () => {
     if (reservations.length === 0) {
       return (
-        <Box sx={{ textAlign: 'center', py: 8 }}>
-          <ScheduleIcon sx={{ fontSize: 80, color: 'text.secondary', mb: 2 }} />
-          <Typography variant="h6" color="text.secondary">
-            No reservations
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Reserve books that are currently unavailable
-          </Typography>
-        </Box>
+        <Fade in={true} timeout={800}>
+          <Paper 
+            elevation={0}
+            sx={{ 
+              textAlign: 'center', 
+              py: 8,
+              background: 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)',
+              borderRadius: 2
+            }}
+          >
+            <Avatar sx={{ 
+              width: 100, 
+              height: 100, 
+              bgcolor: '#ff9800', 
+              margin: '0 auto',
+              mb: 3
+            }}>
+              <ScheduleIcon sx={{ fontSize: 60 }} />
+            </Avatar>
+            <Typography variant="h5" fontWeight={600} gutterBottom>
+              No reservations
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+              Reserve books that are currently unavailable to get notified when they're ready! 🔔
+            </Typography>
+            <Button 
+              variant="contained" 
+              size="large"
+              startIcon={<BookIcon />}
+              href="/browse"
+              sx={{ 
+                bgcolor: '#ff9800', 
+                '&:hover': { bgcolor: '#f57c00' },
+                px: 4,
+                py: 1.5,
+                fontSize: '1.1rem'
+              }}
+            >
+              Browse Books
+            </Button>
+          </Paper>
+        </Fade>
       );
     }
 
     return (
       <Grid container spacing={3}>
-        {reservations.map((reservation) => (
-          <Grid item xs={12} md={6} key={reservation.id}>
-            <Card>
-              <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="h6" fontWeight={600} gutterBottom>
+        {reservations.map((reservation, index) => {
+          const isReady = reservation.status === 'available';
+          const cardGradient = isReady 
+            ? 'linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)'
+            : 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)';
+          const borderColor = isReady ? '#4caf50' : '#ff9800';
+          
+          return (
+            <Grid item xs={12} md={6} lg={4} key={reservation.id}>
+              <Grow in={true} timeout={600 + (index * 200)}>
+                <Card 
+                  sx={{ 
+                    height: '100%',
+                    background: cardGradient,
+                    border: `2px solid ${borderColor}`,
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-8px)',
+                      boxShadow: `0 12px 24px ${borderColor}40`
+                    }
+                  }}
+                >
+                  <CardContent>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                      <Avatar sx={{ 
+                        bgcolor: borderColor,
+                        width: 48,
+                        height: 48
+                      }}>
+                        {isReady ? <CheckIcon /> : <ScheduleIcon />}
+                      </Avatar>
+                      <Chip 
+                        label={isReady ? '✅ Ready' : '⏳ Pending'}
+                        sx={{
+                          bgcolor: borderColor,
+                          color: 'white',
+                          fontWeight: 700,
+                          fontSize: '0.875rem'
+                        }}
+                        size="medium"
+                      />
+                    </Box>
+                    
+                    <Typography variant="h6" fontWeight={700} gutterBottom sx={{ 
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical'
+                    }}>
                       {reservation.book_title}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                    <Typography variant="body2" color="text.secondary" gutterBottom sx={{ mb: 2 }}>
                       by {reservation.book_author}
                     </Typography>
-                  </Box>
-                  <Chip 
-                    label={reservation.status === 'available' ? 'Ready' : 'Pending'}
-                    color={reservation.status === 'available' ? 'success' : 'warning'}
-                    size="small"
-                  />
-                </Box>
-                
-                <Grid container spacing={2} sx={{ mb: 2 }}>
-                  <Grid item xs={6}>
-                    <Typography variant="caption" color="text.secondary">
-                      Reserved On
-                    </Typography>
-                    <Typography variant="body2" fontWeight={600}>
-                      {new Date(reservation.created_at).toLocaleDateString()}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="caption" color="text.secondary">
-                      Queue Position
-                    </Typography>
-                    <Typography variant="body2" fontWeight={600}>
-                      #{reservation.queue_position}
-                    </Typography>
-                  </Grid>
-                </Grid>
-                
-                {reservation.status === 'available' ? (
-                  <Alert severity="success" sx={{ mb: 2 }}>
-                    Your book is ready for pickup!
-                  </Alert>
-                ) : (
-                  <Alert severity="info" sx={{ mb: 2 }}>
-                    You're #{reservation.queue_position} in the queue
-                  </Alert>
-                )}
-                
-                <Button 
-                  fullWidth 
-                  variant="outlined"
-                  color="error"
-                >
-                  Cancel Reservation
-                </Button>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
+                    
+                    <Paper elevation={0} sx={{ p: 2, bgcolor: 'rgba(255,255,255,0.7)', borderRadius: 2, mb: 2 }}>
+                      <Grid container spacing={2}>
+                        <Grid item xs={6}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                            <CalendarIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                            <Typography variant="caption" color="text.secondary">
+                              Reserved On
+                            </Typography>
+                          </Box>
+                          <Typography variant="body2" fontWeight={600}>
+                            {new Date(reservation.created_at).toLocaleDateString()}
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={6}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                            <ScheduleIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                            <Typography variant="caption" color="text.secondary">
+                              Queue Position
+                            </Typography>
+                          </Box>
+                          <Typography variant="h6" fontWeight={700} color={borderColor}>
+                            #{reservation.queue_position}
+                          </Typography>
+                        </Grid>
+                      </Grid>
+                    </Paper>
+                    
+                    {isReady ? (
+                      <Alert 
+                        severity="success" 
+                        sx={{ 
+                          mb: 2,
+                          fontWeight: 600,
+                          '& .MuiAlert-icon': {
+                            fontSize: 24
+                          }
+                        }}
+                      >
+                        🎉 Your book is ready for pickup!
+                      </Alert>
+                    ) : (
+                      <Alert 
+                        severity="info" 
+                        sx={{ 
+                          mb: 2,
+                          fontWeight: 600,
+                          '& .MuiAlert-icon': {
+                            fontSize: 24
+                          }
+                        }}
+                      >
+                        📋 You're #{reservation.queue_position} in the queue
+                      </Alert>
+                    )}
+                    
+                    <Button 
+                      fullWidth 
+                      variant="outlined"
+                      color="error"
+                      sx={{
+                        fontWeight: 600,
+                        '&:hover': {
+                          bgcolor: 'rgba(244, 67, 54, 0.08)'
+                        }
+                      }}
+                    >
+                      Cancel Reservation
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Grow>
+            </Grid>
+          );
+        })}
       </Grid>
     );
   };
 
   return (
     <DashboardLayout title="Digital Library">
-      <Box>
-        <Typography variant="h4" fontWeight={700} gutterBottom>
-          My Books
-        </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-          Manage your borrowed and reserved books
-        </Typography>
-
-        {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            {error}
-          </Alert>
-        )}
-
-        {success && (
-          <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess('')}>
-            {success}
-          </Alert>
-        )}
-
-        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-          <Tabs value={tabValue} onChange={handleTabChange}>
-            <Tab 
-              label={`Borrowed (${loans.length})`}
-              icon={<BookIcon />}
-              iconPosition="start"
-            />
-            <Tab 
-              label={`Reservations (${reservations.length})`}
-              icon={<ScheduleIcon />}
-              iconPosition="start"
-            />
-          </Tabs>
-        </Box>
-
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-            <CircularProgress />
+      <Fade in={true} timeout={600}>
+        <Box>
+          {/* Header */}
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h4" fontWeight={700} gutterBottom>
+              📚 My Books
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Manage your borrowed and reserved books
+            </Typography>
           </Box>
-        ) : (
-          <>
-            {tabValue === 0 && renderLoans()}
-            {tabValue === 1 && renderReservations()}
-          </>
-        )}
+
+          {error && (
+            <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>
+              {error}
+            </Alert>
+          )}
+
+          {success && (
+            <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess('')}>
+              {success}
+            </Alert>
+          )}
+
+          {/* Enhanced Tabs */}
+          <Paper 
+            elevation={0}
+            sx={{ 
+              mb: 4,
+              borderRadius: 2,
+              overflow: 'hidden',
+              border: '2px solid #e0e0e0'
+            }}
+          >
+            <Tabs 
+              value={tabValue} 
+              onChange={handleTabChange}
+              sx={{
+                '& .MuiTab-root': {
+                  fontSize: '1rem',
+                  fontWeight: 600,
+                  py: 2,
+                  minHeight: 64
+                },
+                '& .Mui-selected': {
+                  color: '#4a9b8e !important'
+                },
+                '& .MuiTabs-indicator': {
+                  backgroundColor: '#4a9b8e',
+                  height: 3
+                }
+              }}
+            >
+              <Tab 
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <BookIcon />
+                    <span>Borrowed</span>
+                    <Chip 
+                      label={loans.length} 
+                      size="small" 
+                      sx={{ 
+                        bgcolor: tabValue === 0 ? '#4a9b8e' : 'grey.300',
+                        color: tabValue === 0 ? 'white' : 'text.secondary',
+                        fontWeight: 700,
+                        minWidth: 32
+                      }} 
+                    />
+                  </Box>
+                }
+              />
+              <Tab 
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <ScheduleIcon />
+                    <span>Reservations</span>
+                    <Chip 
+                      label={reservations.length} 
+                      size="small" 
+                      sx={{ 
+                        bgcolor: tabValue === 1 ? '#4a9b8e' : 'grey.300',
+                        color: tabValue === 1 ? 'white' : 'text.secondary',
+                        fontWeight: 700,
+                        minWidth: 32
+                      }} 
+                    />
+                  </Box>
+                }
+              />
+            </Tabs>
+          </Paper>
+
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+              <CircularProgress sx={{ color: '#4a9b8e' }} size={60} />
+            </Box>
+          ) : (
+            <>
+              {tabValue === 0 && renderLoans()}
+              {tabValue === 1 && renderReservations()}
+            </>
+          )}
+        </Box>
+      </Fade>
 
         {/* Return Book Confirmation Dialog */}
         <Dialog
