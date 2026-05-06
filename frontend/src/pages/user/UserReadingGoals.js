@@ -15,7 +15,11 @@ import {
   DialogActions,
   TextField,
   MenuItem,
-  Chip
+  Chip,
+  Avatar,
+  Paper,
+  Fade,
+  Grow
 } from '@mui/material';
 import {
   TrendingUp as TrendingUpIcon,
@@ -24,7 +28,9 @@ import {
   Schedule as ScheduleIcon,
   EmojiEvents as TrophyIcon,
   Edit as EditIcon,
-  Delete as DeleteIcon
+  Delete as DeleteIcon,
+  CalendarToday as CalendarIcon,
+  LocalFireDepartment as FireIcon
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { useAuth } from '../../contexts/AuthContext';
@@ -270,168 +276,282 @@ const UserReadingGoals = () => {
 
   return (
     <DashboardLayout title="Digital Library">
-      <Box>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Box>
-            <Typography variant="h4" fontWeight={700} gutterBottom>
-              Reading Goals
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Set and track your reading targets
-            </Typography>
-          </Box>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleOpenDialog}
-            sx={{ bgcolor: '#4a9b8e', '&:hover': { bgcolor: '#3d8276' } }}
-          >
-            New Goal
-          </Button>
-        </Box>
-
-        {success && (
-          <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess('')}>
-            {success}
-          </Alert>
-        )}
-
-        {error && !dialogOpen && (
-          <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>
-            {error}
-          </Alert>
-        )}
-
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-            <CircularProgress />
-          </Box>
-        ) : goals.length === 0 ? (
-          <Box sx={{ textAlign: 'center', py: 8 }}>
-            <TrophyIcon sx={{ fontSize: 80, color: 'text.secondary', mb: 2 }} />
-            <Typography variant="h6" color="text.secondary" gutterBottom>
-              No reading goals yet
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Set your first reading goal to track your progress
-            </Typography>
+      <Fade in={true} timeout={600}>
+        <Box>
+          {/* Header */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, flexWrap: 'wrap', gap: 2 }}>
+            <Box>
+              <Typography variant="h4" fontWeight={700} gutterBottom>
+                🎯 Reading Goals
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                Set and track your reading targets
+              </Typography>
+            </Box>
             <Button
               variant="contained"
+              size="large"
               startIcon={<AddIcon />}
               onClick={handleOpenDialog}
-              sx={{ bgcolor: '#4a9b8e', '&:hover': { bgcolor: '#3d8276' } }}
+              sx={{ 
+                bgcolor: '#4a9b8e', 
+                '&:hover': { bgcolor: '#3d8276' },
+                px: 3,
+                py: 1.5,
+                fontSize: '1rem',
+                fontWeight: 600
+              }}
             >
-              Create Your First Goal
+              New Goal
             </Button>
           </Box>
-        ) : (
-          <Grid container spacing={3}>
-            {goals.map((goal) => {
-              const progress = getProgressPercentage(goal);
-              const daysRemaining = getDaysRemaining(goal.end_date);
-              
-              return (
-                <Grid item xs={12} md={6} key={goal.id}>
-                  <Card>
-                    <CardContent>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                        <Box sx={{ flex: 1 }}>
-                          <Typography variant="h6" fontWeight={600} gutterBottom>
+
+          {success && (
+            <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess('')}>
+              {success}
+            </Alert>
+          )}
+
+          {error && !dialogOpen && (
+            <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>
+              {error}
+            </Alert>
+          )}
+
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+              <CircularProgress sx={{ color: '#4a9b8e' }} size={60} />
+            </Box>
+          ) : goals.length === 0 ? (
+            <Fade in={true} timeout={800}>
+              <Paper 
+                elevation={0}
+                sx={{ 
+                  textAlign: 'center', 
+                  py: 8,
+                  background: 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)',
+                  borderRadius: 2,
+                  border: '2px solid #ff9800'
+                }}
+              >
+                <Avatar sx={{ 
+                  width: 120, 
+                  height: 120, 
+                  bgcolor: '#ff9800', 
+                  margin: '0 auto',
+                  mb: 3
+                }}>
+                  <TrophyIcon sx={{ fontSize: 70 }} />
+                </Avatar>
+                <Typography variant="h5" fontWeight={600} gutterBottom>
+                  No reading goals yet
+                </Typography>
+                <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+                  Set your first reading goal to track your progress and stay motivated! 📚
+                </Typography>
+                <Button
+                  variant="contained"
+                  size="large"
+                  startIcon={<AddIcon />}
+                  onClick={handleOpenDialog}
+                  sx={{ 
+                    bgcolor: '#ff9800', 
+                    '&:hover': { bgcolor: '#f57c00' },
+                    px: 4,
+                    py: 1.5,
+                    fontSize: '1.1rem',
+                    fontWeight: 600
+                  }}
+                >
+                  Create Your First Goal
+                </Button>
+              </Paper>
+            </Fade>
+          ) : (
+            <Grid container spacing={3}>
+              {goals.map((goal, index) => {
+                const progress = getProgressPercentage(goal);
+                const daysRemaining = getDaysRemaining(goal.end_date);
+                
+                // Determine card gradient based on progress and status
+                let cardGradient = 'linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%)';
+                let borderColor = '#4a9b8e';
+                let iconBg = '#4a9b8e';
+                
+                if (progress >= 100) {
+                  cardGradient = 'linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)';
+                  borderColor = '#4caf50';
+                  iconBg = '#4caf50';
+                } else if (daysRemaining < 0) {
+                  cardGradient = 'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)';
+                  borderColor = '#f44336';
+                  iconBg = '#f44336';
+                } else if (daysRemaining <= 7) {
+                  cardGradient = 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)';
+                  borderColor = '#ff9800';
+                  iconBg = '#ff9800';
+                }
+                
+                return (
+                  <Grid item xs={12} md={6} lg={4} key={goal.id}>
+                    <Grow in={true} timeout={600 + (index * 200)}>
+                      <Card 
+                        sx={{ 
+                          height: '100%',
+                          background: cardGradient,
+                          border: `2px solid ${borderColor}`,
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            transform: 'translateY(-8px)',
+                            boxShadow: `0 12px 24px ${borderColor}40`
+                          }
+                        }}
+                      >
+                        <CardContent>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                            <Avatar sx={{ 
+                              bgcolor: iconBg,
+                              width: 56,
+                              height: 56
+                            }}>
+                              {progress >= 100 ? <TrophyIcon sx={{ fontSize: 32 }} /> : <TrendingUpIcon sx={{ fontSize: 32 }} />}
+                            </Avatar>
+                            {getStatusChip(goal)}
+                          </Box>
+                          
+                          <Typography variant="h5" fontWeight={700} gutterBottom>
                             {getGoalTypeLabel(goal.goal_type)} Goal
                           </Typography>
-                          <Typography variant="body2" color="text.secondary">
+                          <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
                             Read {goal.target_books} book{goal.target_books !== 1 ? 's' : ''}
                           </Typography>
-                        </Box>
-                        {getStatusChip(goal)}
-                      </Box>
 
-                      <Box sx={{ mb: 2 }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                          <Typography variant="body2" color="text.secondary">
-                            Progress
-                          </Typography>
-                          <Typography variant="body2" fontWeight={600}>
-                            {goal.current_progress} / {goal.target_books} books
-                          </Typography>
-                        </Box>
-                        <LinearProgress
-                          variant="determinate"
-                          value={progress}
-                          sx={{
-                            height: 10,
-                            borderRadius: 5,
-                            bgcolor: 'grey.200',
-                            '& .MuiLinearProgress-bar': {
-                              bgcolor: progress >= 100 ? 'success.main' : '#4a9b8e'
-                            }
-                          }}
-                        />
-                        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                          {Math.round(progress)}% complete
-                        </Typography>
-                      </Box>
+                          <Box sx={{ mb: 3 }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                              <Typography variant="body2" fontWeight={600} color={borderColor}>
+                                Progress
+                              </Typography>
+                              <Typography variant="body2" fontWeight={700} color={borderColor}>
+                                {goal.current_progress} / {goal.target_books}
+                              </Typography>
+                            </Box>
+                            <LinearProgress
+                              variant="determinate"
+                              value={progress}
+                              sx={{
+                                height: 12,
+                                borderRadius: 6,
+                                bgcolor: 'rgba(0,0,0,0.1)',
+                                '& .MuiLinearProgress-bar': {
+                                  bgcolor: borderColor,
+                                  borderRadius: 6
+                                }
+                              }}
+                            />
+                            <Typography variant="caption" fontWeight={600} sx={{ mt: 0.5, display: 'block', color: borderColor }}>
+                              {Math.round(progress)}% complete
+                            </Typography>
+                          </Box>
 
-                      <Grid container spacing={2} sx={{ mb: 2 }}>
-                        <Grid item xs={6}>
-                          <Typography variant="caption" color="text.secondary">
-                            Start Date
-                          </Typography>
-                          <Typography variant="body2" fontWeight={600}>
-                            {new Date(goal.start_date).toLocaleDateString()}
-                          </Typography>
-                        </Grid>
-                        <Grid item xs={6}>
-                          <Typography variant="caption" color="text.secondary">
-                            End Date
-                          </Typography>
-                          <Typography variant="body2" fontWeight={600}>
-                            {new Date(goal.end_date).toLocaleDateString()}
-                          </Typography>
-                        </Grid>
-                      </Grid>
+                          <Paper elevation={0} sx={{ p: 2, bgcolor: 'rgba(255,255,255,0.7)', borderRadius: 2, mb: 2 }}>
+                            <Grid container spacing={2}>
+                              <Grid item xs={6}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                                  <CalendarIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                                  <Typography variant="caption" color="text.secondary">
+                                    Start Date
+                                  </Typography>
+                                </Box>
+                                <Typography variant="body2" fontWeight={600}>
+                                  {new Date(goal.start_date).toLocaleDateString()}
+                                </Typography>
+                              </Grid>
+                              <Grid item xs={6}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                                  <ScheduleIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                                  <Typography variant="caption" color="text.secondary">
+                                    End Date
+                                  </Typography>
+                                </Box>
+                                <Typography variant="body2" fontWeight={600}>
+                                  {new Date(goal.end_date).toLocaleDateString()}
+                                </Typography>
+                              </Grid>
+                            </Grid>
+                          </Paper>
 
-                      {daysRemaining >= 0 && progress < 100 && (
-                        <Alert severity={daysRemaining <= 7 ? 'warning' : 'info'} sx={{ mb: 2 }}>
-                          {daysRemaining === 0
-                            ? 'Last day to complete!'
-                            : `${daysRemaining} day${daysRemaining !== 1 ? 's' : ''} remaining`}
-                        </Alert>
-                      )}
+                          {daysRemaining >= 0 && progress < 100 && (
+                            <Alert 
+                              severity={daysRemaining <= 7 ? 'warning' : 'info'} 
+                              sx={{ 
+                                mb: 2,
+                                fontWeight: 600,
+                                '& .MuiAlert-icon': {
+                                  fontSize: 24
+                                }
+                              }}
+                            >
+                              {daysRemaining === 0
+                                ? '⏰ Last day to complete!'
+                                : `📅 ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''} remaining`}
+                            </Alert>
+                          )}
 
-                      {progress >= 100 && (
-                        <Alert severity="success" sx={{ mb: 2 }} icon={<TrophyIcon />}>
-                          Goal completed! Great job! 🎉
-                        </Alert>
-                      )}
+                          {progress >= 100 && (
+                            <Alert 
+                              severity="success" 
+                              sx={{ 
+                                mb: 2,
+                                fontWeight: 600,
+                                '& .MuiAlert-icon': {
+                                  fontSize: 24
+                                }
+                              }} 
+                              icon={<TrophyIcon />}
+                            >
+                              🎉 Goal completed! Great job!
+                            </Alert>
+                          )}
 
-                      <Box sx={{ display: 'flex', gap: 1 }}>
-                        <Button
-                          fullWidth
-                          variant="outlined"
-                          startIcon={<EditIcon />}
-                          onClick={() => handleOpenEditDialog(goal)}
-                          sx={{ borderColor: '#4a9b8e', color: '#4a9b8e' }}
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          fullWidth
-                          variant="outlined"
-                          color="error"
-                          startIcon={<DeleteIcon />}
-                          onClick={() => handleOpenDeleteDialog(goal)}
-                        >
-                          Delete
-                        </Button>
-                      </Box>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              );
-            })}
-          </Grid>
-        )}
+                          <Box sx={{ display: 'flex', gap: 1 }}>
+                            <Button
+                              fullWidth
+                              variant="outlined"
+                              startIcon={<EditIcon />}
+                              onClick={() => handleOpenEditDialog(goal)}
+                              sx={{ 
+                                borderColor: borderColor, 
+                                color: borderColor,
+                                fontWeight: 600,
+                                '&:hover': {
+                                  borderColor: borderColor,
+                                  bgcolor: `${borderColor}10`
+                                }
+                              }}
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              fullWidth
+                              variant="outlined"
+                              color="error"
+                              startIcon={<DeleteIcon />}
+                              onClick={() => handleOpenDeleteDialog(goal)}
+                              sx={{ fontWeight: 600 }}
+                            >
+                              Delete
+                            </Button>
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    </Grow>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          )}
+        </Box>
+      </Fade>
 
         {/* Create/Edit Goal Dialog */}
         <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
