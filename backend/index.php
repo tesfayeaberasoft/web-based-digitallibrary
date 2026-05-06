@@ -82,6 +82,11 @@ switch (true) {
         require __DIR__ . '/api/users/stats.php';
         break;
     
+    case preg_match('#^/users/(\d+)/profile-image$#', $path, $matches) && $request_method === 'POST':
+        $_GET['id'] = $matches[1];
+        require __DIR__ . '/api/users/upload-profile-image.php';
+        break;
+    
     // Books routes
     case preg_match('#^/books$#', $path) && $request_method === 'GET':
         require __DIR__ . '/api/books/list.php';

@@ -11,13 +11,19 @@ import {
   Button,
   LinearProgress,
   Alert,
-  CircularProgress
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  DialogContentText
 } from '@mui/material';
 import {
   MenuBook as BookIcon,
   Schedule as ScheduleIcon,
   CheckCircle as CheckIcon,
-  Warning as WarningIcon
+  Warning as WarningIcon,
+  AssignmentReturn as ReturnIcon
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import axios from 'axios';
@@ -28,6 +34,10 @@ const UserBooks = () => {
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [returnDialogOpen, setReturnDialogOpen] = useState(false);
+  const [selectedLoan, setSelectedLoan] = useState(null);
+  const [returning, setReturning] = useState(false);
 
   useEffect(() => {
     fetchUserBooks();
@@ -78,6 +88,58 @@ const UserBooks = () => {
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
+  };
+
+  const handleOpenReturnDialog = (loan) => {
+    setSelectedLoan(loan);
+    setReturnDialogOpen(true);
+  };
+
+  const handleCloseReturnDialog = () => {
+    setReturnDialogOpen(false);
+    setSelectedLoan(null);
+  };
+
+  const handleReturnBook = async () => {
+    if (!selectedLoan) return;
+    
+    setReturning(true);
+    setError('');
+    setSuccess('');
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.put(
+        `http://localhost:8000/api/loans/${selectedLoan.id}/return`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      
+      if (response.data.success) {
+        setSuccess(`Book "${selectedLoan.book_title}" returned successfully!`);
+        
+        // Show fine message if applicable
+        if (response.data.fine_amount > 0) {
+          setSuccess(
+            `Book returned successfully! You have a fine of $${response.data.fine_amount} for late return.`
+          );
+        }
+        
+        // Close dialog
+        handleCloseReturnDialog();
+        
+        // Refresh the loans list
+        fetchUserBooks();
+      }
+    } catch (err) {
+      console.error('Error returning book:', err);
+      const errorMessage = err.response?.data?.message || 'Failed to return book. Please try again.';
+      setError(errorMessage);
+    } finally {
+      setReturning(false);
+    }
   };
 
   const getDaysUntilDue = (dueDate) => {
@@ -196,13 +258,27 @@ const UserBooks = () => {
                     </Alert>
                   )}
                   
-                  <Button 
-                    fullWidth 
-                    variant="outlined"
-                    sx={{ borderColor: '#4a9b8e', color: '#4a9b8e' }}
-                  >
-                    Renew Book
-                  </Button>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Button 
+                      fullWidth 
+                      variant="contained"
+                      startIcon={<ReturnIcon />}
+                      onClick={() => handleOpenReturnDialog(loan)}
+                      sx={{ 
+                        bgcolor: '#4a9b8e', 
+                        '&:hover': { bgcolor: '#3d8276' }
+                      }}
+                    >
+                      Return Book
+                    </Button>
+                    <Button 
+                      fullWidth 
+                      variant="outlined"
+                      sx={{ borderColor: '#4a9b8e', color: '#4a9b8e' }}
+                    >
+                      Renew
+                    </Button>
+                  </Box>
                 </CardContent>
               </Card>
             </Grid>
@@ -309,6 +385,12 @@ const UserBooks = () => {
           </Alert>
         )}
 
+        {success && (
+          <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess('')}>
+            {success}
+          </Alert>
+        )}
+
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
           <Tabs value={tabValue} onChange={handleTabChange}>
             <Tab 
@@ -334,6 +416,50 @@ const UserBooks = () => {
             {tabValue === 1 && renderReservations()}
           </>
         )}
+
+        {/* Return Book Confirmation Dialog */}
+        <Dialog
+          open={returnDialogOpen}
+          onClose={handleCloseReturnDialog}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>
+            Return Book
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Are you sure you want to return <strong>"{selectedLoan?.book_title}"</strong>?
+              {selectedLoan && getDaysUntilDue(selectedLoan.due_date) < 0 && (
+                <Alert severity="warning" sx={{ mt: 2 }}>
+                  This book is overdue by {Math.abs(getDaysUntilDue(selectedLoan.due_date))} day(s). 
+                  A fine of ${Math.abs(getDaysUntilDue(selectedLoan.due_date)) * 5} will be applied.
+                </Alert>
+              )}
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions sx={{ p: 2, gap: 1 }}>
+            <Button 
+              onClick={handleCloseReturnDialog}
+              variant="outlined"
+              disabled={returning}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleReturnBook}
+              variant="contained"
+              startIcon={returning ? <CircularProgress size={20} /> : <ReturnIcon />}
+              disabled={returning}
+              sx={{ 
+                bgcolor: '#4a9b8e', 
+                '&:hover': { bgcolor: '#3d8276' }
+              }}
+            >
+              {returning ? 'Returning...' : 'Confirm Return'}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </DashboardLayout>
   );

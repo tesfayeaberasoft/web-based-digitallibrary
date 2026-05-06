@@ -67,27 +67,27 @@ try {
     // Create fine record if overdue
     if ($fine_amount > 0) {
         $stmt = $db->prepare("
-            INSERT INTO fines (user_id, loan_id, amount, reason, status)
-            VALUES (?, ?, ?, 'Overdue return', 'pending')
+            INSERT INTO fines (user_id, loan_id, fine_type, amount, description, status)
+            VALUES (?, ?, 'overdue', ?, 'Overdue return', 'pending')
         ");
         $stmt->execute([$loan['user_id'], $loan_id, $fine_amount]);
         
         // Notify user about fine
         $stmt = $db->prepare("
             INSERT INTO notifications (user_id, type, title, message)
-            VALUES (?, 'fine', 'Overdue Fine', ?)
+            VALUES (?, 'fine_notice', 'Overdue Fine', ?)
         ");
-        $message = "You have a fine of $$fine_amount for late return of '{$loan['book_title']}'";
-        $stmt->execute([$loan['user_id'], $message]);
+        $fine_message = "You have a fine of $" . number_format($fine_amount, 2) . " for late return of '{$loan['book_title']}'";
+        $stmt->execute([$loan['user_id'], $fine_message]);
     }
     
     // Notify user about successful return
     $stmt = $db->prepare("
         INSERT INTO notifications (user_id, type, title, message)
-        VALUES (?, 'return', 'Book Returned', ?)
+        VALUES (?, 'general', 'Book Returned', ?)
     ");
-    $message = "You have successfully returned '{$loan['book_title']}'";
-    $stmt->execute([$loan['user_id'], $message]);
+    $return_message = "You have successfully returned '{$loan['book_title']}'";
+    $stmt->execute([$loan['user_id'], $return_message]);
     
     // Check if anyone has reserved this book
     $stmt = $db->prepare("
@@ -103,20 +103,20 @@ try {
         // Notify user that book is available
         $stmt = $db->prepare("
             INSERT INTO notifications (user_id, type, title, message)
-            VALUES (?, 'reservation', 'Reserved Book Available', ?)
+            VALUES (?, 'reservation_available', 'Reserved Book Available', ?)
         ");
-        $message = "Your reserved book '{$loan['book_title']}' is now available for pickup";
-        $stmt->execute([$reservation['user_id'], $message]);
+        $reservation_message = "Your reserved book '{$loan['book_title']}' is now available for pickup";
+        $stmt->execute([$reservation['user_id'], $reservation_message]);
         
         // Update reservation status
         $stmt = $db->prepare("UPDATE book_reservations SET status = 'available' WHERE id = ?");
         $stmt->execute([$reservation['id']]);
     }
     
-    // Log activity
+    // Log activity (using correct column names: table_name and record_id)
     $stmt = $db->prepare("
-        INSERT INTO audit_logs (user_id, action, entity_type, entity_id, ip_address)
-        VALUES (?, 'return_book', 'loan', ?, ?)
+        INSERT INTO audit_logs (user_id, action, table_name, record_id, ip_address)
+        VALUES (?, 'return_book', 'book_loans', ?, ?)
     ");
     $stmt->execute([$decoded['user_id'], $loan_id, $_SERVER['REMOTE_ADDR']]);
     

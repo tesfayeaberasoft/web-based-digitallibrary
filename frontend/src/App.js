@@ -32,6 +32,7 @@ import UserProfile from './pages/user/UserProfile';
 import UserBooks from './pages/user/UserBooks';
 import UserHistory from './pages/user/UserHistory';
 import UserAchievements from './pages/user/UserAchievements';
+import UserReadingGoals from './pages/user/UserReadingGoals';
 
 import './App.css';
 
@@ -161,6 +162,11 @@ function App() {
               <Route path="/history" element={
                 <ProtectedRoute allowedRoles={['user', 'librarian', 'admin']}>
                   <UserHistory />
+                </ProtectedRoute>
+              } />
+              <Route path="/reading-goals" element={
+                <ProtectedRoute allowedRoles={['user', 'librarian', 'admin']}>
+                  <UserReadingGoals />
                 </ProtectedRoute>
               } />
               <Route path="/achievements" element={
