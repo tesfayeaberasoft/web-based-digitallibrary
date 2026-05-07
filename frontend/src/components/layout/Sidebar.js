@@ -33,7 +33,8 @@ import {
   Notifications,
   AccountCircle,
   Logout,
-  QrCodeScanner
+  QrCodeScanner,
+  LibraryBooks
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -62,6 +63,7 @@ const Sidebar = ({ open = true }) => {
           { text: 'Notifications', icon: <Notifications />, path: '/librarian/notifications', color: '#ff6b6b', badge: '!' },
           { text: 'Requests', icon: <Assignment />, path: '/librarian/requests', color: '#4a9b8e' },
           { text: 'Barcode Scanner', icon: <QrCodeScanner />, path: '/librarian/barcode', color: '#4a9b8e' },
+          { text: 'Bulk Operations', icon: <LibraryBooks />, path: '/librarian/bulk-operations', color: '#4a9b8e' },
           { text: 'Inventory', icon: <Inventory />, path: '/librarian/inventory', color: '#4a9b8e' },
           { text: 'Members', icon: <People />, path: '/librarian/members', color: '#4a9b8e' },
           { text: 'Reports', icon: <TrendingUp />, path: '/librarian/reports', color: '#4a9b8e' },

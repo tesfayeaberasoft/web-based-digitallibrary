@@ -182,6 +182,15 @@ switch (true) {
         require __DIR__ . '/api/loans/renew.php';
         break;
     
+    // Bulk loan operations
+    case preg_match('#^/loans/bulk-issue$#', $path) && $request_method === 'POST':
+        require __DIR__ . '/api/loans/bulk-issue.php';
+        break;
+    
+    case preg_match('#^/loans/bulk-return$#', $path) && $request_method === 'POST':
+        require __DIR__ . '/api/loans/bulk-return.php';
+        break;
+    
     // Reservations routes
     case preg_match('#^/reservations$#', $path) && $request_method === 'GET':
         require __DIR__ . '/api/reservations/list.php';

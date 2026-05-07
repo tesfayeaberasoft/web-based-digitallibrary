@@ -29,7 +29,8 @@ import {
   AssignmentReturn as ReturnIcon,
   Search as SearchIcon,
   Warning as WarningIcon,
-  Info as InfoIcon
+  Info as InfoIcon,
+  LibraryBooks as LibraryBooksIcon
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import BarcodeScanner from '../../components/BarcodeScanner';
@@ -265,7 +266,7 @@ const LibrarianBarcode = () => {
 
         {/* Quick Action Cards */}
         <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={3}>
             <Fade in timeout={300}>
               <Card sx={{ 
                 height: '100%',
@@ -290,7 +291,7 @@ const LibrarianBarcode = () => {
             </Fade>
           </Grid>
 
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={3}>
             <Fade in timeout={600}>
               <Card sx={{ 
                 height: '100%',
@@ -315,7 +316,7 @@ const LibrarianBarcode = () => {
             </Fade>
           </Grid>
 
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={3}>
             <Fade in timeout={900}>
               <Card sx={{ 
                 height: '100%',
@@ -334,6 +335,31 @@ const LibrarianBarcode = () => {
                   </Typography>
                   <Typography variant="body2" sx={{ opacity: 0.9 }}>
                     Scan any barcode to lookup information
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Fade>
+          </Grid>
+
+          <Grid item xs={12} md={3}>
+            <Fade in timeout={1200}>
+              <Card sx={{ 
+                height: '100%',
+                background: 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)',
+                color: 'white',
+                cursor: 'pointer',
+                transition: 'transform 0.2s',
+                '&:hover': { transform: 'translateY(-4px)' }
+              }}
+              onClick={() => window.location.href = '/librarian/bulk-operations'}
+              >
+                <CardContent sx={{ textAlign: 'center', py: 4 }}>
+                  <LibraryBooksIcon sx={{ fontSize: 48, mb: 2 }} />
+                  <Typography variant="h6" gutterBottom>
+                    Bulk Operations
+                  </Typography>
+                  <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                    Process multiple books at once
                   </Typography>
                 </CardContent>
               </Card>
