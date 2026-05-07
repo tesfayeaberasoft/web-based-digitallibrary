@@ -20,7 +20,8 @@ try {
         exit;
     }
     
-    // Users can only update their own profile, admins can update any
+    // Users can only update their own profile
+    // Admins and librarians can update any user
     if ($decoded['role'] === 'user' && $decoded['user_id'] != $user_id) {
         http_response_code(403);
         echo json_encode(['success' => false, 'message' => 'Unauthorized']);
@@ -47,9 +48,14 @@ try {
     
     $allowed_fields = ['full_name', 'email', 'phone', 'address'];
     
-    // Admins can also update role and status
+    // Admins can update role and status
     if ($decoded['role'] === 'admin') {
         $allowed_fields[] = 'role';
+        $allowed_fields[] = 'status';
+    }
+    
+    // Librarians can update status (but not role)
+    if ($decoded['role'] === 'librarian') {
         $allowed_fields[] = 'status';
     }
     
