@@ -52,8 +52,10 @@ const LibrarianMembers = () => {
   
   // Dialog state
   const [openViewDialog, setOpenViewDialog] = useState(false);
+  const [openStatusDialog, setOpenStatusDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [userStats, setUserStats] = useState(null);
+  const [statusAction, setStatusAction] = useState(null); // 'activate' or 'suspend'
   
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -129,26 +131,39 @@ const LibrarianMembers = () => {
     setUserStats(null);
   };
 
-  const handleToggleStatus = async (userId, currentStatus) => {
-    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-    const action = newStatus === 'active' ? 'activate' : 'suspend';
+  const handleOpenStatusDialog = (user) => {
+    setSelectedUser(user);
+    const action = user.status === 'active' ? 'suspend' : 'activate';
+    setStatusAction(action);
+    setOpenStatusDialog(true);
+  };
+
+  const handleCloseStatusDialog = () => {
+    setOpenStatusDialog(false);
+    setSelectedUser(null);
+    setStatusAction(null);
+  };
+
+  const handleConfirmStatusChange = async () => {
+    if (!selectedUser) return;
     
-    if (!window.confirm(`Are you sure you want to ${action} this member?`)) {
-      return;
-    }
+    const newStatus = selectedUser.status === 'active' ? 'inactive' : 'active';
+    const action = statusAction;
     
     try {
       const token = localStorage.getItem('token');
       await axios.put(
-        `http://localhost:8000/api/users/${userId}`,
+        `http://localhost:8000/api/users/${selectedUser.id}`,
         { status: newStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
       toast.success(`Member ${action}d successfully!`);
+      handleCloseStatusDialog();
       fetchUsers();
     } catch (err) {
       toast.error(err.response?.data?.message || `Failed to ${action} member`);
+      handleCloseStatusDialog();
     }
   };
 
@@ -402,7 +417,7 @@ const LibrarianMembers = () => {
                                 </IconButton>
                                 <IconButton
                                   size="small"
-                                  onClick={() => handleToggleStatus(user.id, user.status)}
+                                  onClick={() => handleOpenStatusDialog(user)}
                                   color={user.status === 'active' ? 'error' : 'success'}
                                   title={user.status === 'active' ? 'Suspend' : 'Activate'}
                                 >
@@ -430,6 +445,107 @@ const LibrarianMembers = () => {
               )}
             </CardContent>
           </Card>
+
+          {/* Status Change Confirmation Dialog */}
+          <Dialog
+            open={openStatusDialog}
+            onClose={handleCloseStatusDialog}
+            maxWidth="sm"
+            fullWidth
+          >
+            <DialogTitle 
+              sx={{ 
+                bgcolor: statusAction === 'suspend' ? '#f44336' : '#4caf50',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1
+              }}
+            >
+              {statusAction === 'suspend' ? <BlockIcon /> : <ActivateIcon />}
+              {statusAction === 'suspend' ? 'Suspend Member' : 'Activate Member'}
+            </DialogTitle>
+            <DialogContent sx={{ mt: 2 }}>
+              {selectedUser && (
+                <Box>
+                  <Alert 
+                    severity={statusAction === 'suspend' ? 'warning' : 'info'}
+                    sx={{ mb: 2 }}
+                  >
+                    {statusAction === 'suspend' 
+                      ? 'Suspending this member will prevent them from borrowing books and accessing library services.'
+                      : 'Activating this member will restore their access to library services.'}
+                  </Alert>
+                  
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                    <Avatar 
+                      sx={{ 
+                        width: 60, 
+                        height: 60, 
+                        bgcolor: statusAction === 'suspend' ? '#f44336' : '#4caf50'
+                      }}
+                      src={selectedUser.profile_image ? `http://localhost:8000/${selectedUser.profile_image}` : undefined}
+                    >
+                      <Typography variant="h5">
+                        {selectedUser.full_name?.charAt(0)}
+                      </Typography>
+                    </Avatar>
+                    <Box>
+                      <Typography variant="h6" fontWeight={600}>
+                        {selectedUser.full_name}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {selectedUser.email}
+                      </Typography>
+                      <Chip
+                        label={selectedUser.status}
+                        color={getStatusColor(selectedUser.status)}
+                        size="small"
+                        sx={{ mt: 0.5 }}
+                      />
+                    </Box>
+                  </Box>
+
+                  <Box sx={{ bgcolor: '#f5f5f5', p: 2, borderRadius: 1 }}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      <strong>User ID:</strong> {selectedUser.user_id || selectedUser.id}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      <strong>Member Since:</strong> {formatDate(selectedUser.created_at)}
+                    </Typography>
+                    {selectedUser.phone && (
+                      <Typography variant="body2" color="text.secondary">
+                        <strong>Phone:</strong> {selectedUser.phone}
+                      </Typography>
+                    )}
+                  </Box>
+
+                  <Typography 
+                    variant="body2" 
+                    sx={{ mt: 2, fontWeight: 600 }}
+                  >
+                    Are you sure you want to {statusAction} this member?
+                  </Typography>
+                </Box>
+              )}
+            </DialogContent>
+            <DialogActions sx={{ p: 2 }}>
+              <Button 
+                onClick={handleCloseStatusDialog}
+                variant="outlined"
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleConfirmStatusChange}
+                variant="contained"
+                color={statusAction === 'suspend' ? 'error' : 'success'}
+                startIcon={statusAction === 'suspend' ? <BlockIcon /> : <ActivateIcon />}
+              >
+                {statusAction === 'suspend' ? 'Suspend Member' : 'Activate Member'}
+              </Button>
+            </DialogActions>
+          </Dialog>
 
           {/* View User Dialog */}
           <Dialog 
