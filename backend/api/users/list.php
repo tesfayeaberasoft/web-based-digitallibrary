@@ -9,8 +9,8 @@ require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../utils/jwt.php';
 
 try {
-    // Require admin role
-    $currentUser = requireRole(['admin']);
+    // Require admin or librarian role
+    $currentUser = requireRole(['admin', 'librarian']);
 
     $db = Database::getInstance()->getConnection();
 
@@ -97,14 +97,12 @@ try {
 
     echo json_encode([
         'success' => true,
-        'data' => [
-            'users' => $users,
-            'pagination' => [
-                'page' => $page,
-                'limit' => $limit,
-                'total' => (int)$total,
-                'pages' => ceil($total / $limit)
-            ]
+        'users' => $users,
+        'pagination' => [
+            'page' => $page,
+            'limit' => $limit,
+            'total' => (int)$total,
+            'pages' => ceil($total / $limit)
         ]
     ]);
 
