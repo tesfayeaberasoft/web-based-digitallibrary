@@ -9,7 +9,8 @@ import {
   Typography,
   Box,
   Chip,
-  Divider
+  Divider,
+  Avatar
 } from '@mui/material';
 import {
   Dashboard,
@@ -236,11 +237,22 @@ const Sidebar = ({ open = true }) => {
             >
               <ListItemIcon 
                 sx={{ 
-                  color: isActive('/profile') ? 'white' : '#4a9b8e',
                   minWidth: 40 
                 }}
               >
-                <AccountCircle />
+                <Avatar
+                  src={user?.profile_image ? `http://localhost:8000/${user.profile_image}` : undefined}
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    bgcolor: isActive('/profile') ? 'white' : '#4a9b8e',
+                    color: isActive('/profile') ? '#4a9b8e' : 'white',
+                    fontSize: '1rem',
+                    fontWeight: 600
+                  }}
+                >
+                  {user?.full_name?.charAt(0) || user?.email?.charAt(0) || 'U'}
+                </Avatar>
               </ListItemIcon>
               <ListItemText 
                 primary="Profile"
