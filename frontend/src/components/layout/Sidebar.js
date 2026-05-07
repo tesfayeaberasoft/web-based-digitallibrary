@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Drawer,
   List,
@@ -10,7 +10,13 @@ import {
   Box,
   Chip,
   Divider,
-  Avatar
+  Avatar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Alert
 } from '@mui/material';
 import {
   Dashboard,
@@ -37,6 +43,7 @@ const Sidebar = ({ open = true }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const [openLogoutDialog, setOpenLogoutDialog] = useState(false);
 
   const getMenuItems = () => {
     switch (user?.role) {
@@ -74,9 +81,22 @@ const Sidebar = ({ open = true }) => {
     navigate(path);
   };
 
-  const handleLogout = () => {
+  const handleOpenLogoutDialog = () => {
+    setOpenLogoutDialog(true);
+  };
+
+  const handleCloseLogoutDialog = () => {
+    setOpenLogoutDialog(false);
+  };
+
+  const handleConfirmLogout = () => {
     logout();
+    setOpenLogoutDialog(false);
     navigate('/login');
+  };
+
+  const handleLogout = () => {
+    handleOpenLogoutDialog();
   };
 
   const isActive = (path) => {
@@ -295,6 +315,81 @@ const Sidebar = ({ open = true }) => {
           </ListItem>
         </List>
       </Box>
+
+      {/* Logout Confirmation Dialog */}
+      <Dialog
+        open={openLogoutDialog}
+        onClose={handleCloseLogoutDialog}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle 
+          sx={{ 
+            bgcolor: '#f44336',
+            color: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1
+          }}
+        >
+          <Logout />
+          Confirm Logout
+        </DialogTitle>
+        <DialogContent sx={{ mt: 2 }}>
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            You will be logged out of your account and redirected to the login page.
+          </Alert>
+          
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+            <Avatar
+              src={user?.profile_image ? `http://localhost:8000/${user.profile_image}` : undefined}
+              sx={{
+                width: 60,
+                height: 60,
+                bgcolor: '#4a9b8e',
+                fontSize: '1.5rem',
+                fontWeight: 600
+              }}
+            >
+              {user?.full_name?.charAt(0) || user?.email?.charAt(0) || 'U'}
+            </Avatar>
+            <Box>
+              <Typography variant="h6" fontWeight={600}>
+                {user?.full_name || 'User'}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {user?.email}
+              </Typography>
+              <Chip
+                label={user?.role || 'user'}
+                size="small"
+                color="primary"
+                sx={{ mt: 0.5, textTransform: 'capitalize' }}
+              />
+            </Box>
+          </Box>
+
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+            Are you sure you want to logout?
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button 
+            onClick={handleCloseLogoutDialog}
+            variant="outlined"
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleConfirmLogout}
+            variant="contained"
+            color="error"
+            startIcon={<Logout />}
+          >
+            Logout
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Drawer>
   );
 };
