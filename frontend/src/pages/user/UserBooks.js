@@ -36,10 +36,10 @@ const UserBooks = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [returnDialogOpen, setReturnDialogOpen] = useState(false);
+  const [renewDialogOpen, setRenewDialogOpen] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState(null);
   const [returning, setReturning] = useState(false);
   const [renewing, setRenewing] = useState(false);
-  const [renewingLoanId, setRenewingLoanId] = useState(null);
 
   useEffect(() => {
     fetchUserBooks();
@@ -102,6 +102,16 @@ const UserBooks = () => {
     setSelectedLoan(null);
   };
 
+  const handleOpenRenewDialog = (loan) => {
+    setSelectedLoan(loan);
+    setRenewDialogOpen(true);
+  };
+
+  const handleCloseRenewDialog = () => {
+    setRenewDialogOpen(false);
+    setSelectedLoan(null);
+  };
+
   const handleReturnBook = async () => {
     if (!selectedLoan) return;
     
@@ -144,8 +154,9 @@ const UserBooks = () => {
     }
   };
 
-  const handleRenewBook = async (loan) => {
-    setRenewingLoanId(loan.id);
+  const handleRenewBook = async () => {
+    if (!selectedLoan) return;
+    
     setRenewing(true);
     setError('');
     setSuccess('');
@@ -153,7 +164,7 @@ const UserBooks = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.put(
-        `http://localhost:8000/api/loans/${loan.id}/renew`,
+        `http://localhost:8000/api/loans/${selectedLoan.id}/renew`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` }
@@ -165,9 +176,12 @@ const UserBooks = () => {
         const renewalsRemaining = response.data.renewals_remaining;
         
         setSuccess(
-          `Book "${loan.book_title}" renewed successfully! New due date: ${newDueDate}. ` +
+          `Book "${selectedLoan.book_title}" renewed successfully! New due date: ${newDueDate}. ` +
           `You have ${renewalsRemaining} renewal${renewalsRemaining !== 1 ? 's' : ''} remaining.`
         );
+        
+        // Close dialog
+        handleCloseRenewDialog();
         
         // Refresh the loans list
         fetchUserBooks();
@@ -178,7 +192,6 @@ const UserBooks = () => {
       setError(errorMessage);
     } finally {
       setRenewing(false);
-      setRenewingLoanId(null);
     }
   };
 
@@ -314,12 +327,10 @@ const UserBooks = () => {
                     <Button 
                       fullWidth 
                       variant="outlined"
-                      startIcon={renewing && renewingLoanId === loan.id ? <CircularProgress size={20} /> : null}
-                      onClick={() => handleRenewBook(loan)}
-                      disabled={renewing && renewingLoanId === loan.id}
+                      onClick={() => handleOpenRenewDialog(loan)}
                       sx={{ borderColor: '#4a9b8e', color: '#4a9b8e' }}
                     >
-                      {renewing && renewingLoanId === loan.id ? 'Renewing...' : 'Renew'}
+                      Renew
                     </Button>
                   </Box>
                 </CardContent>
@@ -500,6 +511,62 @@ const UserBooks = () => {
               }}
             >
               {returning ? 'Returning...' : 'Confirm Return'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Renew Book Confirmation Dialog */}
+        <Dialog
+          open={renewDialogOpen}
+          onClose={handleCloseRenewDialog}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>
+            Renew Book
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Are you sure you want to renew <strong>"{selectedLoan?.book_title}"</strong>?
+            </DialogContentText>
+            {selectedLoan && (
+              <Box sx={{ mt: 2 }}>
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  The due date will be extended by 14 days.
+                </Alert>
+                <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    <strong>Current Due Date:</strong> {new Date(selectedLoan.due_date).toLocaleDateString()}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    <strong>New Due Date:</strong> {new Date(new Date(selectedLoan.due_date).getTime() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString()}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    <strong>Renewals Used:</strong> {selectedLoan.renewal_count || 0} / 2
+                  </Typography>
+                </Box>
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions sx={{ p: 2, gap: 1 }}>
+            <Button 
+              onClick={handleCloseRenewDialog}
+              variant="outlined"
+              disabled={renewing}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleRenewBook}
+              variant="contained"
+              startIcon={renewing ? <CircularProgress size={20} /> : <ScheduleIcon />}
+              disabled={renewing}
+              sx={{ 
+                bgcolor: '#4a9b8e', 
+                '&:hover': { bgcolor: '#3d8276' }
+              }}
+            >
+              {renewing ? 'Renewing...' : 'Confirm Renew'}
             </Button>
           </DialogActions>
         </Dialog>
