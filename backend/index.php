@@ -126,6 +126,12 @@ switch (true) {
         require __DIR__ . '/api/books/delete.php';
         break;
     
+    // QR Code generation for books
+    case preg_match('#^/books/(\d+)/qr-code$#', $path, $matches) && $request_method === 'GET':
+        $_GET['id'] = $matches[1];
+        require __DIR__ . '/api/books/qr-code.php';
+        break;
+    
     // Bulk operations for books
     case preg_match('#^/books/bulk-update$#', $path) && $request_method === 'PUT':
         require __DIR__ . '/api/books/bulk-update.php';
@@ -133,6 +139,15 @@ switch (true) {
     
     case preg_match('#^/books/bulk-delete$#', $path) && $request_method === 'DELETE':
         require __DIR__ . '/api/books/bulk-delete.php';
+        break;
+    
+    // Import/Export operations for books
+    case preg_match('#^/books/import$#', $path) && $request_method === 'POST':
+        require __DIR__ . '/api/books/import.php';
+        break;
+    
+    case preg_match('#^/books/export$#', $path) && $request_method === 'GET':
+        require __DIR__ . '/api/books/export.php';
         break;
     
     // Loans routes

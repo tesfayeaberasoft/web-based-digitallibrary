@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import QRCode from 'qrcode';
 import {
   Box,
   Typography,
@@ -40,7 +41,14 @@ import {
   Clear as ClearIcon,
   DeleteSweep as BulkDeleteIcon,
   Edit as BulkEditIcon,
-  CheckCircle as StatusIcon
+  CheckCircle as StatusIcon,
+  Upload as UploadIcon,
+  Download as DownloadIcon,
+  GetApp as ExportIcon,
+  CloudUpload as ImportIcon,
+  QrCode as QrCodeIcon,
+  Print as PrintIcon,
+  GetApp as DownloadQrIcon
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import axios from 'axios';
@@ -69,6 +77,21 @@ const LibrarianInventory = () => {
     category_id: '',
     status: ''
   });
+  
+  // Import/Export state
+  const [openImportDialog, setOpenImportDialog] = useState(false);
+  const [importFile, setImportFile] = useState(null);
+  const [importPreview, setImportPreview] = useState([]);
+  const [importLoading, setImportLoading] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
+  
+  // QR Code state
+  const [openQrDialog, setOpenQrDialog] = useState(false);
+  const [qrCodeBook, setQrCodeBook] = useState(null);
+  const [qrCodeData, setQrCodeData] = useState('');
+  const [qrCodeImage, setQrCodeImage] = useState('');
+  const [qrLoading, setQrLoading] = useState(false);
+  const [bulkQrDialog, setBulkQrDialog] = useState(false);
   
   // Form data
   const [formData, setFormData] = useState({
@@ -351,6 +374,439 @@ const LibrarianInventory = () => {
     }
   };
 
+  // Import/Export handlers
+  const handleOpenImportDialog = () => {
+    setOpenImportDialog(true);
+    setImportFile(null);
+    setImportPreview([]);
+  };
+
+  const handleCloseImportDialog = () => {
+    setOpenImportDialog(false);
+    setImportFile(null);
+    setImportPreview([]);
+  };
+
+  const handleFileSelect = (event) => {
+    const file = event.target.files[0];
+    if (file && file.type === 'text/csv') {
+      setImportFile(file);
+      parseCSVPreview(file);
+    } else {
+      toast.error('Please select a valid CSV file');
+      event.target.value = '';
+    }
+  };
+
+  const parseCSVPreview = (file) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target.result;
+      const lines = text.split('\n').filter(line => line.trim());
+      
+      if (lines.length < 2) {
+        toast.error('CSV file must have at least a header and one data row');
+        return;
+      }
+
+      const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+      const requiredHeaders = ['title', 'author', 'isbn', 'category_id', 'total_copies'];
+      
+      const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+      if (missingHeaders.length > 0) {
+        toast.error(`Missing required columns: ${missingHeaders.join(', ')}`);
+        return;
+      }
+
+      const preview = lines.slice(1, 6).map(line => {
+        const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
+        const row = {};
+        headers.forEach((header, index) => {
+          row[header] = values[index] || '';
+        });
+        return row;
+      });
+
+      setImportPreview(preview);
+    };
+    reader.readAsText(file);
+  };
+
+  const handleImportBooks = async () => {
+    if (!importFile) {
+      toast.error('Please select a file first');
+      return;
+    }
+
+    setImportLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('csv_file', importFile);
+
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        'http://localhost:8000/api/books/import',
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+
+      if (response.data.success) {
+        toast.success(`Successfully imported ${response.data.imported_count} books!`);
+        if (response.data.errors && response.data.errors.length > 0) {
+          toast.warning(`${response.data.errors.length} rows had errors - check console for details`);
+          console.log('Import errors:', response.data.errors);
+        }
+        handleCloseImportDialog();
+        fetchBooks();
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Import failed');
+    } finally {
+      setImportLoading(false);
+    }
+  };
+
+  const handleExportBooks = async (format = 'csv') => {
+    setExportLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const params = {
+        format,
+        search: searchQuery,
+        category_id: categoryFilter
+      };
+
+      const response = await axios.get('http://localhost:8000/api/books/export', {
+        headers: { Authorization: `Bearer ${token}` },
+        params,
+        responseType: 'blob'
+      });
+
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `books_inventory_${timestamp}.${format}`;
+      link.setAttribute('download', filename);
+      
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      toast.success(`Inventory exported successfully as ${filename}`);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Export failed');
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  const downloadSampleCSV = () => {
+    const sampleData = [
+      ['title', 'author', 'isbn', 'category_id', 'publisher', 'publication_year', 'description', 'language', 'pages', 'total_copies'],
+      ['Sample Book Title', 'John Doe', '978-1234567890', '1', 'Sample Publisher', '2024', 'A sample book description', 'English', '200', '5'],
+      ['Another Book', 'Jane Smith', '978-0987654321', '2', 'Another Publisher', '2023', 'Another book description', 'English', '150', '3']
+    ];
+
+    const csvContent = sampleData.map(row => row.map(field => `"${field}"`).join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'sample_books_import.csv';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+    
+    toast.success('Sample CSV downloaded!');
+  };
+
+  // QR Code handlers
+  const handleOpenQrDialog = async (book) => {
+    setQrCodeBook(book);
+    setOpenQrDialog(true);
+    setQrLoading(true);
+    
+    try {
+      // Create QR code data with book information
+      const qrData = JSON.stringify({
+        id: book.id,
+        title: book.title,
+        author: book.author,
+        isbn: book.isbn,
+        category: book.category_name,
+        library: 'Digital Library System'
+      });
+      
+      setQrCodeData(qrData);
+      
+      // Generate QR code image
+      const qrImageUrl = await QRCode.toDataURL(qrData, {
+        width: 300,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
+      
+      setQrCodeImage(qrImageUrl);
+    } catch (error) {
+      toast.error('Failed to generate QR code');
+      console.error('QR Code generation error:', error);
+    } finally {
+      setQrLoading(false);
+    }
+  };
+
+  const handleCloseQrDialog = () => {
+    setOpenQrDialog(false);
+    setQrCodeBook(null);
+    setQrCodeData('');
+    setQrCodeImage('');
+  };
+
+  const handleDownloadQr = () => {
+    if (!qrCodeImage || !qrCodeBook) return;
+    
+    const link = document.createElement('a');
+    link.href = qrCodeImage;
+    link.download = `qr_code_${qrCodeBook.title.replace(/[^a-zA-Z0-9]/g, '_')}_${qrCodeBook.id}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast.success('QR code downloaded!');
+  };
+
+  const handlePrintQr = () => {
+    if (!qrCodeImage || !qrCodeBook) return;
+    
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>QR Code - ${qrCodeBook.title}</title>
+          <style>
+            body { 
+              font-family: Arial, sans-serif; 
+              text-align: center; 
+              padding: 20px;
+              margin: 0;
+            }
+            .qr-container {
+              border: 2px solid #4a9b8e;
+              border-radius: 10px;
+              padding: 20px;
+              margin: 20px auto;
+              max-width: 400px;
+              background: white;
+            }
+            .book-info {
+              margin-bottom: 20px;
+              text-align: left;
+            }
+            .book-info h2 {
+              color: #4a9b8e;
+              margin-bottom: 10px;
+            }
+            .book-info p {
+              margin: 5px 0;
+              color: #333;
+            }
+            .qr-image {
+              margin: 20px 0;
+            }
+            .footer {
+              margin-top: 20px;
+              font-size: 12px;
+              color: #666;
+            }
+            @media print {
+              body { margin: 0; }
+              .qr-container { border: 2px solid #000; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="qr-container">
+            <div class="book-info">
+              <h2>${qrCodeBook.title}</h2>
+              <p><strong>Author:</strong> ${qrCodeBook.author}</p>
+              <p><strong>ISBN:</strong> ${qrCodeBook.isbn}</p>
+              <p><strong>Category:</strong> ${qrCodeBook.category_name}</p>
+              <p><strong>Book ID:</strong> #${qrCodeBook.id}</p>
+            </div>
+            <div class="qr-image">
+              <img src="${qrCodeImage}" alt="QR Code" style="max-width: 100%;" />
+            </div>
+            <div class="footer">
+              <p>Digital Library Management System</p>
+              <p>Scan this QR code to access book information</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
+  const handleBulkQrGeneration = () => {
+    if (selectedBooks.length === 0) {
+      toast.error('Please select books first');
+      return;
+    }
+    setBulkQrDialog(true);
+  };
+
+  const handleCloseBulkQrDialog = () => {
+    setBulkQrDialog(false);
+  };
+
+  const handleGenerateBulkQr = async () => {
+    if (selectedBooks.length === 0) return;
+    
+    setQrLoading(true);
+    try {
+      const selectedBooksData = books.filter(book => selectedBooks.includes(book.id));
+      
+      // Generate QR codes for all selected books
+      const qrPromises = selectedBooksData.map(async (book) => {
+        const qrData = JSON.stringify({
+          id: book.id,
+          title: book.title,
+          author: book.author,
+          isbn: book.isbn,
+          category: book.category_name,
+          library: 'Digital Library System'
+        });
+        
+        const qrImageUrl = await QRCode.toDataURL(qrData, {
+          width: 200,
+          margin: 1,
+          color: {
+            dark: '#000000',
+            light: '#FFFFFF'
+          }
+        });
+        
+        return { book, qrImageUrl };
+      });
+      
+      const qrResults = await Promise.all(qrPromises);
+      
+      // Create a print page with all QR codes
+      const printWindow = window.open('', '_blank');
+      let htmlContent = `
+        <html>
+          <head>
+            <title>Bulk QR Codes - ${selectedBooks.length} Books</title>
+            <style>
+              body { 
+                font-family: Arial, sans-serif; 
+                padding: 20px;
+                margin: 0;
+              }
+              .qr-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 20px;
+                margin: 20px 0;
+              }
+              .qr-item {
+                border: 2px solid #4a9b8e;
+                border-radius: 8px;
+                padding: 15px;
+                text-align: center;
+                background: white;
+                break-inside: avoid;
+              }
+              .book-info {
+                margin-bottom: 10px;
+                text-align: left;
+              }
+              .book-info h3 {
+                color: #4a9b8e;
+                margin: 0 0 8px 0;
+                font-size: 14px;
+              }
+              .book-info p {
+                margin: 3px 0;
+                font-size: 12px;
+                color: #333;
+              }
+              .qr-image {
+                margin: 10px 0;
+              }
+              .header {
+                text-align: center;
+                margin-bottom: 30px;
+                border-bottom: 2px solid #4a9b8e;
+                padding-bottom: 20px;
+              }
+              @media print {
+                body { margin: 0; }
+                .qr-item { border: 1px solid #000; }
+                .qr-grid { grid-template-columns: repeat(2, 1fr); }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>Digital Library QR Codes</h1>
+              <p>Generated on ${new Date().toLocaleDateString()} - ${selectedBooks.length} Books</p>
+            </div>
+            <div class="qr-grid">
+      `;
+      
+      qrResults.forEach(({ book, qrImageUrl }) => {
+        htmlContent += `
+          <div class="qr-item">
+            <div class="book-info">
+              <h3>${book.title}</h3>
+              <p><strong>Author:</strong> ${book.author}</p>
+              <p><strong>ISBN:</strong> ${book.isbn}</p>
+              <p><strong>ID:</strong> #${book.id}</p>
+            </div>
+            <div class="qr-image">
+              <img src="${qrImageUrl}" alt="QR Code" style="width: 120px; height: 120px;" />
+            </div>
+          </div>
+        `;
+      });
+      
+      htmlContent += `
+            </div>
+          </body>
+        </html>
+      `;
+      
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+      printWindow.print();
+      
+      toast.success(`Generated QR codes for ${selectedBooks.length} books!`);
+      handleCloseBulkQrDialog();
+      
+    } catch (error) {
+      toast.error('Failed to generate bulk QR codes');
+      console.error('Bulk QR generation error:', error);
+    } finally {
+      setQrLoading(false);
+    }
+  };
+
   return (
     <DashboardLayout title="Librarian Panel">
       <Box>
@@ -363,14 +819,42 @@ const LibrarianInventory = () => {
               Manage book inventory and stock levels
             </Typography>
           </Box>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => handleOpenDialog()}
-            sx={{ bgcolor: '#4a9b8e', '&:hover': { bgcolor: '#3d8276' } }}
-          >
-            Add Book
-          </Button>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+              variant="outlined"
+              startIcon={<DownloadIcon />}
+              onClick={() => handleExportBooks('csv')}
+              disabled={exportLoading}
+              sx={{ borderColor: '#4a9b8e', color: '#4a9b8e' }}
+            >
+              Export CSV
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<ExportIcon />}
+              onClick={() => handleExportBooks('xlsx')}
+              disabled={exportLoading}
+              sx={{ borderColor: '#ff9800', color: '#ff9800' }}
+            >
+              Export Excel
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<ImportIcon />}
+              onClick={handleOpenImportDialog}
+              sx={{ borderColor: '#2196f3', color: '#2196f3' }}
+            >
+              Import CSV
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => handleOpenDialog()}
+              sx={{ bgcolor: '#4a9b8e', '&:hover': { bgcolor: '#3d8276' } }}
+            >
+              Add Book
+            </Button>
+          </Box>
         </Box>
 
         {error && (
@@ -545,6 +1029,15 @@ const LibrarianInventory = () => {
                   <Button
                     variant="contained"
                     size="small"
+                    startIcon={<QrCodeIcon />}
+                    onClick={handleBulkQrGeneration}
+                    sx={{ bgcolor: '#9c27b0', '&:hover': { bgcolor: '#7b1fa2' } }}
+                  >
+                    Generate QR Codes
+                  </Button>
+                  <Button
+                    variant="contained"
+                    size="small"
                     startIcon={<BulkEditIcon />}
                     onClick={() => handleOpenBulkDialog('category')}
                     sx={{ bgcolor: '#ff9800', '&:hover': { bgcolor: '#f57c00' } }}
@@ -670,8 +1163,17 @@ const LibrarianInventory = () => {
                           <TableCell>
                             <IconButton
                               size="small"
+                              onClick={() => handleOpenQrDialog(book)}
+                              sx={{ color: '#9c27b0' }}
+                              title="Generate QR Code"
+                            >
+                              <QrCodeIcon />
+                            </IconButton>
+                            <IconButton
+                              size="small"
                               onClick={() => handleOpenDialog(book)}
                               sx={{ color: '#4a9b8e' }}
+                              title="Edit Book"
                             >
                               <EditIcon />
                             </IconButton>
@@ -679,6 +1181,7 @@ const LibrarianInventory = () => {
                               size="small"
                               onClick={() => handleOpenDeleteDialog(book)}
                               color="error"
+                              title="Delete Book"
                             >
                               <DeleteIcon />
                             </IconButton>
@@ -1065,6 +1568,353 @@ const LibrarianInventory = () => {
               {bulkAction === 'delete' && 'Delete Books'}
               {bulkAction === 'category' && 'Update Category'}
               {bulkAction === 'status' && 'Update Status'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Import Books Dialog */}
+        <Dialog 
+          open={openImportDialog} 
+          onClose={handleCloseImportDialog}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogTitle 
+            sx={{ 
+              bgcolor: '#2196f3',
+              color: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1
+            }}
+          >
+            <ImportIcon />
+            Import Books from CSV
+          </DialogTitle>
+          <DialogContent sx={{ mt: 2 }}>
+            <Box>
+              <Alert severity="info" sx={{ mb: 3 }}>
+                <Typography variant="body2" fontWeight={600} gutterBottom>
+                  CSV Import Instructions:
+                </Typography>
+                <Typography variant="body2" component="div">
+                  • Required columns: title, author, isbn, category_id, total_copies<br/>
+                  • Optional columns: publisher, publication_year, description, language, pages<br/>
+                  • Use category IDs from your existing categories<br/>
+                  • Ensure ISBN values are unique
+                </Typography>
+              </Alert>
+
+              <Box sx={{ mb: 3 }}>
+                <Button
+                  variant="outlined"
+                  startIcon={<DownloadIcon />}
+                  onClick={downloadSampleCSV}
+                  sx={{ mb: 2, borderColor: '#4a9b8e', color: '#4a9b8e' }}
+                >
+                  Download Sample CSV Template
+                </Button>
+              </Box>
+
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="body2" fontWeight={600} gutterBottom>
+                  Select CSV File:
+                </Typography>
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={handleFileSelect}
+                  style={{ 
+                    width: '100%',
+                    padding: '12px',
+                    border: '2px dashed #2196f3',
+                    borderRadius: '8px',
+                    backgroundColor: '#f8f9fa'
+                  }}
+                />
+              </Box>
+
+              {importPreview.length > 0 && (
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="body2" fontWeight={600} gutterBottom>
+                    Preview (First 5 rows):
+                  </Typography>
+                  <Box sx={{ 
+                    maxHeight: 300, 
+                    overflow: 'auto',
+                    border: '1px solid #ddd',
+                    borderRadius: 1
+                  }}>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow sx={{ bgcolor: '#f5f5f5' }}>
+                          <TableCell><strong>Title</strong></TableCell>
+                          <TableCell><strong>Author</strong></TableCell>
+                          <TableCell><strong>ISBN</strong></TableCell>
+                          <TableCell><strong>Category ID</strong></TableCell>
+                          <TableCell><strong>Copies</strong></TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {importPreview.map((row, index) => (
+                          <TableRow key={index}>
+                            <TableCell>{row.title}</TableCell>
+                            <TableCell>{row.author}</TableCell>
+                            <TableCell>{row.isbn}</TableCell>
+                            <TableCell>{row.category_id}</TableCell>
+                            <TableCell>{row.total_copies}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </Box>
+                </Box>
+              )}
+
+              <Box sx={{ bgcolor: '#fff3e0', p: 2, borderRadius: 1 }}>
+                <Typography variant="body2" color="text.secondary">
+                  <strong>Available Categories:</strong>
+                </Typography>
+                <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {categories.map(category => (
+                    <Chip
+                      key={category.id}
+                      label={`${category.id}: ${category.name}`}
+                      size="small"
+                      sx={{ bgcolor: '#4a9b8e', color: 'white' }}
+                    />
+                  ))}
+                </Box>
+              </Box>
+            </Box>
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button 
+              onClick={handleCloseImportDialog}
+              variant="outlined"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleImportBooks}
+              variant="contained"
+              disabled={!importFile || importLoading}
+              startIcon={importLoading ? <CircularProgress size={20} /> : <UploadIcon />}
+              sx={{ bgcolor: '#2196f3', '&:hover': { bgcolor: '#1976d2' } }}
+            >
+              {importLoading ? 'Importing...' : 'Import Books'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* QR Code Dialog */}
+        <Dialog 
+          open={openQrDialog} 
+          onClose={handleCloseQrDialog}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle 
+            sx={{ 
+              bgcolor: '#9c27b0',
+              color: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1
+            }}
+          >
+            <QrCodeIcon />
+            QR Code - {qrCodeBook?.title}
+          </DialogTitle>
+          <DialogContent sx={{ mt: 2 }}>
+            {qrCodeBook && (
+              <Box>
+                <Alert severity="info" sx={{ mb: 3 }}>
+                  <Typography variant="body2">
+                    This QR code contains book information that can be scanned for quick access.
+                  </Typography>
+                </Alert>
+
+                <Box sx={{ bgcolor: '#f5f5f5', p: 2, borderRadius: 1, mb: 3 }}>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    <strong>Book Information:</strong>
+                  </Typography>
+                  <Grid container spacing={1}>
+                    <Grid item xs={6}>
+                      <Typography variant="caption" color="text.secondary">
+                        Book ID
+                      </Typography>
+                      <Typography variant="body2" fontWeight={600}>
+                        #{qrCodeBook.id}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="caption" color="text.secondary">
+                        ISBN
+                      </Typography>
+                      <Typography variant="body2" fontWeight={600}>
+                        {qrCodeBook.isbn}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Typography variant="caption" color="text.secondary">
+                        Title
+                      </Typography>
+                      <Typography variant="body2" fontWeight={600}>
+                        {qrCodeBook.title}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="caption" color="text.secondary">
+                        Author
+                      </Typography>
+                      <Typography variant="body2" fontWeight={600}>
+                        {qrCodeBook.author}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="caption" color="text.secondary">
+                        Category
+                      </Typography>
+                      <Typography variant="body2" fontWeight={600}>
+                        {qrCodeBook.category_name}
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                </Box>
+
+                <Box sx={{ textAlign: 'center', mb: 3 }}>
+                  {qrLoading ? (
+                    <Box sx={{ py: 4 }}>
+                      <CircularProgress sx={{ color: '#9c27b0' }} />
+                      <Typography variant="body2" sx={{ mt: 2 }}>
+                        Generating QR Code...
+                      </Typography>
+                    </Box>
+                  ) : qrCodeImage ? (
+                    <Box>
+                      <img 
+                        src={qrCodeImage} 
+                        alt="QR Code" 
+                        style={{ 
+                          maxWidth: '100%', 
+                          border: '2px solid #9c27b0',
+                          borderRadius: '8px',
+                          padding: '10px',
+                          backgroundColor: 'white'
+                        }} 
+                      />
+                      <Typography variant="caption" sx={{ display: 'block', mt: 1, color: 'text.secondary' }}>
+                        Scan with any QR code reader
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Alert severity="error">
+                      Failed to generate QR code
+                    </Alert>
+                  )}
+                </Box>
+
+                <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                  <Button
+                    variant="outlined"
+                    startIcon={<DownloadQrIcon />}
+                    onClick={handleDownloadQr}
+                    disabled={!qrCodeImage}
+                    sx={{ borderColor: '#9c27b0', color: '#9c27b0' }}
+                  >
+                    Download
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<PrintIcon />}
+                    onClick={handlePrintQr}
+                    disabled={!qrCodeImage}
+                    sx={{ borderColor: '#4a9b8e', color: '#4a9b8e' }}
+                  >
+                    Print
+                  </Button>
+                </Box>
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseQrDialog}>Close</Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Bulk QR Generation Dialog */}
+        <Dialog 
+          open={bulkQrDialog} 
+          onClose={handleCloseBulkQrDialog}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle 
+            sx={{ 
+              bgcolor: '#9c27b0',
+              color: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1
+            }}
+          >
+            <QrCodeIcon />
+            Generate QR Codes for {selectedBooks.length} Books
+          </DialogTitle>
+          <DialogContent sx={{ mt: 2 }}>
+            <Box>
+              <Alert severity="info" sx={{ mb: 3 }}>
+                <Typography variant="body2">
+                  This will generate QR codes for all selected books and open a print-ready page.
+                </Typography>
+              </Alert>
+
+              <Box sx={{ bgcolor: '#f5f5f5', p: 2, borderRadius: 1, mb: 3 }}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  <strong>Selected Books ({selectedBooks.length}):</strong>
+                </Typography>
+                <Box sx={{ maxHeight: 200, overflow: 'auto' }}>
+                  {books
+                    .filter(book => selectedBooks.includes(book.id))
+                    .map(book => (
+                      <Box key={book.id} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                        <QrCodeIcon sx={{ fontSize: 16, color: '#9c27b0' }} />
+                        <Typography variant="caption">
+                          #{book.id} - {book.title} by {book.author}
+                        </Typography>
+                      </Box>
+                    ))
+                  }
+                </Box>
+              </Box>
+
+              <Box sx={{ bgcolor: '#fff3e0', p: 2, borderRadius: 1 }}>
+                <Typography variant="body2" color="text.secondary">
+                  <strong>Features:</strong><br/>
+                  • Individual QR codes for each book<br/>
+                  • Print-optimized layout<br/>
+                  • Book information included<br/>
+                  • Ready for cutting and labeling
+                </Typography>
+              </Box>
+            </Box>
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button 
+              onClick={handleCloseBulkQrDialog}
+              variant="outlined"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleGenerateBulkQr}
+              variant="contained"
+              disabled={qrLoading}
+              startIcon={qrLoading ? <CircularProgress size={20} /> : <QrCodeIcon />}
+              sx={{ bgcolor: '#9c27b0', '&:hover': { bgcolor: '#7b1fa2' } }}
+            >
+              {qrLoading ? 'Generating...' : 'Generate & Print'}
             </Button>
           </DialogActions>
         </Dialog>
