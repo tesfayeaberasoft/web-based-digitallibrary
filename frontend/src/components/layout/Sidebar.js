@@ -156,6 +156,7 @@ const Sidebar = ({ open = true }) => {
         {(user?.role === 'admin' || user?.role === 'librarian') && (
           <Box sx={{ mt: 2 }}>
             <ListItemButton
+              onClick={() => navigate('/librarian/reports')}
               sx={{
                 borderRadius: 2,
                 backgroundColor: '#4a9b8e',
