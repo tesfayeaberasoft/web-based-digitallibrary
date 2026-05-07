@@ -7,20 +7,12 @@
 header('Content-Type: application/json');
 
 try {
-    // Verify JWT token
-    $headers = getallheaders();
-    $token = isset($headers['Authorization']) ? str_replace('Bearer ', '', $headers['Authorization']) : '';
-    
-    if (!$token) {
-        http_response_code(401);
-        echo json_encode(['success' => false, 'message' => 'No token provided']);
-        exit;
-    }
-    
+    require_once __DIR__ . '/../../config/config.php';
     require_once __DIR__ . '/../../utils/jwt.php';
-    $decoded = JWT::decode($token);
     
-    if (!$decoded || !in_array($decoded->role, ['admin', 'librarian'])) {
+    $decoded = requireAuth();
+    
+    if (!in_array($decoded['role'], ['admin', 'librarian'])) {
         http_response_code(403);
         echo json_encode(['success' => false, 'message' => 'Unauthorized']);
         exit;
@@ -55,7 +47,7 @@ try {
     
     $allowed_fields = ['title', 'author', 'isbn', 'publisher', 'publication_year', 
                        'category_id', 'description', 'language', 'pages', 
-                       'total_copies', 'location', 'status'];
+                       'total_copies', 'status'];
     
     foreach ($allowed_fields as $field) {
         if (isset($data[$field])) {
@@ -83,12 +75,12 @@ try {
     $stmt = $db->prepare($sql);
     $stmt->execute($params);
     
-    // Log activity
+    // Log activity (using correct column names: table_name and record_id)
     $stmt = $db->prepare("
-        INSERT INTO audit_logs (user_id, action, entity_type, entity_id, ip_address)
-        VALUES (?, 'update', 'book', ?, ?)
+        INSERT INTO audit_logs (user_id, action, table_name, record_id, ip_address)
+        VALUES (?, 'update_book', 'books', ?, ?)
     ");
-    $stmt->execute([$decoded->user_id, $book_id, $_SERVER['REMOTE_ADDR']]);
+    $stmt->execute([$decoded['user_id'], $book_id, $_SERVER['REMOTE_ADDR']]);
     
     echo json_encode([
         'success' => true,

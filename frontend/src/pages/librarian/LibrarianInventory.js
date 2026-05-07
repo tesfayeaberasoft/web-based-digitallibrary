@@ -46,6 +46,10 @@ const LibrarianInventory = () => {
   const [editMode, setEditMode] = useState(false);
   const [currentBook, setCurrentBook] = useState(null);
   
+  // Delete confirmation dialog state
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [bookToDelete, setBookToDelete] = useState(null);
+  
   // Form data
   const [formData, setFormData] = useState({
     title: '',
@@ -57,8 +61,7 @@ const LibrarianInventory = () => {
     description: '',
     language: 'English',
     pages: '',
-    total_copies: '',
-    location: 'Main Library'
+    total_copies: ''
   });
   
   // Filters
@@ -80,12 +83,21 @@ const LibrarianInventory = () => {
 
   const fetchCategories = async () => {
     try {
+      console.log('Fetching categories from API...');
       const response = await axios.get('http://localhost:8000/api/categories');
+      console.log('Categories API response:', response.data);
+      
       if (response.data.success) {
         setCategories(response.data.categories);
+        console.log('Categories loaded:', response.data.categories.length, 'categories');
+      } else {
+        console.error('Categories API returned success=false:', response.data);
+        toast.error('Failed to load categories');
       }
     } catch (err) {
       console.error('Error fetching categories:', err);
+      console.error('Error details:', err.response?.data);
+      toast.error('Failed to load categories. Please check console for details.');
     }
   };
 
@@ -133,8 +145,7 @@ const LibrarianInventory = () => {
         description: book.description || '',
         language: book.language || 'English',
         pages: book.pages || '',
-        total_copies: book.total_copies,
-        location: book.location || 'Main Library'
+        total_copies: book.total_copies
       });
     } else {
       setEditMode(false);
@@ -149,8 +160,7 @@ const LibrarianInventory = () => {
         description: '',
         language: 'English',
         pages: '',
-        total_copies: '',
-        location: 'Main Library'
+        total_copies: ''
       });
     }
     setOpenDialog(true);
@@ -199,23 +209,33 @@ const LibrarianInventory = () => {
     }
   };
 
-  const handleDelete = async (bookId) => {
-    if (!window.confirm('Are you sure you want to delete this book?')) {
-      return;
-    }
+  const handleOpenDeleteDialog = (book) => {
+    setBookToDelete(book);
+    setOpenDeleteDialog(true);
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setOpenDeleteDialog(false);
+    setBookToDelete(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!bookToDelete) return;
     
     try {
       const token = localStorage.getItem('token');
       await axios.delete(
-        `http://localhost:8000/api/books/${bookId}`,
+        `http://localhost:8000/api/books/${bookToDelete.id}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
       );
       toast.success('Book deleted successfully!');
+      handleCloseDeleteDialog();
       fetchBooks();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to delete book');
+      handleCloseDeleteDialog();
     }
   };
 
@@ -358,7 +378,7 @@ const LibrarianInventory = () => {
                             </IconButton>
                             <IconButton
                               size="small"
-                              onClick={() => handleDelete(book.id)}
+                              onClick={() => handleOpenDeleteDialog(book)}
                               color="error"
                             >
                               <DeleteIcon />
@@ -431,12 +451,23 @@ const LibrarianInventory = () => {
                   name="category_id"
                   value={formData.category_id}
                   onChange={handleChange}
+                  helperText={categories.length === 0 ? "Loading categories..." : "Select a book category"}
+                  error={categories.length === 0}
                 >
-                  {categories.map((category) => (
-                    <MenuItem key={category.id} value={category.id}>
-                      {category.name}
+                  <MenuItem value="">
+                    <em>Select a category</em>
+                  </MenuItem>
+                  {categories.length === 0 ? (
+                    <MenuItem value="" disabled>
+                      No categories available - Please add categories first
                     </MenuItem>
-                  ))}
+                  ) : (
+                    categories.map((category) => (
+                      <MenuItem key={category.id} value={category.id}>
+                        {category.name}
+                      </MenuItem>
+                    ))
+                  )}
                 </TextField>
               </Grid>
               <Grid item xs={12} md={6}>
@@ -491,15 +522,6 @@ const LibrarianInventory = () => {
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Location"
-                  name="location"
-                  value={formData.location}
-                  onChange={handleChange}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
                   multiline
                   rows={3}
                   label="Description"
@@ -518,6 +540,84 @@ const LibrarianInventory = () => {
               sx={{ bgcolor: '#4a9b8e', '&:hover': { bgcolor: '#3d8276' } }}
             >
               {editMode ? 'Update' : 'Add'} Book
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog 
+          open={openDeleteDialog} 
+          onClose={handleCloseDeleteDialog}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle sx={{ bgcolor: '#ff6b6b', color: 'white' }}>
+            ⚠️ Confirm Deletion
+          </DialogTitle>
+          <DialogContent sx={{ mt: 2 }}>
+            {bookToDelete && (
+              <Box>
+                <Typography variant="body1" gutterBottom>
+                  Are you sure you want to delete this book?
+                </Typography>
+                <Box sx={{ mt: 2, p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+                  <Grid container spacing={1}>
+                    <Grid item xs={12}>
+                      <Typography variant="body2" color="text.secondary">
+                        Title
+                      </Typography>
+                      <Typography variant="body1" fontWeight={600}>
+                        {bookToDelete.title}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Typography variant="body2" color="text.secondary">
+                        Author
+                      </Typography>
+                      <Typography variant="body1" fontWeight={600}>
+                        {bookToDelete.author}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="body2" color="text.secondary">
+                        ISBN
+                      </Typography>
+                      <Typography variant="body1" fontWeight={600}>
+                        {bookToDelete.isbn}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="body2" color="text.secondary">
+                        Total Copies
+                      </Typography>
+                      <Typography variant="body1" fontWeight={600}>
+                        {bookToDelete.total_copies}
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                </Box>
+                <Alert severity="warning" sx={{ mt: 2 }}>
+                  <Typography variant="body2">
+                    <strong>Warning:</strong> This action cannot be undone. The book will be permanently removed from the library.
+                  </Typography>
+                </Alert>
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button 
+              onClick={handleCloseDeleteDialog}
+              variant="outlined"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmDelete}
+              variant="contained"
+              color="error"
+              startIcon={<DeleteIcon />}
+            >
+              Delete Book
             </Button>
           </DialogActions>
         </Dialog>

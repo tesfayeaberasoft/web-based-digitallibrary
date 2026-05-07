@@ -80,15 +80,18 @@ const Navbar = ({ title = "Digital Library", showUserMenu = true }) => {
                `Welcome, ${user.full_name}`}
             </Typography>
 
-            <IconButton
-              size="large"
-              color="inherit"
-              onClick={handleNotifications}
-            >
-              <Badge badgeContent={3} color="error">
-                <NotificationsIcon />
-              </Badge>
-            </IconButton>
+            {/* Show notification icon only for regular users, not for librarians/admins */}
+            {user.role === 'user' && (
+              <IconButton
+                size="large"
+                color="inherit"
+                onClick={handleNotifications}
+              >
+                <Badge badgeContent={3} color="error">
+                  <NotificationsIcon />
+                </Badge>
+              </IconButton>
+            )}
 
             <IconButton
               size="large"

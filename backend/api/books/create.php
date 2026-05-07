@@ -7,27 +7,13 @@
 header('Content-Type: application/json');
 
 try {
-    // Verify JWT token
-    $headers = getallheaders();
-    $token = isset($headers['Authorization']) ? str_replace('Bearer ', '', $headers['Authorization']) : '';
-    
-    if (!$token) {
-        http_response_code(401);
-        echo json_encode(['success' => false, 'message' => 'No token provided']);
-        exit;
-    }
-    
+    require_once __DIR__ . '/../../config/config.php';
     require_once __DIR__ . '/../../utils/jwt.php';
-    $decoded = JWT::decode($token);
     
-    if (!$decoded) {
-        http_response_code(401);
-        echo json_encode(['success' => false, 'message' => 'Invalid token']);
-        exit;
-    }
+    $decoded = requireAuth();
     
     // Check if user is admin or librarian
-    if (!in_array($decoded->role, ['admin', 'librarian'])) {
+    if (!in_array($decoded['role'], ['admin', 'librarian'])) {
         http_response_code(403);
         echo json_encode(['success' => false, 'message' => 'Unauthorized']);
         exit;
@@ -39,7 +25,7 @@ try {
     // Validate required fields
     $required = ['title', 'author', 'isbn', 'category_id', 'total_copies'];
     foreach ($required as $field) {
-        if (!isset($data[$field]) || empty($data[$field])) {
+        if (!isset($data[$field]) || $data[$field] === '' || $data[$field] === null) {
             http_response_code(400);
             echo json_encode(['success' => false, 'message' => "Missing required field: $field"]);
             exit;
@@ -63,8 +49,8 @@ try {
         INSERT INTO books (
             title, author, isbn, publisher, publication_year,
             category_id, description, language, pages,
-            total_copies, available_copies, location, status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'available')
+            total_copies, available_copies, status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')
     ");
     
     $available_copies = $data['total_copies'];
@@ -80,18 +66,17 @@ try {
         $data['language'] ?? 'English',
         $data['pages'] ?? null,
         $data['total_copies'],
-        $available_copies,
-        $data['location'] ?? 'Main Library'
+        $available_copies
     ]);
     
     $book_id = $db->lastInsertId();
     
-    // Log activity
+    // Log activity (using correct column names: table_name and record_id)
     $stmt = $db->prepare("
-        INSERT INTO audit_logs (user_id, action, entity_type, entity_id, ip_address)
-        VALUES (?, 'create', 'book', ?, ?)
+        INSERT INTO audit_logs (user_id, action, table_name, record_id, ip_address)
+        VALUES (?, 'create_book', 'books', ?, ?)
     ");
-    $stmt->execute([$decoded->user_id, $book_id, $_SERVER['REMOTE_ADDR']]);
+    $stmt->execute([$decoded['user_id'], $book_id, $_SERVER['REMOTE_ADDR']]);
     
     echo json_encode([
         'success' => true,
