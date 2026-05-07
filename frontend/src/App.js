@@ -25,6 +25,7 @@ import AdminSettings from './pages/admin/AdminSettings';
 import LibrarianDashboard from './pages/librarian/LibrarianDashboard';
 import LibrarianInventory from './pages/librarian/LibrarianInventory';
 import LibrarianRequests from './pages/librarian/LibrarianRequests';
+import LibrarianBarcode from './pages/librarian/LibrarianBarcode';
 import LibrarianNotifications from './pages/librarian/LibrarianNotifications';
 import LibrarianMembers from './pages/librarian/LibrarianMembers';
 import LibrarianReports from './pages/librarian/LibrarianReports';
@@ -143,6 +144,11 @@ function App() {
               <Route path="/librarian/requests" element={
                 <ProtectedRoute allowedRoles={['librarian', 'admin']}>
                   <LibrarianRequests />
+                </ProtectedRoute>
+              } />
+              <Route path="/librarian/barcode" element={
+                <ProtectedRoute allowedRoles={['librarian', 'admin']}>
+                  <LibrarianBarcode />
                 </ProtectedRoute>
               } />
               <Route path="/librarian/notifications" element={

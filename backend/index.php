@@ -150,6 +150,19 @@ switch (true) {
         require __DIR__ . '/api/books/export.php';
         break;
     
+    // Barcode routes
+    case preg_match('#^/barcode/lookup$#', $path) && $request_method === 'GET':
+        require __DIR__ . '/api/barcode/lookup.php';
+        break;
+    
+    case preg_match('#^/barcode/quick-issue$#', $path) && $request_method === 'POST':
+        require __DIR__ . '/api/barcode/quick-issue.php';
+        break;
+    
+    case preg_match('#^/barcode/quick-return$#', $path) && $request_method === 'POST':
+        require __DIR__ . '/api/barcode/quick-return.php';
+        break;
+    
     // Loans routes
     case preg_match('#^/loans$#', $path) && $request_method === 'GET':
         require __DIR__ . '/api/loans/list.php';
