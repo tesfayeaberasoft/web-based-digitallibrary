@@ -127,7 +127,7 @@ function getInventoryReport($db, $start_date, $end_date) {
             COUNT(b.id) as total,
             SUM(CASE WHEN b.status = 'active' THEN b.available_copies ELSE 0 END) as available,
             COUNT(CASE WHEN bl.status = 'active' THEN bl.id END) as borrowed,
-            COUNT(CASE WHEN r.status = 'pending' THEN r.id END) as reserved,
+            COUNT(CASE WHEN br.status = 'pending' THEN br.id END) as reserved,
             ROUND(
                 (COUNT(CASE WHEN bl.status = 'active' THEN bl.id END) * 100.0) / 
                 NULLIF(COUNT(b.id), 0), 
@@ -136,7 +136,7 @@ function getInventoryReport($db, $start_date, $end_date) {
         FROM books b
         LEFT JOIN categories c ON c.id = b.category_id
         LEFT JOIN book_loans bl ON bl.book_id = b.id AND bl.status = 'active'
-        LEFT JOIN reservations r ON r.book_id = b.id AND r.status = 'pending'
+        LEFT JOIN book_reservations br ON br.book_id = b.id AND br.status = 'pending'
         GROUP BY c.name
         ORDER BY total DESC
     ";

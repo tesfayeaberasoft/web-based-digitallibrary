@@ -29,7 +29,8 @@ import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Search as SearchIcon
+  Search as SearchIcon,
+  Category as CategoryIcon
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import axios from 'axios';
@@ -268,10 +269,16 @@ const LibrarianInventory = () => {
         )}
 
         {/* Filters */}
-        <Card sx={{ mb: 3 }}>
+        <Card 
+          sx={{ 
+            mb: 3,
+            background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+          }}
+        >
           <CardContent>
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
+            <Grid container spacing={3} alignItems="center">
+              <Grid item xs={12} sm={6} md={6}>
                 <TextField
                   fullWidth
                   placeholder="Search by title, author, or ISBN..."
@@ -283,31 +290,121 @@ const LibrarianInventory = () => {
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <SearchIcon />
+                        <SearchIcon sx={{ color: '#4a9b8e', fontSize: { xs: 24, sm: 28 } }} />
                       </InputAdornment>
                     ),
+                  }}
+                  sx={{
+                    bgcolor: 'white',
+                    borderRadius: 2,
+                    '& .MuiOutlinedInput-root': {
+                      height: { xs: '50px', sm: '56px' },
+                      fontSize: { xs: '0.95rem', sm: '1rem' },
+                      '&:hover fieldset': {
+                        borderColor: '#4a9b8e',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#4a9b8e',
+                      },
+                    },
+                    '& .MuiInputBase-input::placeholder': {
+                      fontSize: { xs: '0.9rem', sm: '1rem' },
+                    },
                   }}
                 />
               </Grid>
               
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} sm={6} md={6}>
                 <TextField
                   fullWidth
                   select
-                  label="Category"
                   value={categoryFilter}
                   onChange={(e) => {
                     setCategoryFilter(e.target.value);
                     setPage(1);
                   }}
+                  displayEmpty
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <CategoryIcon sx={{ 
+                          color: '#4a9b8e', 
+                          fontSize: { xs: 24, sm: 28 } 
+                        }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    bgcolor: 'white',
+                    borderRadius: 2,
+                    '& .MuiOutlinedInput-root': {
+                      height: { xs: '50px', sm: '56px' },
+                      fontSize: { xs: '0.95rem', sm: '1rem' },
+                      fontWeight: 600,
+                      '&:hover fieldset': {
+                        borderColor: '#4a9b8e',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#4a9b8e',
+                      },
+                    },
+                    '& .MuiSelect-select': {
+                      fontWeight: 600,
+                      fontSize: { xs: '0.95rem', sm: '1rem' },
+                      color: categoryFilter ? 'inherit' : '#9e9e9e',
+                    },
+                  }}
                 >
-                  <MenuItem value="">All Categories</MenuItem>
+                  <MenuItem value="" disabled>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <CategoryIcon sx={{ fontSize: { xs: 20, sm: 22 }, color: '#9e9e9e' }} />
+                      <Typography 
+                        fontWeight={600} 
+                        fontSize={{ xs: '0.95rem', sm: '1rem' }}
+                        color="#9e9e9e"
+                      >
+                        Select Categories
+                      </Typography>
+                    </Box>
+                  </MenuItem>
                   {categories.map((category) => (
                     <MenuItem key={category.id} value={category.id}>
-                      {category.name}
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <CategoryIcon sx={{ fontSize: { xs: 20, sm: 22 }, color: '#4a9b8e' }} />
+                        <Typography 
+                          fontWeight={600} 
+                          fontSize={{ xs: '0.95rem', sm: '1rem' }}
+                        >
+                          {category.name}
+                        </Typography>
+                      </Box>
                     </MenuItem>
                   ))}
                 </TextField>
+                {categoryFilter && (
+                  <Chip
+                    label={`Filtered: ${categories.find(c => c.id === parseInt(categoryFilter))?.name || 'Category'}`}
+                    onDelete={() => {
+                      setCategoryFilter('');
+                      setPage(1);
+                    }}
+                    sx={{
+                      mt: 1,
+                      bgcolor: '#4a9b8e',
+                      color: 'white',
+                      fontWeight: 600,
+                      fontSize: { xs: '0.85rem', sm: '0.95rem' },
+                      height: { xs: '28px', sm: '32px' },
+                      '& .MuiChip-deleteIcon': {
+                        color: 'white',
+                        fontSize: { xs: '18px', sm: '20px' },
+                        '&:hover': {
+                          color: '#f5f5f5',
+                        },
+                      },
+                    }}
+                  />
+                )}
               </Grid>
             </Grid>
           </CardContent>
@@ -332,6 +429,7 @@ const LibrarianInventory = () => {
                   <Table>
                     <TableHead>
                       <TableRow>
+                        <TableCell><strong>Book ID</strong></TableCell>
                         <TableCell><strong>Title</strong></TableCell>
                         <TableCell><strong>Author</strong></TableCell>
                         <TableCell><strong>ISBN</strong></TableCell>
@@ -345,6 +443,18 @@ const LibrarianInventory = () => {
                     <TableBody>
                       {books.map((book) => (
                         <TableRow key={book.id} hover>
+                          <TableCell>
+                            <Chip
+                              label={`#${book.id}`}
+                              size="small"
+                              sx={{
+                                bgcolor: '#e3f2fd',
+                                color: '#1976d2',
+                                fontWeight: 700,
+                                fontSize: '0.85rem',
+                              }}
+                            />
+                          </TableCell>
                           <TableCell>
                             <Typography variant="body2" fontWeight={600}>
                               {book.title}
