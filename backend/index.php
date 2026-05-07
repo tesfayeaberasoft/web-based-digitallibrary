@@ -126,6 +126,15 @@ switch (true) {
         require __DIR__ . '/api/books/delete.php';
         break;
     
+    // Bulk operations for books
+    case preg_match('#^/books/bulk-update$#', $path) && $request_method === 'PUT':
+        require __DIR__ . '/api/books/bulk-update.php';
+        break;
+    
+    case preg_match('#^/books/bulk-delete$#', $path) && $request_method === 'DELETE':
+        require __DIR__ . '/api/books/bulk-delete.php';
+        break;
+    
     // Loans routes
     case preg_match('#^/loans$#', $path) && $request_method === 'GET':
         require __DIR__ . '/api/loans/list.php';

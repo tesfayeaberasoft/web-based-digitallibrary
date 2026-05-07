@@ -23,14 +23,24 @@ import {
   Pagination,
   CircularProgress,
   Alert,
-  InputAdornment
+  InputAdornment,
+  Checkbox,
+  Toolbar,
+  Fade,
+  Grow,
+  Divider
 } from '@mui/material';
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
   Search as SearchIcon,
-  Category as CategoryIcon
+  Category as CategoryIcon,
+  SelectAll as SelectAllIcon,
+  Clear as ClearIcon,
+  DeleteSweep as BulkDeleteIcon,
+  Edit as BulkEditIcon,
+  CheckCircle as StatusIcon
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import axios from 'axios';
@@ -50,6 +60,15 @@ const LibrarianInventory = () => {
   // Delete confirmation dialog state
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [bookToDelete, setBookToDelete] = useState(null);
+  
+  // Bulk operations state
+  const [selectedBooks, setSelectedBooks] = useState([]);
+  const [openBulkDialog, setBulkDialog] = useState(false);
+  const [bulkAction, setBulkAction] = useState(''); // 'delete', 'category', 'status'
+  const [bulkFormData, setBulkFormData] = useState({
+    category_id: '',
+    status: ''
+  });
   
   // Form data
   const [formData, setFormData] = useState({
@@ -240,6 +259,98 @@ const LibrarianInventory = () => {
     }
   };
 
+  // Bulk operations handlers
+  const handleSelectBook = (bookId) => {
+    setSelectedBooks(prev => 
+      prev.includes(bookId) 
+        ? prev.filter(id => id !== bookId)
+        : [...prev, bookId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedBooks.length === books.length) {
+      setSelectedBooks([]);
+    } else {
+      setSelectedBooks(books.map(book => book.id));
+    }
+  };
+
+  const handleClearSelection = () => {
+    setSelectedBooks([]);
+  };
+
+  const handleOpenBulkDialog = (action) => {
+    if (selectedBooks.length === 0) {
+      toast.error('Please select books first');
+      return;
+    }
+    setBulkAction(action);
+    setBulkDialog(true);
+  };
+
+  const handleCloseBulkDialog = () => {
+    setBulkDialog(false);
+    setBulkAction('');
+    setBulkFormData({ category_id: '', status: '' });
+  };
+
+  const handleBulkAction = async () => {
+    if (selectedBooks.length === 0) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+
+      if (bulkAction === 'delete') {
+        // Bulk delete using new API
+        await axios.delete('http://localhost:8000/api/books/bulk-delete', {
+          ...config,
+          data: { book_ids: selectedBooks }
+        });
+        toast.success(`${selectedBooks.length} books deleted successfully!`);
+      } else if (bulkAction === 'category') {
+        // Bulk update category using new API
+        if (!bulkFormData.category_id) {
+          toast.error('Please select a category');
+          return;
+        }
+        await axios.put(
+          'http://localhost:8000/api/books/bulk-update',
+          { 
+            book_ids: selectedBooks,
+            action: 'category',
+            category_id: bulkFormData.category_id
+          },
+          config
+        );
+        toast.success(`Category updated for ${selectedBooks.length} books!`);
+      } else if (bulkAction === 'status') {
+        // Bulk update status using new API
+        if (!bulkFormData.status) {
+          toast.error('Please select a status');
+          return;
+        }
+        await axios.put(
+          'http://localhost:8000/api/books/bulk-update',
+          { 
+            book_ids: selectedBooks,
+            action: 'status',
+            status: bulkFormData.status
+          },
+          config
+        );
+        toast.success(`Status updated for ${selectedBooks.length} books!`);
+      }
+
+      handleCloseBulkDialog();
+      setSelectedBooks([]);
+      fetchBooks();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Bulk operation failed');
+    }
+  };
+
   return (
     <DashboardLayout title="Librarian Panel">
       <Box>
@@ -410,6 +521,60 @@ const LibrarianInventory = () => {
           </CardContent>
         </Card>
 
+        {/* Bulk Operations Toolbar */}
+        {selectedBooks.length > 0 && (
+          <Fade in={true} timeout={300}>
+            <Card sx={{ mb: 3, bgcolor: '#e3f2fd', border: '2px solid #2196f3' }}>
+              <Toolbar sx={{ justifyContent: 'space-between', py: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Chip
+                    label={`${selectedBooks.length} book${selectedBooks.length > 1 ? 's' : ''} selected`}
+                    color="primary"
+                    sx={{ fontWeight: 600 }}
+                  />
+                  <Button
+                    size="small"
+                    startIcon={<ClearIcon />}
+                    onClick={handleClearSelection}
+                    sx={{ color: '#1976d2' }}
+                  >
+                    Clear Selection
+                  </Button>
+                </Box>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    startIcon={<BulkEditIcon />}
+                    onClick={() => handleOpenBulkDialog('category')}
+                    sx={{ bgcolor: '#ff9800', '&:hover': { bgcolor: '#f57c00' } }}
+                  >
+                    Update Category
+                  </Button>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    startIcon={<StatusIcon />}
+                    onClick={() => handleOpenBulkDialog('status')}
+                    sx={{ bgcolor: '#4caf50', '&:hover': { bgcolor: '#45a049' } }}
+                  >
+                    Update Status
+                  </Button>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    startIcon={<BulkDeleteIcon />}
+                    onClick={() => handleOpenBulkDialog('delete')}
+                    color="error"
+                  >
+                    Delete Selected
+                  </Button>
+                </Box>
+              </Toolbar>
+            </Card>
+          </Fade>
+        )}
+
         {/* Books Table */}
         <Card>
           <CardContent>
@@ -429,6 +594,14 @@ const LibrarianInventory = () => {
                   <Table>
                     <TableHead>
                       <TableRow>
+                        <TableCell padding="checkbox">
+                          <Checkbox
+                            indeterminate={selectedBooks.length > 0 && selectedBooks.length < books.length}
+                            checked={books.length > 0 && selectedBooks.length === books.length}
+                            onChange={handleSelectAll}
+                            sx={{ color: '#4a9b8e' }}
+                          />
+                        </TableCell>
                         <TableCell><strong>Book ID</strong></TableCell>
                         <TableCell><strong>Title</strong></TableCell>
                         <TableCell><strong>Author</strong></TableCell>
@@ -442,7 +615,23 @@ const LibrarianInventory = () => {
                     </TableHead>
                     <TableBody>
                       {books.map((book) => (
-                        <TableRow key={book.id} hover>
+                        <TableRow 
+                          key={book.id} 
+                          hover
+                          selected={selectedBooks.includes(book.id)}
+                          sx={{ 
+                            '&.Mui-selected': { 
+                              bgcolor: 'rgba(74, 155, 142, 0.08)' 
+                            }
+                          }}
+                        >
+                          <TableCell padding="checkbox">
+                            <Checkbox
+                              checked={selectedBooks.includes(book.id)}
+                              onChange={() => handleSelectBook(book.id)}
+                              sx={{ color: '#4a9b8e' }}
+                            />
+                          </TableCell>
                           <TableCell>
                             <Chip
                               label={`#${book.id}`}
@@ -728,6 +917,154 @@ const LibrarianInventory = () => {
               startIcon={<DeleteIcon />}
             >
               Delete Book
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Bulk Operations Dialog */}
+        <Dialog 
+          open={openBulkDialog} 
+          onClose={handleCloseBulkDialog}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle 
+            sx={{ 
+              bgcolor: bulkAction === 'delete' ? '#f44336' : '#4a9b8e',
+              color: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1
+            }}
+          >
+            {bulkAction === 'delete' && <BulkDeleteIcon />}
+            {bulkAction === 'category' && <BulkEditIcon />}
+            {bulkAction === 'status' && <StatusIcon />}
+            {bulkAction === 'delete' && `Delete ${selectedBooks.length} Books`}
+            {bulkAction === 'category' && `Update Category for ${selectedBooks.length} Books`}
+            {bulkAction === 'status' && `Update Status for ${selectedBooks.length} Books`}
+          </DialogTitle>
+          <DialogContent sx={{ mt: 2 }}>
+            <Box>
+              <Alert 
+                severity={bulkAction === 'delete' ? 'error' : 'info'}
+                sx={{ mb: 3 }}
+              >
+                {bulkAction === 'delete' && (
+                  <Typography variant="body2">
+                    <strong>Warning:</strong> This will permanently delete {selectedBooks.length} books. This action cannot be undone.
+                  </Typography>
+                )}
+                {bulkAction === 'category' && (
+                  <Typography variant="body2">
+                    <strong>Info:</strong> This will update the category for {selectedBooks.length} selected books.
+                  </Typography>
+                )}
+                {bulkAction === 'status' && (
+                  <Typography variant="body2">
+                    <strong>Info:</strong> This will update the status for {selectedBooks.length} selected books.
+                  </Typography>
+                )}
+              </Alert>
+
+              <Box sx={{ bgcolor: '#f5f5f5', p: 2, borderRadius: 1, mb: 3 }}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  <strong>Selected Books ({selectedBooks.length}):</strong>
+                </Typography>
+                <Box sx={{ maxHeight: 150, overflow: 'auto' }}>
+                  {books
+                    .filter(book => selectedBooks.includes(book.id))
+                    .map(book => (
+                      <Typography key={book.id} variant="caption" sx={{ display: 'block', mb: 0.5 }}>
+                        #{book.id} - {book.title} by {book.author}
+                      </Typography>
+                    ))
+                  }
+                </Box>
+              </Box>
+
+              {bulkAction === 'category' && (
+                <TextField
+                  fullWidth
+                  select
+                  required
+                  label="New Category"
+                  value={bulkFormData.category_id}
+                  onChange={(e) => setBulkFormData({ ...bulkFormData, category_id: e.target.value })}
+                  helperText="Select the new category for all selected books"
+                >
+                  <MenuItem value="">
+                    <em>Select a category</em>
+                  </MenuItem>
+                  {categories.map((category) => (
+                    <MenuItem key={category.id} value={category.id}>
+                      {category.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              )}
+
+              {bulkAction === 'status' && (
+                <TextField
+                  fullWidth
+                  select
+                  required
+                  label="New Status"
+                  value={bulkFormData.status}
+                  onChange={(e) => setBulkFormData({ ...bulkFormData, status: e.target.value })}
+                  helperText="Select the new status for all selected books"
+                >
+                  <MenuItem value="">
+                    <em>Select a status</em>
+                  </MenuItem>
+                  <MenuItem value="active">Active</MenuItem>
+                  <MenuItem value="inactive">Inactive</MenuItem>
+                  <MenuItem value="maintenance">Maintenance</MenuItem>
+                </TextField>
+              )}
+
+              {bulkAction === 'delete' && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="body2" fontWeight={600} gutterBottom>
+                    Type "DELETE" to confirm:
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    placeholder="Type DELETE to confirm"
+                    value={bulkFormData.confirmText || ''}
+                    onChange={(e) => setBulkFormData({ ...bulkFormData, confirmText: e.target.value })}
+                    error={bulkFormData.confirmText && bulkFormData.confirmText !== 'DELETE'}
+                    helperText={bulkFormData.confirmText && bulkFormData.confirmText !== 'DELETE' ? 'Please type "DELETE" exactly' : ''}
+                  />
+                </Box>
+              )}
+            </Box>
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button 
+              onClick={handleCloseBulkDialog}
+              variant="outlined"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleBulkAction}
+              variant="contained"
+              color={bulkAction === 'delete' ? 'error' : 'primary'}
+              disabled={
+                (bulkAction === 'category' && !bulkFormData.category_id) ||
+                (bulkAction === 'status' && !bulkFormData.status) ||
+                (bulkAction === 'delete' && bulkFormData.confirmText !== 'DELETE')
+              }
+              startIcon={
+                bulkAction === 'delete' ? <BulkDeleteIcon /> :
+                bulkAction === 'category' ? <BulkEditIcon /> : <StatusIcon />
+              }
+              sx={bulkAction !== 'delete' ? { bgcolor: '#4a9b8e', '&:hover': { bgcolor: '#3d8276' } } : {}}
+            >
+              {bulkAction === 'delete' && 'Delete Books'}
+              {bulkAction === 'category' && 'Update Category'}
+              {bulkAction === 'status' && 'Update Status'}
             </Button>
           </DialogActions>
         </Dialog>

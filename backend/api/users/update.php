@@ -52,11 +52,13 @@ try {
     if ($decoded['role'] === 'admin') {
         $allowed_fields[] = 'role';
         $allowed_fields[] = 'status';
+        $allowed_fields[] = 'suspension_reason';
     }
     
     // Librarians can update status (but not role)
     if ($decoded['role'] === 'librarian') {
         $allowed_fields[] = 'status';
+        $allowed_fields[] = 'suspension_reason';
     }
     
     foreach ($allowed_fields as $field) {

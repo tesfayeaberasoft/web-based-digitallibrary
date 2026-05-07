@@ -56,6 +56,7 @@ const LibrarianMembers = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [userStats, setUserStats] = useState(null);
   const [statusAction, setStatusAction] = useState(null); // 'activate' or 'suspend'
+  const [suspensionReason, setSuspensionReason] = useState(''); // New state for suspension reason
   
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -142,19 +143,31 @@ const LibrarianMembers = () => {
     setOpenStatusDialog(false);
     setSelectedUser(null);
     setStatusAction(null);
+    setSuspensionReason(''); // Clear suspension reason
   };
 
   const handleConfirmStatusChange = async () => {
     if (!selectedUser) return;
     
-    const newStatus = selectedUser.status === 'active' ? 'inactive' : 'active';
+    // Validate suspension reason if suspending
+    if (statusAction === 'suspend' && !suspensionReason.trim()) {
+      toast.error('Please provide a reason for suspension');
+      return;
+    }
+    
+    const newStatus = selectedUser.status === 'active' ? 'suspended' : 'active';
     const action = statusAction;
     
     try {
       const token = localStorage.getItem('token');
+      const updateData = { 
+        status: newStatus,
+        ...(statusAction === 'suspend' && { suspension_reason: suspensionReason.trim() })
+      };
+      
       await axios.put(
         `http://localhost:8000/api/users/${selectedUser.id}`,
-        { status: newStatus },
+        updateData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
@@ -526,6 +539,43 @@ const LibrarianMembers = () => {
                   >
                     Are you sure you want to {statusAction} this member?
                   </Typography>
+
+                  {/* Suspension Reason Field */}
+                  {statusAction === 'suspend' && (
+                    <Box sx={{ mt: 3 }}>
+                      <Typography variant="body2" fontWeight={600} gutterBottom>
+                        Reason for Suspension <span style={{ color: '#f44336' }}>*</span>
+                      </Typography>
+                      <TextField
+                        fullWidth
+                        multiline
+                        rows={4}
+                        placeholder="Please provide a detailed reason for suspending this member (e.g., overdue books, violation of library rules, etc.)"
+                        value={suspensionReason}
+                        onChange={(e) => setSuspensionReason(e.target.value)}
+                        variant="outlined"
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            '&:hover fieldset': {
+                              borderColor: '#f44336',
+                            },
+                            '&.Mui-focused fieldset': {
+                              borderColor: '#f44336',
+                            },
+                          },
+                        }}
+                        helperText={`${suspensionReason.length}/500 characters`}
+                        inputProps={{ maxLength: 500 }}
+                        error={suspensionReason.trim() === ''}
+                      />
+                      <Alert severity="info" sx={{ mt: 2 }}>
+                        <Typography variant="body2">
+                          <strong>Note:</strong> This reason will be recorded and may be visible to the member. 
+                          Please provide a clear and professional explanation.
+                        </Typography>
+                      </Alert>
+                    </Box>
+                  )}
                 </Box>
               )}
             </DialogContent>
@@ -541,6 +591,7 @@ const LibrarianMembers = () => {
                 variant="contained"
                 color={statusAction === 'suspend' ? 'error' : 'success'}
                 startIcon={statusAction === 'suspend' ? <BlockIcon /> : <ActivateIcon />}
+                disabled={statusAction === 'suspend' && !suspensionReason.trim()}
               >
                 {statusAction === 'suspend' ? 'Suspend Member' : 'Activate Member'}
               </Button>
@@ -641,6 +692,19 @@ const LibrarianMembers = () => {
                         <Typography variant="body1" fontWeight={600}>
                           {selectedUser.address}
                         </Typography>
+                      </Grid>
+                    )}
+
+                    {selectedUser.status === 'suspended' && selectedUser.suspension_reason && (
+                      <Grid item xs={12}>
+                        <Alert severity="warning" sx={{ mt: 2 }}>
+                          <Typography variant="body2" color="text.secondary" gutterBottom>
+                            <strong>Suspension Reason:</strong>
+                          </Typography>
+                          <Typography variant="body1">
+                            {selectedUser.suspension_reason}
+                          </Typography>
+                        </Alert>
                       </Grid>
                     )}
                   </Grid>
