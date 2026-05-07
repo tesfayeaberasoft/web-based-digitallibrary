@@ -38,6 +38,8 @@ const UserBooks = () => {
   const [returnDialogOpen, setReturnDialogOpen] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState(null);
   const [returning, setReturning] = useState(false);
+  const [renewing, setRenewing] = useState(false);
+  const [renewingLoanId, setRenewingLoanId] = useState(null);
 
   useEffect(() => {
     fetchUserBooks();
@@ -139,6 +141,44 @@ const UserBooks = () => {
       setError(errorMessage);
     } finally {
       setReturning(false);
+    }
+  };
+
+  const handleRenewBook = async (loan) => {
+    setRenewingLoanId(loan.id);
+    setRenewing(true);
+    setError('');
+    setSuccess('');
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.put(
+        `http://localhost:8000/api/loans/${loan.id}/renew`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      
+      if (response.data.success) {
+        const newDueDate = new Date(response.data.new_due_date).toLocaleDateString();
+        const renewalsRemaining = response.data.renewals_remaining;
+        
+        setSuccess(
+          `Book "${loan.book_title}" renewed successfully! New due date: ${newDueDate}. ` +
+          `You have ${renewalsRemaining} renewal${renewalsRemaining !== 1 ? 's' : ''} remaining.`
+        );
+        
+        // Refresh the loans list
+        fetchUserBooks();
+      }
+    } catch (err) {
+      console.error('Error renewing book:', err);
+      const errorMessage = err.response?.data?.message || 'Failed to renew book. Please try again.';
+      setError(errorMessage);
+    } finally {
+      setRenewing(false);
+      setRenewingLoanId(null);
     }
   };
 
@@ -274,9 +314,12 @@ const UserBooks = () => {
                     <Button 
                       fullWidth 
                       variant="outlined"
+                      startIcon={renewing && renewingLoanId === loan.id ? <CircularProgress size={20} /> : null}
+                      onClick={() => handleRenewBook(loan)}
+                      disabled={renewing && renewingLoanId === loan.id}
                       sx={{ borderColor: '#4a9b8e', color: '#4a9b8e' }}
                     >
-                      Renew
+                      {renewing && renewingLoanId === loan.id ? 'Renewing...' : 'Renew'}
                     </Button>
                   </Box>
                 </CardContent>

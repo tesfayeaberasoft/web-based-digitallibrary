@@ -125,6 +125,11 @@ switch (true) {
         require __DIR__ . '/api/loans/return.php';
         break;
     
+    case preg_match('#^/loans/(\d+)/renew$#', $path, $matches) && $request_method === 'PUT':
+        $_GET['id'] = $matches[1];
+        require __DIR__ . '/api/loans/renew.php';
+        break;
+    
     // Reservations routes
     case preg_match('#^/reservations$#', $path) && $request_method === 'GET':
         require __DIR__ . '/api/reservations/list.php';
