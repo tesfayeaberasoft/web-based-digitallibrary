@@ -23,7 +23,9 @@ import {
   EmojiEvents,
   MenuBook,
   GetApp,
-  Notifications
+  Notifications,
+  AccountCircle,
+  Logout
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -33,7 +35,7 @@ const drawerWidth = 280;
 const Sidebar = ({ open = true }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   const getMenuItems = () => {
     switch (user?.role) {
@@ -69,6 +71,11 @@ const Sidebar = ({ open = true }) => {
 
   const handleNavigation = (path) => {
     navigate(path);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
   };
 
   const isActive = (path) => {
@@ -209,6 +216,72 @@ const Sidebar = ({ open = true }) => {
             </ListItemButton>
           </Box>
         )}
+
+        <Divider sx={{ my: 2 }} />
+
+        {/* Profile and Logout Section */}
+        <List>
+          <ListItem disablePadding sx={{ mb: 0.5 }}>
+            <ListItemButton
+              onClick={() => navigate('/profile')}
+              sx={{
+                borderRadius: 2,
+                backgroundColor: isActive('/profile') ? '#4a9b8e' : 'transparent',
+                color: isActive('/profile') ? 'white' : '#666',
+                '&:hover': {
+                  backgroundColor: isActive('/profile') ? '#4a9b8e' : '#f5f5f5',
+                },
+                py: 1.5,
+              }}
+            >
+              <ListItemIcon 
+                sx={{ 
+                  color: isActive('/profile') ? 'white' : '#4a9b8e',
+                  minWidth: 40 
+                }}
+              >
+                <AccountCircle />
+              </ListItemIcon>
+              <ListItemText 
+                primary="Profile"
+                primaryTypographyProps={{
+                  fontWeight: isActive('/profile') ? 600 : 500,
+                  fontSize: '0.9rem'
+                }}
+              />
+            </ListItemButton>
+          </ListItem>
+
+          <ListItem disablePadding>
+            <ListItemButton
+              onClick={handleLogout}
+              sx={{
+                borderRadius: 2,
+                color: '#f44336',
+                '&:hover': {
+                  backgroundColor: '#ffebee',
+                },
+                py: 1.5,
+              }}
+            >
+              <ListItemIcon 
+                sx={{ 
+                  color: '#f44336',
+                  minWidth: 40 
+                }}
+              >
+                <Logout />
+              </ListItemIcon>
+              <ListItemText 
+                primary="Logout"
+                primaryTypographyProps={{
+                  fontWeight: 500,
+                  fontSize: '0.9rem'
+                }}
+              />
+            </ListItemButton>
+          </ListItem>
+        </List>
       </Box>
     </Drawer>
   );
