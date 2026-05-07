@@ -590,6 +590,15 @@ const LibrarianMembers = () => {
 
                     <Grid item xs={12} md={6}>
                       <Typography variant="body2" color="text.secondary">
+                        User ID
+                      </Typography>
+                      <Typography variant="body1" fontWeight={600}>
+                        {selectedUser.user_id || selectedUser.id}
+                      </Typography>
+                    </Grid>
+
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2" color="text.secondary">
                         Email
                       </Typography>
                       <Typography variant="body1" fontWeight={600}>
