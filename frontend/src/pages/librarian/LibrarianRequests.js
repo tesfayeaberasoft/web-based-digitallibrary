@@ -272,12 +272,33 @@ const LibrarianRequests = () => {
           <Typography variant="h6" color="text.secondary">
             No pending reservations
           </Typography>
+          <Button
+            variant="outlined"
+            sx={{ mt: 2, borderColor: '#4a9b8e', color: '#4a9b8e' }}
+            onClick={() => window.location.href = '/librarian/reservations'}
+          >
+            Manage Reservation Queues
+          </Button>
         </Box>
       );
     }
 
     return (
-      <TableContainer>
+      <Box>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h6" sx={{ color: '#4a9b8e' }}>
+            Pending Reservations ({reservations.length})
+          </Typography>
+          <Button
+            variant="contained"
+            sx={{ bgcolor: '#4a9b8e', '&:hover': { bgcolor: '#3d8276' } }}
+            onClick={() => window.location.href = '/librarian/reservations'}
+          >
+            Advanced Queue Management
+          </Button>
+        </Box>
+        
+        <TableContainer>
         <Table>
           <TableHead>
             <TableRow>
@@ -343,6 +364,7 @@ const LibrarianRequests = () => {
           </TableBody>
         </Table>
       </TableContainer>
+      </Box>
     );
   };
 

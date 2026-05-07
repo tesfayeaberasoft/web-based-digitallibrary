@@ -200,6 +200,19 @@ switch (true) {
         require __DIR__ . '/api/reservations/create.php';
         break;
     
+    case preg_match('#^/reservations/queue-management$#', $path) && $request_method === 'GET':
+        require __DIR__ . '/api/reservations/queue-management.php';
+        break;
+    
+    case preg_match('#^/reservations/reorder-queue$#', $path) && $request_method === 'PUT':
+        require __DIR__ . '/api/reservations/reorder-queue.php';
+        break;
+    
+    case preg_match('#^/reservations/(\d+)/cancel$#', $path, $matches) && $request_method === 'DELETE':
+        $_GET['id'] = $matches[1];
+        require __DIR__ . '/api/reservations/cancel.php';
+        break;
+    
     // Categories routes
     case preg_match('#^/categories$#', $path) && $request_method === 'GET':
         require __DIR__ . '/api/categories/list.php';

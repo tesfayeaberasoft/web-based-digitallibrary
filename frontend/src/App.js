@@ -27,6 +27,7 @@ import LibrarianInventory from './pages/librarian/LibrarianInventory';
 import LibrarianRequests from './pages/librarian/LibrarianRequests';
 import LibrarianBarcode from './pages/librarian/LibrarianBarcode';
 import LibrarianBulkOperations from './pages/librarian/LibrarianBulkOperations';
+import LibrarianReservations from './pages/librarian/LibrarianReservations';
 import LibrarianNotifications from './pages/librarian/LibrarianNotifications';
 import LibrarianMembers from './pages/librarian/LibrarianMembers';
 import LibrarianReports from './pages/librarian/LibrarianReports';
@@ -155,6 +156,11 @@ function App() {
               <Route path="/librarian/bulk-operations" element={
                 <ProtectedRoute allowedRoles={['librarian', 'admin']}>
                   <LibrarianBulkOperations />
+                </ProtectedRoute>
+              } />
+              <Route path="/librarian/reservations" element={
+                <ProtectedRoute allowedRoles={['librarian', 'admin']}>
+                  <LibrarianReservations />
                 </ProtectedRoute>
               } />
               <Route path="/librarian/notifications" element={
