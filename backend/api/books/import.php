@@ -59,6 +59,7 @@ try {
         
         // Required columns
         $required_columns = ['title', 'author', 'isbn', 'category_id', 'total_copies'];
+        $optional_columns = ['publisher', 'publication_year', 'description', 'language', 'pages', 'condition_status'];
         $missing_columns = array_diff($required_columns, $headers);
         
         if (!empty($missing_columns)) {
@@ -136,13 +137,14 @@ try {
                     'description' => $row['description'] ?? null,
                     'language' => $row['language'] ?? 'English',
                     'pages' => !empty($row['pages']) && is_numeric($row['pages']) ? intval($row['pages']) : null,
+                    'condition_status' => !empty($row['condition_status']) && in_array($row['condition_status'], ['new', 'good', 'fair', 'poor', 'damaged']) ? $row['condition_status'] : 'good',
                     'status' => 'active'
                 ];
                 
                 // Insert book
                 $sql = "INSERT INTO books (title, author, isbn, category_id, publisher, publication_year, 
-                        description, language, pages, total_copies, available_copies, status) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                        description, language, pages, total_copies, available_copies, condition_status, status) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 
                 $stmt = $db->prepare($sql);
                 $stmt->execute([
@@ -157,6 +159,7 @@ try {
                     $book_data['pages'],
                     $book_data['total_copies'],
                     $book_data['available_copies'],
+                    $book_data['condition_status'],
                     $book_data['status']
                 ]);
                 

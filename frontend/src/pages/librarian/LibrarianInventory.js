@@ -104,7 +104,8 @@ const LibrarianInventory = () => {
     description: '',
     language: 'English',
     pages: '',
-    total_copies: ''
+    total_copies: '',
+    condition_status: 'good'
   });
   
   // Filters
@@ -188,7 +189,8 @@ const LibrarianInventory = () => {
         description: book.description || '',
         language: book.language || 'English',
         pages: book.pages || '',
-        total_copies: book.total_copies
+        total_copies: book.total_copies,
+        condition_status: book.condition_status || 'good'
       });
     } else {
       setEditMode(false);
@@ -203,7 +205,8 @@ const LibrarianInventory = () => {
         description: '',
         language: 'English',
         pages: '',
-        total_copies: ''
+        total_copies: '',
+        condition_status: 'good'
       });
     }
     setOpenDialog(true);
@@ -364,6 +367,22 @@ const LibrarianInventory = () => {
           config
         );
         toast.success(`Status updated for ${selectedBooks.length} books!`);
+      } else if (bulkAction === 'condition') {
+        // Bulk update condition using new API
+        if (!bulkFormData.condition_status) {
+          toast.error('Please select a condition');
+          return;
+        }
+        await axios.put(
+          'http://localhost:8000/api/books/bulk-update',
+          { 
+            book_ids: selectedBooks,
+            action: 'condition',
+            condition_status: bulkFormData.condition_status
+          },
+          config
+        );
+        toast.success(`Condition updated for ${selectedBooks.length} books!`);
       }
 
       handleCloseBulkDialog();
@@ -371,6 +390,24 @@ const LibrarianInventory = () => {
       fetchBooks();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Bulk operation failed');
+    }
+  };
+
+  // Helper function for condition colors
+  const getConditionColor = (condition) => {
+    switch (condition) {
+      case 'new':
+        return '#4caf50'; // Green
+      case 'good':
+        return '#2196f3'; // Blue
+      case 'fair':
+        return '#ff9800'; // Orange
+      case 'poor':
+        return '#f44336'; // Red
+      case 'damaged':
+        return '#9e9e9e'; // Gray
+      default:
+        return '#2196f3'; // Default blue
     }
   };
 
@@ -1048,6 +1085,15 @@ const LibrarianInventory = () => {
                     variant="contained"
                     size="small"
                     startIcon={<StatusIcon />}
+                    onClick={() => handleOpenBulkDialog('condition')}
+                    sx={{ bgcolor: '#607d8b', '&:hover': { bgcolor: '#546e7a' } }}
+                  >
+                    Update Condition
+                  </Button>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    startIcon={<StatusIcon />}
                     onClick={() => handleOpenBulkDialog('status')}
                     sx={{ bgcolor: '#4caf50', '&:hover': { bgcolor: '#45a049' } }}
                   >
@@ -1100,6 +1146,7 @@ const LibrarianInventory = () => {
                         <TableCell><strong>Author</strong></TableCell>
                         <TableCell><strong>ISBN</strong></TableCell>
                         <TableCell><strong>Category</strong></TableCell>
+                        <TableCell><strong>Condition</strong></TableCell>
                         <TableCell><strong>Total Copies</strong></TableCell>
                         <TableCell><strong>Available</strong></TableCell>
                         <TableCell><strong>Status</strong></TableCell>
@@ -1145,6 +1192,18 @@ const LibrarianInventory = () => {
                           <TableCell>{book.author}</TableCell>
                           <TableCell>{book.isbn}</TableCell>
                           <TableCell>{book.category_name}</TableCell>
+                          <TableCell>
+                            <Chip
+                              label={book.condition_status || 'good'}
+                              size="small"
+                              sx={{
+                                bgcolor: getConditionColor(book.condition_status || 'good'),
+                                color: 'white',
+                                fontWeight: 600,
+                                textTransform: 'capitalize'
+                              }}
+                            />
+                          </TableCell>
                           <TableCell>{book.total_copies}</TableCell>
                           <TableCell>
                             <Chip
@@ -1321,6 +1380,24 @@ const LibrarianInventory = () => {
                   onChange={handleChange}
                 />
               </Grid>
+              <Grid item xs={12} md={4}>
+                <TextField
+                  fullWidth
+                  select
+                  required
+                  label="Condition"
+                  name="condition_status"
+                  value={formData.condition_status}
+                  onChange={handleChange}
+                  helperText="Physical condition of the book"
+                >
+                  <MenuItem value="new">New</MenuItem>
+                  <MenuItem value="good">Good</MenuItem>
+                  <MenuItem value="fair">Fair</MenuItem>
+                  <MenuItem value="poor">Poor</MenuItem>
+                  <MenuItem value="damaged">Damaged</MenuItem>
+                </TextField>
+              </Grid>
               <Grid item xs={12}>
                 <TextField
                   fullWidth
@@ -1445,6 +1522,7 @@ const LibrarianInventory = () => {
             {bulkAction === 'status' && <StatusIcon />}
             {bulkAction === 'delete' && `Delete ${selectedBooks.length} Books`}
             {bulkAction === 'category' && `Update Category for ${selectedBooks.length} Books`}
+            {bulkAction === 'condition' && `Update Condition for ${selectedBooks.length} Books`}
             {bulkAction === 'status' && `Update Status for ${selectedBooks.length} Books`}
           </DialogTitle>
           <DialogContent sx={{ mt: 2 }}>
@@ -1461,6 +1539,11 @@ const LibrarianInventory = () => {
                 {bulkAction === 'category' && (
                   <Typography variant="body2">
                     <strong>Info:</strong> This will update the category for {selectedBooks.length} selected books.
+                  </Typography>
+                )}
+                {bulkAction === 'condition' && (
+                  <Typography variant="body2">
+                    <strong>Info:</strong> This will update the physical condition for {selectedBooks.length} selected books.
                   </Typography>
                 )}
                 {bulkAction === 'status' && (
@@ -1504,6 +1587,52 @@ const LibrarianInventory = () => {
                       {category.name}
                     </MenuItem>
                   ))}
+                </TextField>
+              )}
+
+              {bulkAction === 'condition' && (
+                <TextField
+                  fullWidth
+                  select
+                  required
+                  label="New Condition"
+                  value={bulkFormData.condition_status}
+                  onChange={(e) => setBulkFormData({ ...bulkFormData, condition_status: e.target.value })}
+                  helperText="Select the new physical condition for all selected books"
+                >
+                  <MenuItem value="">
+                    <em>Select a condition</em>
+                  </MenuItem>
+                  <MenuItem value="new">
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: '#4caf50' }} />
+                      New
+                    </Box>
+                  </MenuItem>
+                  <MenuItem value="good">
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: '#2196f3' }} />
+                      Good
+                    </Box>
+                  </MenuItem>
+                  <MenuItem value="fair">
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: '#ff9800' }} />
+                      Fair
+                    </Box>
+                  </MenuItem>
+                  <MenuItem value="poor">
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: '#f44336' }} />
+                      Poor
+                    </Box>
+                  </MenuItem>
+                  <MenuItem value="damaged">
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: '#9e9e9e' }} />
+                      Damaged
+                    </Box>
+                  </MenuItem>
                 </TextField>
               )}
 
@@ -1556,6 +1685,7 @@ const LibrarianInventory = () => {
               color={bulkAction === 'delete' ? 'error' : 'primary'}
               disabled={
                 (bulkAction === 'category' && !bulkFormData.category_id) ||
+                (bulkAction === 'condition' && !bulkFormData.condition_status) ||
                 (bulkAction === 'status' && !bulkFormData.status) ||
                 (bulkAction === 'delete' && bulkFormData.confirmText !== 'DELETE')
               }
@@ -1567,6 +1697,7 @@ const LibrarianInventory = () => {
             >
               {bulkAction === 'delete' && 'Delete Books'}
               {bulkAction === 'category' && 'Update Category'}
+              {bulkAction === 'condition' && 'Update Condition'}
               {bulkAction === 'status' && 'Update Status'}
             </Button>
           </DialogActions>

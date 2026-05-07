@@ -49,11 +49,12 @@ try {
         INSERT INTO books (
             title, author, isbn, publisher, publication_year,
             category_id, description, language, pages,
-            total_copies, available_copies, status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')
+            total_copies, available_copies, status, condition_status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)
     ");
     
     $available_copies = $data['total_copies'];
+    $condition_status = $data['condition_status'] ?? 'good';
     
     $stmt->execute([
         $data['title'],
@@ -66,7 +67,8 @@ try {
         $data['language'] ?? 'English',
         $data['pages'] ?? null,
         $data['total_copies'],
-        $available_copies
+        $available_copies,
+        $condition_status
     ]);
     
     $book_id = $db->lastInsertId();

@@ -26,7 +26,7 @@ try {
         exit;
     }
     
-    if (!isset($data['action']) || !in_array($data['action'], ['category', 'status'])) {
+    if (!isset($data['action']) || !in_array($data['action'], ['category', 'status', 'condition'])) {
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'Invalid action']);
         exit;
@@ -87,6 +87,21 @@ try {
         // Update status for all selected books
         $stmt = $db->prepare("UPDATE books SET status = ? WHERE id IN ($placeholders)");
         $params = array_merge([$status], $book_ids);
+        $stmt->execute($params);
+        $updated_count = $stmt->rowCount();
+        
+    } elseif ($action === 'condition') {
+        if (!isset($data['condition_status']) || !in_array($data['condition_status'], ['new', 'good', 'fair', 'poor', 'damaged'])) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Valid condition is required']);
+            exit;
+        }
+        
+        $condition_status = $data['condition_status'];
+        
+        // Update condition for all selected books
+        $stmt = $db->prepare("UPDATE books SET condition_status = ? WHERE id IN ($placeholders)");
+        $params = array_merge([$condition_status], $book_ids);
         $stmt->execute($params);
         $updated_count = $stmt->rowCount();
     }

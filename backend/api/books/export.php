@@ -40,6 +40,7 @@ try {
             b.total_copies,
             b.available_copies,
             b.status,
+            b.condition_status,
             b.created_at
         FROM books b
         LEFT JOIN categories c ON c.id = b.category_id
@@ -78,7 +79,7 @@ try {
         $headers = [
             'ID', 'Title', 'Author', 'ISBN', 'Publisher', 'Publication Year',
             'Category', 'Description', 'Language', 'Pages', 'Total Copies',
-            'Available Copies', 'Status', 'Created Date'
+            'Available Copies', 'Status', 'Condition', 'Created Date'
         ];
         
         fputcsv($output, $headers);
@@ -99,6 +100,7 @@ try {
                 $book['total_copies'],
                 $book['available_copies'],
                 $book['status'],
+                $book['condition_status'] ?? 'good',
                 date('Y-m-d H:i:s', strtotime($book['created_at']))
             ];
             fputcsv($output, $row);
@@ -122,7 +124,7 @@ try {
         $headers = [
             'ID', 'Title', 'Author', 'ISBN', 'Publisher', 'Publication Year',
             'Category', 'Description', 'Language', 'Pages', 'Total Copies',
-            'Available Copies', 'Status', 'Created Date'
+            'Available Copies', 'Status', 'Condition', 'Created Date'
         ];
         
         foreach ($headers as $header) {
@@ -148,6 +150,7 @@ try {
                 $book['total_copies'],
                 $book['available_copies'],
                 $book['status'],
+                $book['condition_status'] ?? 'good',
                 date('Y-m-d H:i:s', strtotime($book['created_at']))
             ];
             
