@@ -46,7 +46,7 @@ try {
     $updates = [];
     $params = [];
     
-    $allowed_fields = ['full_name', 'email', 'phone', 'address'];
+    $allowed_fields = ['full_name', 'email', 'phone', 'address', 'employee_id', 'department', 'hire_date', 'shift'];
     
     // Admins can update role and status
     if ($decoded['role'] === 'admin') {
