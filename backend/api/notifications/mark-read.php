@@ -25,7 +25,7 @@ try {
     // Update notification status
     $stmt = $db->prepare("
         UPDATE notifications 
-        SET status = 'read', updated_at = NOW()
+        SET status = 'read', read_at = NOW()
         WHERE id = ? AND user_id = ?
     ");
     $stmt->execute([$notification_id, $decoded['user_id']]);

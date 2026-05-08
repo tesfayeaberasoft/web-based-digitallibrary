@@ -17,7 +17,7 @@ try {
     // Update all unread notifications for the user
     $stmt = $db->prepare("
         UPDATE notifications 
-        SET status = 'read', updated_at = NOW()
+        SET status = 'read', read_at = NOW()
         WHERE user_id = ? AND status = 'unread'
     ");
     $stmt->execute([$decoded['user_id']]);
