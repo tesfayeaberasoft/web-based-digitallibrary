@@ -62,6 +62,11 @@ switch (true) {
         require __DIR__ . '/api/users/list.php';
         break;
     
+    case preg_match('#^/users/list$#', $path) && $request_method === 'GET':
+        error_log("Matched: GET /users/list");
+        require __DIR__ . '/api/users/list.php';
+        break;
+    
     case preg_match('#^/users/(\d+)$#', $path, $matches) && $request_method === 'GET':
         $_GET['id'] = $matches[1];
         require __DIR__ . '/api/users/get.php';

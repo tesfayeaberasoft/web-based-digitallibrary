@@ -192,7 +192,8 @@ const LibrarianMembers = () => {
         setStatusFilter('active');
         break;
       case 2:
-        setStatusFilter('inactive');
+        // For inactive tab, we need to handle this differently since we want both 'inactive' and 'suspended'
+        setStatusFilter('non-active');
         break;
       default:
         setStatusFilter('all');

@@ -1,6 +1,6 @@
 <?php
 /**
- * List Users Endpoint (Admin only)
+ * List Users Endpoint (Admin/Librarian only)
  */
 
 header('Content-Type: application/json');
@@ -9,8 +9,15 @@ require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../utils/jwt.php';
 
 try {
-    // Require admin or librarian role
-    $currentUser = requireRole(['admin', 'librarian']);
+    // Require authentication and check role
+    $decoded = requireAuth();
+    
+    // Only allow admin and librarian roles
+    if (!in_array($decoded['role'], ['admin', 'librarian'])) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'message' => 'Insufficient permissions']);
+        exit;
+    }
 
     $db = Database::getInstance()->getConnection();
 
@@ -20,7 +27,7 @@ try {
 
     // Get query parameters
     $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-    $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : DEFAULT_PAGE_SIZE;
+    $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 20;
     $search = isset($_GET['search']) ? $_GET['search'] : '';
     $role = isset($_GET['role']) ? $_GET['role'] : '';
     $status = isset($_GET['status']) ? $_GET['status'] : '';
@@ -42,8 +49,13 @@ try {
     }
 
     if (!empty($status)) {
-        $whereConditions[] = "status = :status";
-        $params[':status'] = $status;
+        if ($status === 'non-active') {
+            // Special case: show all users that are not active (inactive, suspended, etc.)
+            $whereConditions[] = "status != 'active'";
+        } else {
+            $whereConditions[] = "status = :status";
+            $params[':status'] = $status;
+        }
     }
 
     $whereClause = !empty($whereConditions) ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
