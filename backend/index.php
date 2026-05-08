@@ -92,6 +92,11 @@ switch (true) {
         require __DIR__ . '/api/librarian/stats.php';
         break;
     
+    // Admin stats route
+    case preg_match('#^/admin/stats$#', $path) && $request_method === 'GET':
+        require __DIR__ . '/api/admin/stats.php';
+        break;
+    
     // Librarian notifications route
     case preg_match('#^/librarian/notifications$#', $path) && $request_method === 'GET':
         require __DIR__ . '/api/librarian/notifications.php';
