@@ -29,6 +29,7 @@ const params = new URLSearchParams({
 #### 2. UI Simplification
 - **Removed Role Filter Dropdown**: No longer needed since we only show users
 - **Removed Role Column**: All displayed users have the same role
+- **Removed Role Input Field**: From add/edit user dialogs (always defaults to 'user')
 - **Expanded Search Field**: Takes more space since role filter was removed
 - **Updated Grid Layout**: Adjusted from 4-3-3-2 to 6-6-3 column layout
 
@@ -49,6 +50,7 @@ const params = new URLSearchParams({
 ### 🧹 Code Cleanup
 - **Removed `roleFilter` state variable**
 - **Removed `getRoleColor()` function** (no longer needed)
+- **Removed role input field** from add/edit dialogs (always defaults to 'user')
 - **Updated `useEffect` dependencies** (removed roleFilter)
 - **Simplified filter UI components**
 
@@ -66,6 +68,7 @@ const params = new URLSearchParams({
 - Cleaner, more focused user management interface
 - Reduces confusion by separating user management from admin/librarian management
 - Simpler UI with fewer filter options
+- **Automatic role assignment** - new users are always created as 'user' role
 
 ### 🔒 **Better Security Separation**
 - Admin and librarian accounts are not exposed in regular user management

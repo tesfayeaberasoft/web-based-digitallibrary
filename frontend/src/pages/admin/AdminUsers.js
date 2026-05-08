@@ -157,7 +157,7 @@ const AdminUsers = () => {
         password: '',
         phone: '',
         address: '',
-        role: 'user',
+        role: 'user', // Always set to 'user' since we only manage library users
         status: 'active'
       });
     } else if (dialogType === 'edit' && user) {
@@ -167,7 +167,7 @@ const AdminUsers = () => {
         password: '', // Always start with empty password for security
         phone: user.phone || '',
         address: user.address || '',
-        role: user.role,
+        role: 'user', // Always 'user' since we only manage library users
         status: user.status
       });
     } else if (dialogType === 'details' && user) {
@@ -659,21 +659,7 @@ const AdminUsers = () => {
                   onChange={(e) => handleInputChange('address', e.target.value)}
                 />
               </Grid>
-              <Grid item xs={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Role</InputLabel>
-                  <Select
-                    value={formData.role || 'user'}
-                    label="Role"
-                    onChange={(e) => handleInputChange('role', e.target.value)}
-                  >
-                    <SelectMenuItem value="user">User</SelectMenuItem>
-                    <SelectMenuItem value="librarian">Librarian</SelectMenuItem>
-                    <SelectMenuItem value="admin">Admin</SelectMenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={6}>
+              <Grid item xs={12}>
                 <FormControl fullWidth>
                   <InputLabel>Status</InputLabel>
                   <Select
