@@ -1,6 +1,6 @@
 <?php
 /**
- * Mark All Notifications as Read
+ * Mark All Notifications as Read API
  * PUT /api/notifications/mark-all-read
  */
 
@@ -14,20 +14,20 @@ try {
     require_once __DIR__ . '/../../config/database.php';
     $db = Database::getInstance()->getConnection();
     
-    // Mark all user's notifications as read
+    // Update all unread notifications for the user
     $stmt = $db->prepare("
         UPDATE notifications 
-        SET status = 'read', read_at = NOW()
+        SET status = 'read', updated_at = NOW()
         WHERE user_id = ? AND status = 'unread'
     ");
     $stmt->execute([$decoded['user_id']]);
     
-    $count = $stmt->rowCount();
+    $updated_count = $stmt->rowCount();
     
     echo json_encode([
         'success' => true,
-        'message' => "$count notifications marked as read",
-        'count' => $count
+        'message' => "Marked $updated_count notifications as read",
+        'updated_count' => $updated_count
     ]);
     
 } catch (Exception $e) {

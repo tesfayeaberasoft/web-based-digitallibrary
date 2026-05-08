@@ -242,6 +242,27 @@ switch (true) {
         require __DIR__ . '/api/notifications/mark-all-read.php';
         break;
     
+    // Notification management routes (for librarians)
+    case preg_match('#^/notifications/send-manual$#', $path) && $request_method === 'POST':
+        require __DIR__ . '/api/notifications/send-manual.php';
+        break;
+    
+    case preg_match('#^/notifications/settings$#', $path) && $request_method === 'GET':
+        require __DIR__ . '/api/notifications/settings.php';
+        break;
+    
+    case preg_match('#^/notifications/settings$#', $path) && $request_method === 'PUT':
+        require __DIR__ . '/api/notifications/settings.php';
+        break;
+    
+    case preg_match('#^/notifications/logs$#', $path) && $request_method === 'GET':
+        require __DIR__ . '/api/notifications/logs.php';
+        break;
+    
+    case preg_match('#^/notifications/run-scheduler$#', $path) && $request_method === 'POST':
+        require __DIR__ . '/api/notifications/run-scheduler.php';
+        break;
+    
     // Default - API info
     case $path === '/' || $path === '':
         header('Content-Type: application/json');

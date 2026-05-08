@@ -1,6 +1,6 @@
 <?php
 /**
- * Mark Notification as Read
+ * Mark Notification as Read API
  * PUT /api/notifications/{id}/read
  */
 
@@ -11,35 +11,37 @@ try {
     require_once __DIR__ . '/../../utils/jwt.php';
     $decoded = requireAuth();
     
-    $notification_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+    $notification_id = $_GET['id'] ?? null;
     
-    if ($notification_id <= 0) {
+    if (!$notification_id) {
         http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Invalid notification ID']);
+        echo json_encode(['success' => false, 'message' => 'Notification ID is required']);
         exit;
     }
     
     require_once __DIR__ . '/../../config/database.php';
     $db = Database::getInstance()->getConnection();
     
-    // Update notification (only if it belongs to the user)
+    // Update notification status
     $stmt = $db->prepare("
         UPDATE notifications 
-        SET status = 'read', read_at = NOW()
+        SET status = 'read', updated_at = NOW()
         WHERE id = ? AND user_id = ?
     ");
     $stmt->execute([$notification_id, $decoded['user_id']]);
     
-    if ($stmt->rowCount() === 0) {
+    if ($stmt->rowCount() > 0) {
+        echo json_encode([
+            'success' => true,
+            'message' => 'Notification marked as read'
+        ]);
+    } else {
         http_response_code(404);
-        echo json_encode(['success' => false, 'message' => 'Notification not found']);
-        exit;
+        echo json_encode([
+            'success' => false,
+            'message' => 'Notification not found'
+        ]);
     }
-    
-    echo json_encode([
-        'success' => true,
-        'message' => 'Notification marked as read'
-    ]);
     
 } catch (Exception $e) {
     http_response_code(500);

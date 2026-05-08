@@ -1,7 +1,7 @@
 <?php
 /**
- * List Notifications
- * GET /api/notifications
+ * User Notifications List API
+ * GET /api/notifications - Get user's in-app notifications
  */
 
 header('Content-Type: application/json');
@@ -14,81 +14,65 @@ try {
     require_once __DIR__ . '/../../config/database.php';
     $db = Database::getInstance()->getConnection();
     
-    // Users can only see their own notifications
-    $user_id = $decoded['user_id'];
-    
-    // Filter by read status
-    $where = ["user_id = ?"];
-    $params = [$user_id];
-    
-    if (isset($_GET['is_read'])) {
-        $isRead = $_GET['is_read'] === 'true';
-        $where[] = "status = ?";
-        $params[] = $isRead ? 'read' : 'unread';
-    }
-    
-    // Filter by type
-    if (isset($_GET['type'])) {
-        $where[] = "type = ?";
-        $params[] = $_GET['type'];
-    }
-    
-    $where_clause = 'WHERE ' . implode(' AND ', $where);
-    
-    // Pagination
+    // Get query parameters
     $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
-    $limit = isset($_GET['limit']) ? min(100, max(1, intval($_GET['limit']))) : 20;
+    $limit = isset($_GET['limit']) ? min(50, max(1, intval($_GET['limit']))) : 20;
+    $status = isset($_GET['status']) ? $_GET['status'] : '';
+    
     $offset = ($page - 1) * $limit;
     
+    // Build WHERE clause
+    $where_conditions = ['user_id = ?'];
+    $params = [$decoded['user_id']];
+    
+    if (!empty($status)) {
+        $where_conditions[] = "status = ?";
+        $params[] = $status;
+    }
+    
+    $where_clause = 'WHERE ' . implode(' AND ', $where_conditions);
+    
     // Get total count
-    $stmt = $db->prepare("
-        SELECT COUNT(*) as total
-        FROM notifications
-        $where_clause
-    ");
+    $count_sql = "SELECT COUNT(*) as total FROM notifications $where_clause";
+    $stmt = $db->prepare($count_sql);
     $stmt->execute($params);
     $total = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     
-    // Get unread count
-    $stmt = $db->prepare("
-        SELECT COUNT(*) as unread
-        FROM notifications
-        WHERE user_id = ? AND status = 'unread'
-    ");
-    $stmt->execute([$user_id]);
-    $unread_count = $stmt->fetch(PDO::FETCH_ASSOC)['unread'];
-    
     // Get notifications
-    $stmt = $db->prepare("
+    $sql = "
         SELECT *
         FROM notifications
         $where_clause
         ORDER BY sent_at DESC
         LIMIT ? OFFSET ?
-    ");
+    ";
     
-    // Bind parameters with correct types
-    $paramIndex = 1;
-    foreach ($params as $param) {
-        $stmt->bindValue($paramIndex++, $param);
+    $stmt = $db->prepare($sql);
+    foreach ($params as $index => $param) {
+        $stmt->bindValue($index + 1, $param);
     }
-    // Bind LIMIT and OFFSET as integers
-    $stmt->bindValue($paramIndex++, $limit, PDO::PARAM_INT);
-    $stmt->bindValue($paramIndex++, $offset, PDO::PARAM_INT);
-    
+    $stmt->bindValue(count($params) + 1, $limit, PDO::PARAM_INT);
+    $stmt->bindValue(count($params) + 2, $offset, PDO::PARAM_INT);
     $stmt->execute();
+    
     $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Get unread count
+    $unread_sql = "SELECT COUNT(*) as unread FROM notifications WHERE user_id = ? AND status = 'unread'";
+    $stmt = $db->prepare($unread_sql);
+    $stmt->execute([$decoded['user_id']]);
+    $unread_count = $stmt->fetch(PDO::FETCH_ASSOC)['unread'];
     
     echo json_encode([
         'success' => true,
         'notifications' => $notifications,
-        'unread_count' => $unread_count,
         'pagination' => [
             'page' => $page,
             'limit' => $limit,
-            'total' => $total,
+            'total' => (int)$total,
             'pages' => ceil($total / $limit)
-        ]
+        ],
+        'unread_count' => (int)$unread_count
     ]);
     
 } catch (Exception $e) {
