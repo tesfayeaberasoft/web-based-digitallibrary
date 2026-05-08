@@ -114,8 +114,8 @@ try {
             : "Your account has been reactivated. You can now access all library services.";
         
         $stmt = $db->prepare("
-            INSERT INTO notifications (user_id, type, title, message, created_at) 
-            VALUES (?, 'account_status', ?, ?, NOW())
+            INSERT INTO notifications (user_id, type, title, message) 
+            VALUES (?, 'general', ?, ?)
         ");
         $stmt->execute([$user_id, $notification_title, $notification_message]);
         
