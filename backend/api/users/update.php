@@ -68,6 +68,21 @@ try {
         }
     }
     
+    // Handle password update separately (only if provided and not empty)
+    if (isset($data['password']) && !empty(trim($data['password']))) {
+        $password = trim($data['password']);
+        
+        // Validate password strength
+        if (strlen($password) < 6) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Password must be at least 6 characters long']);
+            exit;
+        }
+        
+        $updates[] = "password = ?";
+        $params[] = password_hash($password, PASSWORD_DEFAULT);
+    }
+    
     if (empty($updates)) {
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'No fields to update']);

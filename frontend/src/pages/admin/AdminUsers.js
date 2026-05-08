@@ -71,22 +71,23 @@ const AdminUsers = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedUserId, setSelectedUserId] = useState(null);
   const [openDialog, setOpenDialog] = useState('');
   const [formData, setFormData] = useState({});
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [userDetails, setUserDetails] = useState(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
+  const [suspendReason, setSuspendReason] = useState('');
 
   useEffect(() => {
     fetchUsers();
-  }, [page, searchQuery, roleFilter, statusFilter]);
+  }, [page, searchQuery, statusFilter]);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -95,8 +96,8 @@ const AdminUsers = () => {
       const params = new URLSearchParams({
         page: page.toString(),
         limit: '10',
+        role: 'user', // Only fetch users with 'user' role
         ...(searchQuery && { search: searchQuery }),
-        ...(roleFilter && { role: roleFilter }),
         ...(statusFilter && { status: statusFilter })
       });
 
@@ -138,11 +139,12 @@ const AdminUsers = () => {
   const handleMenuOpen = (event, user) => {
     setAnchorEl(event.currentTarget);
     setSelectedUser(user);
+    setSelectedUserId(user.id);
   };
 
   const handleMenuClose = () => {
     setAnchorEl(null);
-    setSelectedUser(null);
+    // Don't clear selectedUser here to prevent null reference errors
   };
 
   const handleOpenDialog = (dialogType, user = null) => {
@@ -162,6 +164,7 @@ const AdminUsers = () => {
       setFormData({
         full_name: user.full_name,
         email: user.email,
+        password: '', // Always start with empty password for security
         phone: user.phone || '',
         address: user.address || '',
         role: user.role,
@@ -169,6 +172,8 @@ const AdminUsers = () => {
       });
     } else if (dialogType === 'details' && user) {
       fetchUserDetails(user.id);
+    } else if (dialogType === 'suspend' && user) {
+      setSuspendReason(''); // Reset reason field
     }
     handleMenuClose();
   };
@@ -176,8 +181,10 @@ const AdminUsers = () => {
   const handleCloseDialog = () => {
     setOpenDialog('');
     setSelectedUser(null);
+    setSelectedUserId(null);
     setFormData({});
     setUserDetails(null);
+    setSuspendReason('');
     setError('');
   };
 
@@ -203,54 +210,108 @@ const AdminUsers = () => {
   };
 
   const handleUpdateUser = async () => {
+    if (!selectedUser) {
+      setError('No user selected for update');
+      return;
+    }
+
     try {
       const token = localStorage.getItem('token');
+      console.log('Updating user:', selectedUser.id, 'with data:', formData);
+      
       const response = await axios.put(`http://localhost:8000/api/users/${selectedUser.id}`, formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
+
+      console.log('Update response:', response.data);
 
       if (response.data.success) {
         setSuccess('User updated successfully');
         handleCloseDialog();
         fetchUsers();
+      } else {
+        setError(response.data.message || 'Failed to update user');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update user');
+      console.error('Update user error:', err);
+      console.error('Error response:', err.response?.data);
+      setError(err.response?.data?.message || `Failed to update user: ${err.message}`);
     }
   };
 
-  const handleSuspendUser = async (action = 'toggle') => {
+  const handleSuspendUser = async (user, action = 'toggle') => {
+    if (!user) {
+      setError('No user selected for status update');
+      return;
+    }
+
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.put(`http://localhost:8000/api/users/${selectedUser.id}/suspend`, 
-        { action }, 
+      console.log('Suspending user:', user.id, 'action:', action, 'reason:', suspendReason);
+      
+      const requestBody = { action };
+      if (suspendReason.trim()) {
+        requestBody.reason = suspendReason.trim();
+      }
+      
+      const response = await axios.put(`http://localhost:8000/api/users/${user.id}/suspend`, 
+        requestBody, 
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
+      console.log('Suspend response:', response.data);
 
       if (response.data.success) {
         setSuccess(response.data.message);
         handleCloseDialog();
         fetchUsers();
+      } else {
+        setError(response.data.message || 'Failed to update user status');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update user status');
+      console.error('Suspend user error:', err);
+      console.error('Error response:', err.response?.data);
+      setError(err.response?.data?.message || `Failed to update user status: ${err.message}`);
     }
   };
 
   const handleDeleteUser = async () => {
+    if (!selectedUser) {
+      setError('No user selected for deletion');
+      return;
+    }
+
     try {
       const token = localStorage.getItem('token');
+      console.log('Deleting user:', selectedUser.id, selectedUser.full_name);
+      
       const response = await axios.delete(`http://localhost:8000/api/users/${selectedUser.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+
+      console.log('Delete response:', response.data);
 
       if (response.data.success) {
         setSuccess(response.data.message);
         handleCloseDialog();
         fetchUsers();
+      } else {
+        setError(response.data.message || 'Failed to delete user');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to delete user');
+      console.error('Delete user error:', err);
+      console.error('Error response:', err.response?.data);
+      
+      // Provide more specific error messages
+      if (err.response?.status === 400) {
+        setError(err.response.data.message || 'Cannot delete user - check for active loans or unpaid fines');
+      } else if (err.response?.status === 403) {
+        setError('Access denied - admin privileges required');
+      } else if (err.response?.status === 404) {
+        setError('User not found');
+      } else {
+        setError(err.response?.data?.message || `Failed to delete user: ${err.message}`);
+      }
     }
   };
 
@@ -259,15 +320,6 @@ const AdminUsers = () => {
       case 'active': return 'success';
       case 'suspended': return 'error';
       case 'inactive': return 'default';
-      default: return 'default';
-    }
-  };
-
-  const getRoleColor = (role) => {
-    switch (role) {
-      case 'admin': return 'error';
-      case 'librarian': return 'warning';
-      case 'user': return 'primary';
       default: return 'default';
     }
   };
@@ -289,10 +341,10 @@ const AdminUsers = () => {
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent'
               }}>
-                👥 User Management
+                👥 Library Users Management
               </Typography>
               <Typography variant="h6" color="text.secondary">
-                Manage all registered users, roles, and permissions
+                Manage library users, their accounts, and permissions
               </Typography>
             </Box>
             <Button
@@ -307,17 +359,39 @@ const AdminUsers = () => {
                 }
               }}
             >
-              Add User
+              Add Library User
             </Button>
           </Box>
         </Fade>
+
+        {/* Debug Panel (only show in development) */}
+        {process.env.NODE_ENV === 'development' && (
+          <Card sx={{ mb: 3, bgcolor: '#f5f5f5' }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                🔧 Debug Information
+              </Typography>
+              <Typography variant="body2">
+                • This page shows only library users (role: 'user')<br/>
+                • Admins and librarians are not displayed here<br/>
+                • Backend APIs are working correctly in tests<br/>
+                • If you see "Failed to delete/update user", check browser console (F12)<br/>
+                • Users with active loans cannot be deleted<br/>
+                • Only users with 0 books and $0.00 fines can be safely deleted<br/>
+                • Try hard refresh (Ctrl+F5) if issues persist<br/>
+                • Selected User: {selectedUser ? `${selectedUser.full_name} (ID: ${selectedUser.id})` : 'None'}<br/>
+                • Selected User ID: {selectedUserId || 'None'}
+              </Typography>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Filters */}
         <Grow in timeout={500}>
           <Card sx={{ mb: 3 }}>
             <CardContent>
               <Grid container spacing={2} alignItems="center">
-                <Grid item xs={12} md={4}>
+                <Grid item xs={12} md={6}>
                   <TextField
                     fullWidth
                     placeholder="Search users by name, email, or ID..."
@@ -332,22 +406,7 @@ const AdminUsers = () => {
                     }}
                   />
                 </Grid>
-                <Grid item xs={12} md={3}>
-                  <FormControl fullWidth>
-                    <InputLabel>Role</InputLabel>
-                    <Select
-                      value={roleFilter}
-                      label="Role"
-                      onChange={(e) => setRoleFilter(e.target.value)}
-                    >
-                      <SelectMenuItem value="">All Roles</SelectMenuItem>
-                      <SelectMenuItem value="user">User</SelectMenuItem>
-                      <SelectMenuItem value="librarian">Librarian</SelectMenuItem>
-                      <SelectMenuItem value="admin">Admin</SelectMenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} md={3}>
+                <Grid item xs={12} md={6}>
                   <FormControl fullWidth>
                     <InputLabel>Status</InputLabel>
                     <Select
@@ -362,7 +421,7 @@ const AdminUsers = () => {
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} md={2}>
+                <Grid item xs={12} md={3}>
                   <Button
                     fullWidth
                     variant="outlined"
@@ -393,7 +452,6 @@ const AdminUsers = () => {
                         <TableRow>
                           <TableCell>User</TableCell>
                           <TableCell>User ID</TableCell>
-                          <TableCell>Role</TableCell>
                           <TableCell align="center">Books</TableCell>
                           <TableCell align="center">Fines</TableCell>
                           <TableCell align="center">Status</TableCell>
@@ -432,14 +490,6 @@ const AdminUsers = () => {
                                 <Typography variant="body2" fontWeight={600}>
                                   {user.user_id}
                                 </Typography>
-                              </TableCell>
-                              <TableCell>
-                                <Chip
-                                  label={user.role}
-                                  size="small"
-                                  color={getRoleColor(user.role)}
-                                  sx={{ textTransform: 'capitalize', fontWeight: 600 }}
-                                />
                               </TableCell>
                               <TableCell align="center">
                                 <Chip
@@ -510,20 +560,32 @@ const AdminUsers = () => {
           open={Boolean(anchorEl)}
           onClose={handleMenuClose}
         >
-          <MenuItem onClick={() => handleOpenDialog('details', selectedUser)}>
+          <MenuItem onClick={() => {
+            handleOpenDialog('details', selectedUser);
+          }}>
             <Visibility sx={{ mr: 2, fontSize: 20 }} />
             View Details
           </MenuItem>
-          <MenuItem onClick={() => handleOpenDialog('edit', selectedUser)}>
+          <MenuItem onClick={() => {
+            handleOpenDialog('edit', selectedUser);
+          }}>
             <Edit sx={{ mr: 2, fontSize: 20 }} />
             Edit User
           </MenuItem>
           <Divider />
-          <MenuItem onClick={() => handleSuspendUser('toggle')}>
+          <MenuItem onClick={() => {
+            const userToSuspend = selectedUser;
+            handleMenuClose();
+            if (userToSuspend) {
+              handleOpenDialog('suspend', userToSuspend);
+            }
+          }}>
             <Block sx={{ mr: 2, fontSize: 20 }} />
             {selectedUser?.status === 'suspended' ? 'Activate' : 'Suspend'} User
           </MenuItem>
-          <MenuItem onClick={() => handleOpenDialog('delete', selectedUser)} sx={{ color: 'error.main' }}>
+          <MenuItem onClick={() => {
+            handleOpenDialog('delete', selectedUser);
+          }} sx={{ color: 'error.main' }}>
             <Delete sx={{ mr: 2, fontSize: 20 }} />
             Delete User
           </MenuItem>
@@ -564,6 +626,18 @@ const AdminUsers = () => {
                     value={formData.password || ''}
                     onChange={(e) => handleInputChange('password', e.target.value)}
                     required
+                  />
+                </Grid>
+              )}
+              {openDialog === 'edit' && (
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="New Password (leave empty to keep current)"
+                    type="password"
+                    value={formData.password || ''}
+                    onChange={(e) => handleInputChange('password', e.target.value)}
+                    helperText="Only enter a password if you want to change it"
                   />
                 </Grid>
               )}
@@ -777,8 +851,64 @@ const AdminUsers = () => {
           </DialogContent>
           <DialogActions>
             <Button onClick={handleCloseDialog}>Cancel</Button>
-            <Button onClick={handleDeleteUser} color="error" variant="contained">
+            <Button onClick={() => {
+              if (selectedUser) {
+                handleDeleteUser();
+              }
+            }} color="error" variant="contained">
               Delete User
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Suspend/Activate Confirmation Dialog */}
+        <Dialog open={openDialog === 'suspend'} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+          <DialogTitle>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'warning.main' }}>
+              <Block />
+              {selectedUser?.status === 'suspended' ? 'Activate User' : 'Suspend User'}
+            </Box>
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText sx={{ mb: 2 }}>
+              {selectedUser?.status === 'suspended' 
+                ? `Are you sure you want to activate user ${selectedUser?.full_name}? They will regain access to all library services.`
+                : `Are you sure you want to suspend user ${selectedUser?.full_name}? They will lose access to library services and all active reservations will be cancelled.`
+              }
+            </DialogContentText>
+            
+            {selectedUser?.status !== 'suspended' && (
+              <TextField
+                fullWidth
+                label="Reason for Suspension (Optional)"
+                multiline
+                rows={3}
+                value={suspendReason}
+                onChange={(e) => setSuspendReason(e.target.value)}
+                placeholder="Enter the reason for suspending this user..."
+                helperText="This reason will be included in the notification sent to the user"
+                sx={{ mt: 1 }}
+              />
+            )}
+            
+            {error && (
+              <Alert severity="error" sx={{ mt: 2 }}>
+                {error}
+              </Alert>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseDialog}>Cancel</Button>
+            <Button 
+              onClick={() => {
+                if (selectedUser) {
+                  handleSuspendUser(selectedUser, 'toggle');
+                }
+              }} 
+              color={selectedUser?.status === 'suspended' ? 'success' : 'warning'} 
+              variant="contained"
+            >
+              {selectedUser?.status === 'suspended' ? 'Activate User' : 'Suspend User'}
             </Button>
           </DialogActions>
         </Dialog>
