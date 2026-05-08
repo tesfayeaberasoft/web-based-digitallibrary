@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .result { background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .error { background: #ffebee; color: #c62828; }
+        .success { background: #e8f5e9; color: #2e7d32; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        pre { white-space: pre-wrap; word-wrap: break-word; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Analytics API Test</h1>
+        
+        <div>
+            <button onclick="testLogin()">1. Test Admin Login</button>
+            <button onclick="testAnalytics()">2. Test Analytics API</button>
+            <button onclick="clearResults()">Clear Results</button>
+        </div>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        let authToken = '';
+        
+        function addResult(title, content, isError = false) {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `result ${isError ? 'error' : 'success'}`;
+            div.innerHTML = `<h3>${title}</h3><pre>${content}</pre>`;
+            results.appendChild(div);
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+        
+        async function testLogin() {
+            try {
+                const response = await fetch('http://localhost:8000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'admin@digitallibrary.com',
+                        password: 'password'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    authToken = data.data.token;
+                    addResult('✅ Login Successful', `Token received: ${authToken.substring(0, 50)}...`);
+                } else {
+                    addResult('❌ Login Failed', JSON.stringify(data, null, 2), true);
+                }
+            } catch (error) {
+                addResult('❌ Login Error', error.message, true);
+            }
+        }
+        
+        async function testAnalytics() {
+            if (!authToken) {
+                addResult('❌ Analytics Test Failed', 'Please login first to get auth token', true);
+                return;
+            }
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/admin/stats', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const analytics = data.stats.analytics;
+                    const summary = {
+                        'Collection Utilization': `${analytics.collection_utilization?.utilization_rate || 0}%`,
+                        'Return Rate': `${analytics.return_analysis?.return_rate || 0}%`,
+                        'On-Time Rate': `${analytics.satisfaction_metrics?.on_time_rate || 0}%`,
+                        'Avg Books/User': `${(analytics.user_engagement?.avg_books_per_user || 0).toFixed(1)}`,
+                        'Popular Books Count': analytics.popular_books?.length || 0,
+                        'Peak Hours Data': analytics.peak_hours?.length || 0,
+                        'Weekly Patterns': analytics.weekly_patterns?.length || 0,
+                        'Revenue Breakdown': analytics.revenue_breakdown?.length || 0
+                    };
+                    
+                    addResult('✅ Analytics API Success', JSON.stringify(summary, null, 2));
+                    
+                    // Show sample popular books
+                    if (analytics.popular_books?.length > 0) {
+                        const topBooks = analytics.popular_books.slice(0, 3).map(book => 
+                            `${book.title} by ${book.author} (${book.loan_count} loans)`
+                        ).join('\n');
+                        addResult('📚 Top 3 Popular Books', topBooks);
+                    }
+                    
+                } else {
+                    addResult('❌ Analytics API Failed', JSON.stringify(data, null, 2), true);
+                }
+            } catch (error) {
+                addResult('❌ Analytics API Error', error.message, true);
+            }
+        }
+    </script>
+</body>
+</html>

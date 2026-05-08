@@ -183,6 +183,139 @@ try {
     $stmt->execute();
     $pending_reservations = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
     
+    // === ADVANCED ANALYTICS ===
+    
+    // User engagement metrics
+    $stmt = $db->prepare("
+        SELECT 
+            AVG(books_per_user) as avg_books_per_user,
+            MAX(books_per_user) as max_books_per_user
+        FROM (
+            SELECT user_id, COUNT(*) as books_per_user
+            FROM book_loans 
+            WHERE loan_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+            GROUP BY user_id
+        ) as user_stats
+    ");
+    $stmt->execute();
+    $user_engagement = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    // Popular books (most borrowed in last 30 days)
+    $stmt = $db->prepare("
+        SELECT 
+            b.title,
+            b.author,
+            c.name as category,
+            COUNT(bl.id) as loan_count
+        FROM books b
+        JOIN book_loans bl ON b.id = bl.book_id
+        JOIN categories c ON b.category_id = c.id
+        WHERE bl.loan_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+        GROUP BY b.id, b.title, b.author, c.name
+        ORDER BY loan_count DESC
+        LIMIT 10
+    ");
+    $stmt->execute();
+    $popular_books = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Peak hours analysis
+    $stmt = $db->prepare("
+        SELECT 
+            HOUR(loan_date) as hour,
+            COUNT(*) as loan_count
+        FROM book_loans 
+        WHERE loan_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+        GROUP BY HOUR(loan_date)
+        ORDER BY hour
+    ");
+    $stmt->execute();
+    $peak_hours = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Weekly patterns
+    $stmt = $db->prepare("
+        SELECT 
+            DAYNAME(loan_date) as day_name,
+            DAYOFWEEK(loan_date) as day_number,
+            COUNT(*) as loan_count
+        FROM book_loans 
+        WHERE loan_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+        GROUP BY DAYOFWEEK(loan_date), DAYNAME(loan_date)
+        ORDER BY day_number
+    ");
+    $stmt->execute();
+    $weekly_patterns = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Return rate analysis
+    $stmt = $db->prepare("
+        SELECT 
+            COUNT(CASE WHEN status = 'returned' THEN 1 END) as returned_books,
+            COUNT(CASE WHEN status = 'active' AND due_date >= CURDATE() THEN 1 END) as active_books,
+            COUNT(CASE WHEN status = 'active' AND due_date < CURDATE() THEN 1 END) as overdue_books,
+            COUNT(*) as total_loans
+        FROM book_loans 
+        WHERE loan_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+    ");
+    $stmt->execute();
+    $return_analysis = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    // User satisfaction metrics (based on return patterns)
+    $stmt = $db->prepare("
+        SELECT 
+            AVG(DATEDIFF(return_date, loan_date)) as avg_loan_duration,
+            COUNT(CASE WHEN return_date <= due_date THEN 1 END) as on_time_returns,
+            COUNT(CASE WHEN return_date > due_date THEN 1 END) as late_returns,
+            COUNT(*) as total_returns
+        FROM book_loans 
+        WHERE status = 'returned' 
+        AND return_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+    ");
+    $stmt->execute();
+    $satisfaction_metrics = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    // Collection utilization
+    $stmt = $db->prepare("
+        SELECT 
+            COUNT(DISTINCT bl.book_id) as borrowed_books,
+            COUNT(DISTINCT b.id) as total_books,
+            ROUND((COUNT(DISTINCT bl.book_id) * 100.0 / COUNT(DISTINCT b.id)), 1) as utilization_rate
+        FROM books b
+        LEFT JOIN book_loans bl ON b.id = bl.book_id 
+        AND bl.loan_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+    ");
+    $stmt->execute();
+    $collection_utilization = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    // Revenue breakdown by fine types
+    $stmt = $db->prepare("
+        SELECT 
+            fine_type,
+            COUNT(*) as fine_count,
+            SUM(amount) as total_amount,
+            SUM(paid_amount) as paid_amount,
+            AVG(amount) as avg_fine_amount
+        FROM fines 
+        WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+        GROUP BY fine_type
+        ORDER BY total_amount DESC
+    ");
+    $stmt->execute();
+    $revenue_breakdown = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Monthly comparison (current vs previous month)
+    $stmt = $db->prepare("
+        SELECT 
+            COUNT(CASE WHEN DATE(loan_date) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) THEN 1 END) as current_month_loans,
+            COUNT(CASE WHEN DATE(loan_date) >= DATE_SUB(CURDATE(), INTERVAL 60 DAY) 
+                       AND DATE(loan_date) < DATE_SUB(CURDATE(), INTERVAL 30 DAY) THEN 1 END) as previous_month_loans,
+            COUNT(CASE WHEN DATE(created_at) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) AND role = 'user' THEN 1 END) as current_month_users,
+            COUNT(CASE WHEN DATE(created_at) >= DATE_SUB(CURDATE(), INTERVAL 60 DAY) 
+                       AND DATE(created_at) < DATE_SUB(CURDATE(), INTERVAL 30 DAY) AND role = 'user' THEN 1 END) as previous_month_users
+        FROM book_loans bl
+        RIGHT JOIN users u ON 1=1
+    ");
+    $stmt->execute();
+    $monthly_comparison = $stmt->fetch(PDO::FETCH_ASSOC);
+    
     // Calculate growth percentages (compared to last month)
     $stmt = $db->prepare("
         SELECT 
@@ -234,6 +367,55 @@ try {
                 'returns' => (int)$today_returns,
                 'registrations' => (int)$today_registrations,
                 'revenue' => (float)$today_revenue
+            ],
+            'analytics' => [
+                'user_engagement' => [
+                    'avg_books_per_user' => (float)($user_engagement['avg_books_per_user'] ?? 0),
+                    'max_books_per_user' => (int)($user_engagement['max_books_per_user'] ?? 0)
+                ],
+                'popular_books' => $popular_books,
+                'peak_hours' => $peak_hours,
+                'weekly_patterns' => $weekly_patterns,
+                'return_analysis' => [
+                    'returned_books' => (int)$return_analysis['returned_books'],
+                    'active_books' => (int)$return_analysis['active_books'],
+                    'overdue_books' => (int)$return_analysis['overdue_books'],
+                    'total_loans' => (int)$return_analysis['total_loans'],
+                    'return_rate' => $return_analysis['total_loans'] > 0 
+                        ? round(($return_analysis['returned_books'] / $return_analysis['total_loans']) * 100, 1)
+                        : 0
+                ],
+                'satisfaction_metrics' => [
+                    'avg_loan_duration' => (float)($satisfaction_metrics['avg_loan_duration'] ?? 0),
+                    'on_time_returns' => (int)$satisfaction_metrics['on_time_returns'],
+                    'late_returns' => (int)$satisfaction_metrics['late_returns'],
+                    'total_returns' => (int)$satisfaction_metrics['total_returns'],
+                    'on_time_rate' => $satisfaction_metrics['total_returns'] > 0 
+                        ? round(($satisfaction_metrics['on_time_returns'] / $satisfaction_metrics['total_returns']) * 100, 1)
+                        : 0
+                ],
+                'collection_utilization' => [
+                    'borrowed_books' => (int)$collection_utilization['borrowed_books'],
+                    'total_books' => (int)$collection_utilization['total_books'],
+                    'utilization_rate' => (float)$collection_utilization['utilization_rate']
+                ],
+                'revenue_breakdown' => $revenue_breakdown,
+                'monthly_comparison' => [
+                    'loans' => [
+                        'current' => (int)$monthly_comparison['current_month_loans'],
+                        'previous' => (int)$monthly_comparison['previous_month_loans'],
+                        'change' => $monthly_comparison['previous_month_loans'] > 0 
+                            ? round((($monthly_comparison['current_month_loans'] - $monthly_comparison['previous_month_loans']) / $monthly_comparison['previous_month_loans']) * 100, 1)
+                            : 0
+                    ],
+                    'users' => [
+                        'current' => (int)$monthly_comparison['current_month_users'],
+                        'previous' => (int)$monthly_comparison['previous_month_users'],
+                        'change' => $monthly_comparison['previous_month_users'] > 0 
+                            ? round((($monthly_comparison['current_month_users'] - $monthly_comparison['previous_month_users']) / $monthly_comparison['previous_month_users']) * 100, 1)
+                            : 0
+                    ]
+                ]
             ]
         ]
     ]);
