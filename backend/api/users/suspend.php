@@ -92,7 +92,7 @@ try {
     }
     
     // Update user status
-    $stmt = $db->prepare("UPDATE users SET status = ?, updated_at = NOW() WHERE id = ?");
+    $stmt = $db->prepare("UPDATE users SET status = ? WHERE id = ?");
     $result = $stmt->execute([$new_status, $user_id]);
     
     if ($result) {

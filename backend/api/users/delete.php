@@ -85,9 +85,18 @@ try {
     
     try {
         // Delete related records first (to maintain referential integrity)
+        // Note: We'll set user_id to NULL for audit trail instead of deleting
         
         // Delete notifications
         $stmt = $db->prepare("DELETE FROM notifications WHERE user_id = ?");
+        $stmt->execute([$user_id]);
+        
+        // Delete notification logs
+        $stmt = $db->prepare("DELETE FROM notification_logs WHERE user_id = ?");
+        $stmt->execute([$user_id]);
+        
+        // Delete notification settings
+        $stmt = $db->prepare("DELETE FROM notification_settings WHERE user_id = ?");
         $stmt->execute([$user_id]);
         
         // Delete book reviews
@@ -98,16 +107,30 @@ try {
         $stmt = $db->prepare("DELETE FROM reading_history WHERE user_id = ?");
         $stmt->execute([$user_id]);
         
+        // Delete reading goals
+        $stmt = $db->prepare("DELETE FROM reading_goals WHERE user_id = ?");
+        $stmt->execute([$user_id]);
+        
+        // Delete user achievements
+        $stmt = $db->prepare("DELETE FROM user_achievements WHERE user_id = ?");
+        $stmt->execute([$user_id]);
+        
         // Delete reservations
         $stmt = $db->prepare("DELETE FROM book_reservations WHERE user_id = ?");
         $stmt->execute([$user_id]);
         
-        // Delete paid fines (keep record for audit)
+        // Delete payment transactions
+        $stmt = $db->prepare("DELETE FROM payment_transactions WHERE user_id = ?");
+        $stmt->execute([$user_id]);
+        
+        // Set user_id to NULL for audit trail records (keep for history)
         $stmt = $db->prepare("UPDATE fines SET user_id = NULL WHERE user_id = ? AND status = 'paid'");
         $stmt->execute([$user_id]);
         
-        // Delete returned book loans (keep record for audit)
         $stmt = $db->prepare("UPDATE book_loans SET user_id = NULL WHERE user_id = ? AND status = 'returned'");
+        $stmt->execute([$user_id]);
+        
+        $stmt = $db->prepare("UPDATE audit_logs SET user_id = NULL WHERE user_id = ?");
         $stmt->execute([$user_id]);
         
         // Finally delete the user

@@ -86,17 +86,19 @@ try {
     }
     
     $params[] = $user_id;
-    $sql = "UPDATE users SET " . implode(', ', $updates) . " WHERE id = ?";
+    $sql = "UPDATE users SET " . implode(', ', $updates) . ", updated_at = CURRENT_TIMESTAMP WHERE id = ?";
     
     $stmt = $db->prepare($sql);
-    $stmt->execute($params);
+    $result = $stmt->execute($params);
     
-    // Note: audit_logs insert removed due to missing columns in schema
-    
-    echo json_encode([
-        'success' => true,
-        'message' => 'User updated successfully'
-    ]);
+    if ($result) {
+        echo json_encode([
+            'success' => true,
+            'message' => 'User updated successfully'
+        ]);
+    } else {
+        throw new Exception('Failed to update user in database');
+    }
     
 } catch (Exception $e) {
     http_response_code(500);
