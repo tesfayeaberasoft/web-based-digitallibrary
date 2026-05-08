@@ -301,20 +301,28 @@ try {
     $stmt->execute();
     $revenue_breakdown = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Monthly comparison (current vs previous month)
+    // Monthly comparison (current vs previous month) - separate queries to avoid ambiguity
     $stmt = $db->prepare("
         SELECT 
             COUNT(CASE WHEN DATE(loan_date) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) THEN 1 END) as current_month_loans,
             COUNT(CASE WHEN DATE(loan_date) >= DATE_SUB(CURDATE(), INTERVAL 60 DAY) 
-                       AND DATE(loan_date) < DATE_SUB(CURDATE(), INTERVAL 30 DAY) THEN 1 END) as previous_month_loans,
-            COUNT(CASE WHEN DATE(created_at) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) AND role = 'user' THEN 1 END) as current_month_users,
-            COUNT(CASE WHEN DATE(created_at) >= DATE_SUB(CURDATE(), INTERVAL 60 DAY) 
-                       AND DATE(created_at) < DATE_SUB(CURDATE(), INTERVAL 30 DAY) AND role = 'user' THEN 1 END) as previous_month_users
-        FROM book_loans bl
-        RIGHT JOIN users u ON 1=1
+                       AND DATE(loan_date) < DATE_SUB(CURDATE(), INTERVAL 30 DAY) THEN 1 END) as previous_month_loans
+        FROM book_loans
     ");
     $stmt->execute();
-    $monthly_comparison = $stmt->fetch(PDO::FETCH_ASSOC);
+    $loan_comparison = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    $stmt = $db->prepare("
+        SELECT 
+            COUNT(CASE WHEN DATE(u.created_at) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) AND u.role = 'user' THEN 1 END) as current_month_users,
+            COUNT(CASE WHEN DATE(u.created_at) >= DATE_SUB(CURDATE(), INTERVAL 60 DAY) 
+                       AND DATE(u.created_at) < DATE_SUB(CURDATE(), INTERVAL 30 DAY) AND u.role = 'user' THEN 1 END) as previous_month_users
+        FROM users u
+    ");
+    $stmt->execute();
+    $user_comparison = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    $monthly_comparison = array_merge($loan_comparison, $user_comparison);
     
     // Calculate growth percentages (compared to last month)
     $stmt = $db->prepare("
@@ -402,17 +410,17 @@ try {
                 'revenue_breakdown' => $revenue_breakdown,
                 'monthly_comparison' => [
                     'loans' => [
-                        'current' => (int)$monthly_comparison['current_month_loans'],
-                        'previous' => (int)$monthly_comparison['previous_month_loans'],
-                        'change' => $monthly_comparison['previous_month_loans'] > 0 
-                            ? round((($monthly_comparison['current_month_loans'] - $monthly_comparison['previous_month_loans']) / $monthly_comparison['previous_month_loans']) * 100, 1)
+                        'current' => (int)$loan_comparison['current_month_loans'],
+                        'previous' => (int)$loan_comparison['previous_month_loans'],
+                        'change' => $loan_comparison['previous_month_loans'] > 0 
+                            ? round((($loan_comparison['current_month_loans'] - $loan_comparison['previous_month_loans']) / $loan_comparison['previous_month_loans']) * 100, 1)
                             : 0
                     ],
                     'users' => [
-                        'current' => (int)$monthly_comparison['current_month_users'],
-                        'previous' => (int)$monthly_comparison['previous_month_users'],
-                        'change' => $monthly_comparison['previous_month_users'] > 0 
-                            ? round((($monthly_comparison['current_month_users'] - $monthly_comparison['previous_month_users']) / $monthly_comparison['previous_month_users']) * 100, 1)
+                        'current' => (int)$user_comparison['current_month_users'],
+                        'previous' => (int)$user_comparison['previous_month_users'],
+                        'change' => $user_comparison['previous_month_users'] > 0 
+                            ? round((($user_comparison['current_month_users'] - $user_comparison['previous_month_users']) / $user_comparison['previous_month_users']) * 100, 1)
                             : 0
                     ]
                 ]
