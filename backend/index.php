@@ -87,6 +87,23 @@ switch (true) {
         require __DIR__ . '/api/users/stats.php';
         break;
     
+    // Create user route (Admin only)
+    case preg_match('#^/users/create$#', $path) && $request_method === 'POST':
+        require __DIR__ . '/api/users/create.php';
+        break;
+    
+    // Delete user route (Admin only)
+    case preg_match('#^/users/(\d+)$#', $path, $matches) && $request_method === 'DELETE':
+        $_GET['id'] = $matches[1];
+        require __DIR__ . '/api/users/delete.php';
+        break;
+    
+    // Suspend/Activate user route (Admin only)
+    case preg_match('#^/users/(\d+)/suspend$#', $path, $matches) && $request_method === 'PUT':
+        $_GET['id'] = $matches[1];
+        require __DIR__ . '/api/users/suspend.php';
+        break;
+    
     // Librarian stats route
     case preg_match('#^/librarian/stats$#', $path) && $request_method === 'GET':
         require __DIR__ . '/api/librarian/stats.php';
