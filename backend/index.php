@@ -114,6 +114,28 @@ switch (true) {
         require __DIR__ . '/api/admin/stats.php';
         break;
     
+    // Admin settings routes
+    case preg_match('#^/admin/settings$#', $path) && $request_method === 'GET':
+        error_log("Matched: GET /admin/settings");
+        require __DIR__ . '/api/admin/settings.php';
+        break;
+    
+    case preg_match('#^/admin/settings$#', $path) && ($request_method === 'POST' || $request_method === 'PUT'):
+        error_log("Matched: $request_method /admin/settings");
+        require __DIR__ . '/api/admin/settings.php';
+        break;
+    
+    // Admin maintenance routes
+    case preg_match('#^/admin/maintenance$#', $path) && $request_method === 'GET':
+        error_log("Matched: GET /admin/maintenance");
+        require __DIR__ . '/api/admin/maintenance.php';
+        break;
+    
+    case preg_match('#^/admin/maintenance$#', $path) && $request_method === 'POST':
+        error_log("Matched: POST /admin/maintenance");
+        require __DIR__ . '/api/admin/maintenance.php';
+        break;
+    
     // Librarian notifications route
     case preg_match('#^/librarian/notifications$#', $path) && $request_method === 'GET':
         require __DIR__ . '/api/librarian/notifications.php';
@@ -218,6 +240,11 @@ switch (true) {
         require __DIR__ . '/api/loans/bulk-return.php';
         break;
     
+    // Loan policy check routes
+    case preg_match('#^/loans/policy-check$#', $path) && $request_method === 'POST':
+        require __DIR__ . '/api/loans/policy-check.php';
+        break;
+    
     // Reservations routes
     case preg_match('#^/reservations$#', $path) && $request_method === 'GET':
         require __DIR__ . '/api/reservations/list.php';
@@ -253,6 +280,15 @@ switch (true) {
     case preg_match('#^/fines/(\d+)/pay$#', $path, $matches) && $request_method === 'PUT':
         $_GET['id'] = $matches[1];
         require __DIR__ . '/api/fines/pay.php';
+        break;
+    
+    // Fine calculation routes
+    case preg_match('#^/fines/calculate-overdue$#', $path) && $request_method === 'GET':
+        require __DIR__ . '/api/fines/calculate-overdue.php';
+        break;
+    
+    case preg_match('#^/fines/calculate-overdue$#', $path) && $request_method === 'POST':
+        require __DIR__ . '/api/fines/calculate-overdue.php';
         break;
     
     // Notifications routes

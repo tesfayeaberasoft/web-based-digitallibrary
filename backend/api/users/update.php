@@ -46,7 +46,20 @@ try {
     $updates = [];
     $params = [];
     
-    $allowed_fields = ['full_name', 'email', 'phone', 'address', 'employee_id', 'department', 'hire_date', 'shift'];
+    $allowed_fields = ['full_name', 'email', 'phone', 'address'];
+    
+    // Check if librarian-specific columns exist before allowing them
+    try {
+        $stmt = $db->prepare("SHOW COLUMNS FROM users LIKE 'employee_id'");
+        $stmt->execute();
+        $employee_id_exists = $stmt->rowCount() > 0;
+        
+        if ($employee_id_exists) {
+            $allowed_fields = array_merge($allowed_fields, ['employee_id', 'department', 'hire_date', 'shift', 'promotion_reason']);
+        }
+    } catch (Exception $e) {
+        // Columns don't exist, continue with basic fields only
+    }
     
     // Admins can update role and status
     if ($decoded['role'] === 'admin') {

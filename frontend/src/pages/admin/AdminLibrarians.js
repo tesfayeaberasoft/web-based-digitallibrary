@@ -68,7 +68,45 @@ import {
   CheckCircle,
   Cancel,
   AccessTime,
-  Group
+  Group,
+  PersonRemove,
+  // Enhanced icons for better visual appeal
+  SupervisedUserCircle,
+  ManageAccounts,
+  WorkOutline,
+  BusinessCenter,
+  School,
+  LocalLibrary,
+  AdminPanelSettings,
+  Groups,
+  PeopleAlt,
+  PersonPin,
+  WorkspacePremium,
+  Engineering,
+  Support,
+  Handyman,
+  Psychology,
+  EmojiPeople,
+  GroupWork,
+  Diversity3,
+  PersonSearch,
+  PersonOff,
+  Transform,
+  SwapVerticalCircle,
+  TrendingDown,
+  RemoveCircle,
+  ChangeCircle,
+  AccountBox,
+  ContactMail,
+  EventAvailable,
+  VerifiedUser,
+  Apartment,
+  Schedule as ScheduleIcon,
+  AccessTimeFilled,
+  WbSunny,
+  Brightness3,
+  Brightness6,
+  Assessment
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import axios from 'axios';
@@ -90,6 +128,7 @@ const AdminLibrarians = () => {
   const [librarianDetails, setLibrarianDetails] = useState(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [suspendReason, setSuspendReason] = useState('');
+  const [demotionReason, setDemotionReason] = useState('');
 
   useEffect(() => {
     fetchLibrarians();
@@ -194,6 +233,8 @@ const AdminLibrarians = () => {
       fetchLibrarianDetails(librarian.id);
     } else if (dialogType === 'suspend' && librarian) {
       setSuspendReason('');
+    } else if (dialogType === 'demote' && librarian) {
+      setDemotionReason('');
     }
     handleMenuClose();
   };
@@ -205,6 +246,7 @@ const AdminLibrarians = () => {
     setFormData({});
     setLibrarianDetails(null);
     setSuspendReason('');
+    setDemotionReason('');
     setError('');
   };
 
@@ -331,6 +373,49 @@ const AdminLibrarians = () => {
     }
   };
 
+  const handleDemoteLibrarian = async () => {
+    if (!selectedLibrarian) {
+      setError('No librarian selected for demotion');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      console.log('Demoting librarian:', selectedLibrarian.id, 'to user');
+      
+      const demotionData = {
+        role: 'user',
+        // Clear librarian-specific fields
+        department: null,
+        employee_id: null,
+        hire_date: null,
+        shift: null
+      };
+
+      if (demotionReason.trim()) {
+        demotionData.promotion_reason = `Demoted from librarian: ${demotionReason.trim()}`;
+      }
+      
+      const response = await axios.put(`http://localhost:8000/api/users/${selectedLibrarian.id}`, 
+        demotionData, 
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      console.log('Demotion response:', response.data);
+
+      if (response.data.success) {
+        setSuccess(`Librarian ${selectedLibrarian.full_name} has been demoted to user successfully`);
+        handleCloseDialog();
+        fetchLibrarians();
+      } else {
+        setError(response.data.message || 'Failed to demote librarian');
+      }
+    } catch (err) {
+      console.error('Demote librarian error:', err);
+      setError(err.response?.data?.message || `Failed to demote librarian: ${err.message}`);
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'active': return 'success';
@@ -367,7 +452,8 @@ const AdminLibrarians = () => {
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent'
               }}>
-                👨‍💼 Librarian Management
+                <SupervisedUserCircle sx={{ mr: 1, verticalAlign: 'middle', fontSize: 40 }} />
+                Librarian Management
               </Typography>
               <Typography variant="h6" color="text.secondary">
                 Manage library staff, their roles, and permissions
@@ -433,7 +519,7 @@ const AdminLibrarians = () => {
                       </Typography>
                       <Typography variant="body2">Morning Shift</Typography>
                     </Box>
-                    <Schedule sx={{ fontSize: 40, opacity: 0.8 }} />
+                    <AccessTimeFilled sx={{ fontSize: 40, opacity: 0.8 }} />
                   </Box>
                 </CardContent>
               </Card>
@@ -649,9 +735,16 @@ const AdminLibrarians = () => {
           <MenuItem onClick={() => {
             handleOpenDialog('status', selectedLibrarian);
           }}>
-            <Settings sx={{ mr: 2, fontSize: 20 }} />
+            <ChangeCircle sx={{ mr: 2, fontSize: 20 }} />
             Change Status
           </MenuItem>
+          <MenuItem onClick={() => {
+            handleOpenDialog('demote', selectedLibrarian);
+          }} sx={{ color: 'warning.main' }}>
+            <TrendingDown sx={{ mr: 2, fontSize: 20 }} />
+            Demote to User
+          </MenuItem>
+          <Divider />
           <MenuItem onClick={() => {
             const librarianToSuspend = selectedLibrarian;
             handleMenuClose();
@@ -673,7 +766,7 @@ const AdminLibrarians = () => {
         <Dialog open={openDialog === 'add' || openDialog === 'edit'} onClose={handleCloseDialog} maxWidth="md" fullWidth>
           <DialogTitle>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <SupervisorAccount />
+              <ManageAccounts />
               {openDialog === 'add' ? 'Add New Librarian' : 'Edit Librarian'}
             </Box>
           </DialogTitle>
@@ -682,7 +775,8 @@ const AdminLibrarians = () => {
               {/* Personal Information */}
               <Grid item xs={12}>
                 <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 600 }}>
-                  👤 Personal Information
+                  <Person sx={{ mr: 1, verticalAlign: 'middle' }} />
+                  Personal Information
                 </Typography>
               </Grid>
               <Grid item xs={12} md={6}>
@@ -750,7 +844,8 @@ const AdminLibrarians = () => {
               {/* Employment Information */}
               <Grid item xs={12}>
                 <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 600, mt: 2 }}>
-                  💼 Employment Information
+                  <BusinessCenter sx={{ mr: 1, verticalAlign: 'middle' }} />
+                  Employment Information
                 </Typography>
               </Grid>
               <Grid item xs={12} md={6}>
@@ -801,7 +896,8 @@ const AdminLibrarians = () => {
               {/* Account Settings */}
               <Grid item xs={12}>
                 <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 600, mt: 2 }}>
-                  ⚙️ Account Settings
+                  <Settings sx={{ mr: 1, verticalAlign: 'middle' }} />
+                  Account Settings
                 </Typography>
               </Grid>
               <Grid item xs={12}>
@@ -946,7 +1042,8 @@ const AdminLibrarians = () => {
                   <Card variant="outlined">
                     <CardContent>
                       <Typography variant="h6" gutterBottom>
-                        📊 Performance Overview
+                        <Assessment sx={{ mr: 1, verticalAlign: 'middle' }} />
+                        Performance Overview
                       </Typography>
                       <Grid container spacing={2}>
                         <Grid item xs={6}>
@@ -981,7 +1078,7 @@ const AdminLibrarians = () => {
         <Dialog open={openDialog === 'status'} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
           <DialogTitle>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'primary.main' }}>
-              <Settings />
+              <ChangeCircle />
               Change Librarian Status
             </Box>
           </DialogTitle>
@@ -1129,6 +1226,70 @@ const AdminLibrarians = () => {
               }
             }} color="error" variant="contained">
               Delete Librarian
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Demote Confirmation Dialog */}
+        <Dialog open={openDialog === 'demote'} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+          <DialogTitle>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'warning.main' }}>
+              <TrendingDown />
+              Demote Librarian to User
+            </Box>
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText sx={{ mb: 2 }}>
+              Are you sure you want to demote librarian <strong>{selectedLibrarian?.full_name}</strong> to a regular user? 
+              This action will:
+            </DialogContentText>
+            
+            <Box sx={{ mb: 2, pl: 2 }}>
+              <Typography variant="body2" sx={{ mb: 1 }}>
+                • ❌ Remove all librarian privileges and system access
+              </Typography>
+              <Typography variant="body2" sx={{ mb: 1 }}>
+                • 🏢 Clear employment information (department, employee ID, shift)
+              </Typography>
+              <Typography variant="body2" sx={{ mb: 1 }}>
+                • 📚 Revoke access to librarian-only functions
+              </Typography>
+              <Typography variant="body2" sx={{ mb: 1 }}>
+                • 👤 Convert to regular library user account
+              </Typography>
+            </Box>
+
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              <strong>Important:</strong> Make sure to reassign any ongoing responsibilities and notify the staff member before proceeding.
+            </Alert>
+            
+            <TextField
+              fullWidth
+              label="Reason for Demotion"
+              multiline
+              rows={3}
+              value={demotionReason}
+              onChange={(e) => setDemotionReason(e.target.value)}
+              placeholder="Enter the reason for demoting this librarian to user..."
+              helperText="This reason will be recorded for HR purposes and may be included in notifications"
+              required
+            />
+            
+            {error && (
+              <Alert severity="error" sx={{ mt: 2 }}>
+                {error}
+              </Alert>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseDialog}>Cancel</Button>
+            <Button 
+              onClick={handleDemoteLibrarian}
+              color="warning" 
+              variant="contained"
+              disabled={!demotionReason.trim()}
+            >
+              Demote to User
             </Button>
           </DialogActions>
         </Dialog>

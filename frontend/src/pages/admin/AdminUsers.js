@@ -62,7 +62,41 @@ import {
   FilterList,
   PersonAdd,
   Security,
-  AccountCircle
+  AccountCircle,
+  SupervisorAccount,
+  Settings,
+  // Enhanced icons for better visual appeal
+  PeopleAlt,
+  ManageAccounts,
+  PersonSearch,
+  PersonOff,
+  PersonOutline,
+  ContactMail,
+  LocalLibrary,
+  MenuBook,
+  AccountBalance,
+  TrendingUp,
+  Assignment,
+  Schedule,
+  NotificationImportant,
+  VerifiedUser,
+  AdminPanelSettings,
+  WorkOutline,
+  BusinessCenter,
+  School,
+  LibraryBooks,
+  BookOnline,
+  MonetizationOn,
+  EventAvailable,
+  PersonPin,
+  GroupAdd,
+  Upgrade,
+  ChangeCircle,
+  SwapHoriz,
+  Transform,
+  EmojiPeople,
+  Groups,
+  SupervisedUserCircle
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import axios from 'axios';
@@ -84,6 +118,7 @@ const AdminUsers = () => {
   const [userDetails, setUserDetails] = useState(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [suspendReason, setSuspendReason] = useState('');
+  const [promotionReason, setPromotionReason] = useState('');
 
   useEffect(() => {
     fetchUsers();
@@ -174,6 +209,19 @@ const AdminUsers = () => {
       fetchUserDetails(user.id);
     } else if (dialogType === 'suspend' && user) {
       setSuspendReason(''); // Reset reason field
+    } else if (dialogType === 'promote' && user) {
+      setPromotionReason('');
+      setFormData({
+        role: 'librarian',
+        department: '',
+        employee_id: `LIB${String(user.id).padStart(4, '0')}`,
+        hire_date: new Date().toISOString().split('T')[0],
+        shift: 'morning'
+      });
+    } else if (dialogType === 'status' && user) {
+      setFormData({
+        status: user.status
+      });
     }
     handleMenuClose();
   };
@@ -185,6 +233,7 @@ const AdminUsers = () => {
     setFormData({});
     setUserDetails(null);
     setSuspendReason('');
+    setPromotionReason('');
     setError('');
   };
 
@@ -275,6 +324,48 @@ const AdminUsers = () => {
     }
   };
 
+  const handlePromoteUser = async () => {
+    if (!selectedUser) {
+      setError('No user selected for promotion');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      console.log('Promoting user:', selectedUser.id, 'to librarian');
+      
+      const promotionData = {
+        role: 'librarian',
+        department: formData.department || 'General',
+        employee_id: formData.employee_id,
+        hire_date: formData.hire_date,
+        shift: formData.shift || 'morning'
+      };
+
+      if (promotionReason.trim()) {
+        promotionData.promotion_reason = promotionReason.trim();
+      }
+      
+      const response = await axios.put(`http://localhost:8000/api/users/${selectedUser.id}`, 
+        promotionData, 
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      console.log('Promotion response:', response.data);
+
+      if (response.data.success) {
+        setSuccess(`User ${selectedUser.full_name} has been promoted to librarian successfully`);
+        handleCloseDialog();
+        fetchUsers();
+      } else {
+        setError(response.data.message || 'Failed to promote user');
+      }
+    } catch (err) {
+      console.error('Promote user error:', err);
+      setError(err.response?.data?.message || `Failed to promote user: ${err.message}`);
+    }
+  };
+
   const handleDeleteUser = async () => {
     if (!selectedUser) {
       setError('No user selected for deletion');
@@ -341,7 +432,8 @@ const AdminUsers = () => {
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent'
               }}>
-                👥 Library Users Management
+                <Groups sx={{ mr: 1, verticalAlign: 'middle', fontSize: 40 }} />
+                Library Users Management
               </Typography>
               <Typography variant="h6" color="text.secondary">
                 Manage library users, their accounts, and permissions
@@ -349,7 +441,7 @@ const AdminUsers = () => {
             </Box>
             <Button
               variant="contained"
-              startIcon={<PersonAdd />}
+              startIcon={<GroupAdd />}
               onClick={() => handleOpenDialog('add')}
               sx={{ 
                 px: 3,
@@ -574,6 +666,19 @@ const AdminUsers = () => {
           </MenuItem>
           <Divider />
           <MenuItem onClick={() => {
+            handleOpenDialog('status', selectedUser);
+          }}>
+            <ChangeCircle sx={{ mr: 2, fontSize: 20 }} />
+            Change Status
+          </MenuItem>
+          <MenuItem onClick={() => {
+            handleOpenDialog('promote', selectedUser);
+          }} sx={{ color: 'primary.main' }}>
+            <Upgrade sx={{ mr: 2, fontSize: 20 }} />
+            Promote to Librarian
+          </MenuItem>
+          <Divider />
+          <MenuItem onClick={() => {
             const userToSuspend = selectedUser;
             handleMenuClose();
             if (userToSuspend) {
@@ -745,7 +850,7 @@ const AdminUsers = () => {
                   <Card variant="outlined">
                     <CardContent>
                       <Typography variant="h6" gutterBottom>
-                        <BookmarkBorder sx={{ mr: 1, verticalAlign: 'middle' }} />
+                        <LibraryBooks sx={{ mr: 1, verticalAlign: 'middle' }} />
                         Statistics
                       </Typography>
                       <Grid container spacing={2}>
@@ -792,7 +897,8 @@ const AdminUsers = () => {
                     <Card variant="outlined">
                       <CardContent>
                         <Typography variant="h6" gutterBottom>
-                          📚 Currently Borrowed Books
+                          <MenuBook sx={{ mr: 1, verticalAlign: 'middle' }} />
+                          Currently Borrowed Books
                         </Typography>
                         <List>
                           {userDetails.current_books.map((book, index) => (
@@ -895,6 +1001,178 @@ const AdminUsers = () => {
               variant="contained"
             >
               {selectedUser?.status === 'suspended' ? 'Activate User' : 'Suspend User'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Status Change Dialog */}
+        <Dialog open={openDialog === 'status'} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+          <DialogTitle>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'primary.main' }}>
+              <ChangeCircle />
+              Change User Status
+            </Box>
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText sx={{ mb: 2 }}>
+              Change the status of user <strong>{selectedUser?.full_name}</strong>:
+            </DialogContentText>
+            
+            <FormControl fullWidth sx={{ mt: 2 }}>
+              <InputLabel>New Status</InputLabel>
+              <Select
+                value={formData.status || selectedUser?.status || 'active'}
+                label="New Status"
+                onChange={(e) => handleInputChange('status', e.target.value)}
+              >
+                <SelectMenuItem value="active">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <CheckCircle sx={{ color: 'success.main', fontSize: 20 }} />
+                    Active - Full access to library services
+                  </Box>
+                </SelectMenuItem>
+                <SelectMenuItem value="inactive">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Block sx={{ color: 'default', fontSize: 20 }} />
+                    Inactive - Limited access, account on hold
+                  </Box>
+                </SelectMenuItem>
+                <SelectMenuItem value="suspended">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Warning sx={{ color: 'error.main', fontSize: 20 }} />
+                    Suspended - No access, disciplinary action
+                  </Box>
+                </SelectMenuItem>
+              </Select>
+            </FormControl>
+
+            {formData.status === 'suspended' && (
+              <TextField
+                fullWidth
+                label="Reason for Status Change"
+                multiline
+                rows={3}
+                value={suspendReason}
+                onChange={(e) => setSuspendReason(e.target.value)}
+                placeholder="Enter the reason for this status change..."
+                helperText="This reason will be recorded and may be included in notifications"
+                sx={{ mt: 2 }}
+              />
+            )}
+            
+            {error && (
+              <Alert severity="error" sx={{ mt: 2 }}>
+                {error}
+              </Alert>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseDialog}>Cancel</Button>
+            <Button 
+              onClick={() => {
+                if (selectedUser) {
+                  handleUpdateUser();
+                }
+              }} 
+              variant="contained"
+            >
+              Update Status
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Promote User Dialog */}
+        <Dialog open={openDialog === 'promote'} onClose={handleCloseDialog} maxWidth="md" fullWidth>
+          <DialogTitle>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'primary.main' }}>
+              <Upgrade />
+              Promote User to Librarian
+            </Box>
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText sx={{ mb: 2 }}>
+              Promote user <strong>{selectedUser?.full_name}</strong> to librarian role. This will grant them staff privileges and access to librarian functions.
+            </DialogContentText>
+            
+            <Grid container spacing={2} sx={{ mt: 1 }}>
+              <Grid item xs={12}>
+                <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 600 }}>
+                  <BusinessCenter sx={{ mr: 1, verticalAlign: 'middle' }} />
+                  Employment Information
+                </Typography>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Employee ID"
+                  value={formData.employee_id || ''}
+                  onChange={(e) => handleInputChange('employee_id', e.target.value)}
+                  helperText="Unique identifier for the new librarian"
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Department"
+                  value={formData.department || ''}
+                  onChange={(e) => handleInputChange('department', e.target.value)}
+                  placeholder="e.g., Reference, Circulation, Children's"
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Start Date as Librarian"
+                  type="date"
+                  value={formData.hire_date || ''}
+                  onChange={(e) => handleInputChange('hire_date', e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Work Shift</InputLabel>
+                  <Select
+                    value={formData.shift || 'morning'}
+                    label="Work Shift"
+                    onChange={(e) => handleInputChange('shift', e.target.value)}
+                  >
+                    <SelectMenuItem value="morning">Morning (8:00 AM - 4:00 PM)</SelectMenuItem>
+                    <SelectMenuItem value="afternoon">Afternoon (12:00 PM - 8:00 PM)</SelectMenuItem>
+                    <SelectMenuItem value="evening">Evening (4:00 PM - 12:00 AM)</SelectMenuItem>
+                    <SelectMenuItem value="night">Night (10:00 PM - 6:00 AM)</SelectMenuItem>
+                    <SelectMenuItem value="flexible">Flexible Hours</SelectMenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Reason for Promotion (Optional)"
+                  multiline
+                  rows={3}
+                  value={promotionReason}
+                  onChange={(e) => setPromotionReason(e.target.value)}
+                  placeholder="Enter the reason for promoting this user to librarian..."
+                  helperText="This reason will be recorded for HR purposes and may be included in notifications"
+                />
+              </Grid>
+            </Grid>
+            
+            {error && (
+              <Alert severity="error" sx={{ mt: 2 }}>
+                {error}
+              </Alert>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseDialog}>Cancel</Button>
+            <Button 
+              onClick={handlePromoteUser}
+              variant="contained"
+              color="primary"
+            >
+              Promote to Librarian
             </Button>
           </DialogActions>
         </Dialog>
