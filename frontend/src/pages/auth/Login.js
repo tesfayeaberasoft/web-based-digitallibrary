@@ -64,6 +64,9 @@ const Login = () => {
       
       // Redirect based on user role
       switch (result.user.role) {
+        case 'super-admin':
+          navigate('/super-admin');
+          break;
         case 'admin':
           navigate('/admin');
           break;
@@ -85,7 +88,8 @@ const Login = () => {
     const credentials = {
       admin: { email: 'admin@digitallibrary.com', password: 'password' },
       librarian: { email: 'sarah@library.com', password: 'password' },
-      user: { email: 'john.doe@example.com', password: 'password' }
+      user: { email: 'john.doe@example.com', password: 'password' },
+      'super-admin': { email: 'superadmin@digitallibrary.com', password: 'password' }
     };
 
     setFormData(prev => ({
@@ -258,10 +262,22 @@ const Login = () => {
                   endAdornment: (
                     <InputAdornment position="end">
                       <IconButton
-                        onClick={() => setShowPassword(!showPassword)}
+                        onClick={() => {
+                          console.log('Eye button clicked!', showPassword);
+                          setShowPassword(!showPassword);
+                        }}
                         edge="end"
+                        aria-label="toggle password visibility"
+                        size="large"
+                        sx={{
+                          color: '#4a9b8e',
+                          padding: '12px',
+                          '&:hover': {
+                            backgroundColor: 'rgba(74, 155, 142, 0.04)'
+                          }
+                        }}
                       >
-                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                        {showPassword ? <VisibilityOff fontSize="medium" /> : <Visibility fontSize="medium" />}
                       </IconButton>
                     </InputAdornment>
                   ),
@@ -336,6 +352,14 @@ const Login = () => {
                 clickable
                 variant="outlined"
                 size="small"
+              />
+              <Chip
+                label="Super Admin"
+                onClick={() => handleQuickAccess('super-admin')}
+                clickable
+                variant="outlined"
+                size="small"
+                color="error"
               />
             </Box>
           </CardContent>

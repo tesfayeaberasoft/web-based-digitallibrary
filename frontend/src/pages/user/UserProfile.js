@@ -16,7 +16,8 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions
+  DialogActions,
+  InputAdornment
 } from '@mui/material';
 import {
   Person as PersonIcon,
@@ -29,7 +30,9 @@ import {
   CameraAlt as CameraIcon,
   Delete as DeleteIcon,
   Upload as UploadIcon,
-  PhotoCamera as PhotoCameraIcon
+  PhotoCamera as PhotoCameraIcon,
+  Visibility,
+  VisibilityOff
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { useAuth } from '../../contexts/AuthContext';
@@ -62,6 +65,12 @@ const UserProfile = () => {
     current_password: '',
     new_password: '',
     confirm_password: ''
+  });
+
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false
   });
 
   useEffect(() => {
@@ -101,6 +110,13 @@ const UserProfile = () => {
       ...passwordData,
       [e.target.name]: e.target.value
     });
+  };
+
+  const togglePasswordVisibility = (field) => {
+    setShowPasswords(prev => ({
+      ...prev,
+      [field]: !prev[field]
+    }));
   };
 
   const handleEdit = () => {
@@ -182,6 +198,11 @@ const UserProfile = () => {
           current_password: '',
           new_password: '',
           confirm_password: ''
+        });
+        setShowPasswords({
+          current: false,
+          new: false,
+          confirm: false
         });
       }
     } catch (err) {
@@ -507,9 +528,21 @@ const UserProfile = () => {
                       fullWidth
                       label="Current Password"
                       name="current_password"
-                      type="password"
+                      type={showPasswords.current ? 'text' : 'password'}
                       value={passwordData.current_password}
                       onChange={handlePasswordChange}
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              onClick={() => togglePasswordVisibility('current')}
+                              edge="end"
+                            >
+                              {showPasswords.current ? <VisibilityOff /> : <Visibility />}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      }}
                     />
                   </Grid>
 
@@ -518,10 +551,22 @@ const UserProfile = () => {
                       fullWidth
                       label="New Password"
                       name="new_password"
-                      type="password"
+                      type={showPasswords.new ? 'text' : 'password'}
                       value={passwordData.new_password}
                       onChange={handlePasswordChange}
                       helperText="Minimum 6 characters"
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              onClick={() => togglePasswordVisibility('new')}
+                              edge="end"
+                            >
+                              {showPasswords.new ? <VisibilityOff /> : <Visibility />}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      }}
                     />
                   </Grid>
 
@@ -530,9 +575,21 @@ const UserProfile = () => {
                       fullWidth
                       label="Confirm New Password"
                       name="confirm_password"
-                      type="password"
+                      type={showPasswords.confirm ? 'text' : 'password'}
                       value={passwordData.confirm_password}
                       onChange={handlePasswordChange}
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              onClick={() => togglePasswordVisibility('confirm')}
+                              edge="end"
+                            >
+                              {showPasswords.confirm ? <VisibilityOff /> : <Visibility />}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      }}
                     />
                   </Grid>
                 </Grid>
