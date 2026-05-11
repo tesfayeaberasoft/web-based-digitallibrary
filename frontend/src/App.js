@@ -20,6 +20,7 @@ import AdminUsers from './pages/admin/AdminUsers';
 import AdminLibrarians from './pages/admin/AdminLibrarians';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
 import AdminSettings from './pages/admin/AdminSettings';
+import SuperAdminDashboard from './pages/admin/SuperAdminDashboard';
 
 // Librarian Pages
 import LibrarianDashboard from './pages/librarian/LibrarianDashboard';
@@ -129,6 +130,13 @@ function App() {
               <Route path="/admin/settings" element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <AdminSettings />
+                </ProtectedRoute>
+              } />
+
+              {/* Protected Routes - Super Admin */}
+              <Route path="/super-admin" element={
+                <ProtectedRoute allowedRoles={['super-admin']}>
+                  <SuperAdminDashboard />
                 </ProtectedRoute>
               } />
 

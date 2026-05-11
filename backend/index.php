@@ -326,6 +326,17 @@ switch (true) {
         require __DIR__ . '/api/notifications/run-scheduler.php';
         break;
     
+    // Super Admin routes
+    case preg_match('#^/super-admin/dashboard$#', $path) && $request_method === 'GET':
+        error_log("Matched: GET /super-admin/dashboard");
+        require __DIR__ . '/api/super-admin/dashboard.php';
+        break;
+    
+    case preg_match('#^/super-admin/system-management$#', $path) && $request_method === 'POST':
+        error_log("Matched: POST /super-admin/system-management");
+        require __DIR__ . '/api/super-admin/system-management.php';
+        break;
+    
     // Default - API info
     case $path === '/' || $path === '':
         header('Content-Type: application/json');

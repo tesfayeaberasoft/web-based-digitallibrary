@@ -50,6 +50,14 @@ const Sidebar = ({ open = true }) => {
 
   const getMenuItems = () => {
     switch (user?.role) {
+      case 'super-admin':
+        return [
+          { text: 'Super Admin Dashboard', icon: <SupervisorAccount />, path: '/super-admin', color: '#d32f2f' },
+          { text: 'System Overview', icon: <Dashboard />, path: '/super-admin', color: '#d32f2f' },
+          { text: 'User Management', icon: <People />, path: '/admin/users', color: '#d32f2f' },
+          { text: 'System Settings', icon: <Settings />, path: '/admin/settings', color: '#d32f2f' },
+          { text: 'Analytics', icon: <TrendingUp />, path: '/admin/analytics', color: '#d32f2f' },
+        ];
       case 'admin':
         return [
           { text: 'Overview', icon: <Dashboard />, path: '/admin', color: '#4a9b8e' },
