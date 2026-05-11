@@ -262,22 +262,20 @@ const Login = () => {
                   endAdornment: (
                     <InputAdornment position="end">
                       <IconButton
-                        onClick={() => {
-                          console.log('Eye button clicked!', showPassword);
-                          setShowPassword(!showPassword);
-                        }}
+                        onClick={() => setShowPassword(!showPassword)}
                         edge="end"
                         aria-label="toggle password visibility"
-                        size="large"
+                        size="medium"
                         sx={{
-                          color: '#4a9b8e',
-                          padding: '12px',
+                          color: showPassword ? '#4a9b8e' : 'text.secondary',
                           '&:hover': {
-                            backgroundColor: 'rgba(74, 155, 142, 0.04)'
-                          }
+                            color: '#4a9b8e',
+                            backgroundColor: 'rgba(74, 155, 142, 0.08)'
+                          },
+                          transition: 'color 0.2s ease'
                         }}
                       >
-                        {showPassword ? <VisibilityOff fontSize="medium" /> : <Visibility fontSize="medium" />}
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
                     </InputAdornment>
                   ),
