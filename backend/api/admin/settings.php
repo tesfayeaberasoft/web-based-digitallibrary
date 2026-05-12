@@ -29,7 +29,7 @@ try {
             break;
         case 'POST':
         case 'PUT':
-            handleUpdateSettings($db);
+            handleUpdateSettings($db, $decoded);
             break;
         default:
             http_response_code(405);
@@ -76,7 +76,7 @@ function handleGetSettings($db) {
     }
 }
 
-function handleUpdateSettings($db) {
+function handleUpdateSettings($db, $decoded) {
     try {
         $data = json_decode(file_get_contents('php://input'), true);
         
@@ -88,6 +88,12 @@ function handleUpdateSettings($db) {
         
         $category = $data['category'];
         $settings = $data['settings'];
+
+        if ($decoded['role'] === 'admin' && $category !== 'library') {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Admin can only update library info']);
+            return;
+        }
         
         // Create settings table if it doesn't exist
         createSettingsTable($db);

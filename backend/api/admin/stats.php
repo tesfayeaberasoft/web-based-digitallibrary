@@ -12,7 +12,7 @@ try {
     $decoded = requireAuth();
     
     // Only admins can access
-    if ($decoded['role'] !== 'admin') {
+    if (!in_array($decoded['role'], ['admin', 'super-admin'], true)) {
         http_response_code(403);
         echo json_encode(['success' => false, 'message' => 'Admin access required']);
         exit;

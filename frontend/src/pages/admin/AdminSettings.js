@@ -149,6 +149,7 @@ import {
   CalendarToday
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
+import { useAuth } from '../../contexts/AuthContext';
 import axios from 'axios';
 
 const AdminSettings = () => {
@@ -157,6 +158,8 @@ const AdminSettings = () => {
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
   const [openDialog, setOpenDialog] = useState('');
+  const { hasRole } = useAuth();
+  const isSuperAdmin = hasRole('super-admin');
   
   // Library Settings
   const [librarySettings, setLibrarySettings] = useState({
@@ -255,6 +258,8 @@ const AdminSettings = () => {
     cpu: { usage: 23, unit: '%' },
     activeUsers: 142,
     totalBooks: 15847,
+    totalLibrarians: 0,
+    messages: 0,
     activeLoans: 892,
     overdueBooks: 23,
     systemUptime: '15 days, 7 hours',
@@ -278,6 +283,7 @@ const AdminSettings = () => {
 
   useEffect(() => {
     loadSettings();
+    loadOverview();
   }, []);
 
   const loadSettings = async () => {
@@ -302,15 +308,16 @@ const AdminSettings = () => {
           setLibrarySettings(prev => ({
             ...prev,
             ...basicInfo,
-            // Map policy fields to frontend field names
-            maxUserBorrowBooks: policies.max_user_borrow_books || prev.maxUserBorrowBooks,
-            dueFinesPerDay: policies.due_fines_per_day || prev.dueFinesPerDay,
-            maxBookReturnDays: policies.max_book_return_days || prev.maxBookReturnDays
+            ...(isSuperAdmin ? {
+              maxUserBorrowBooks: policies.max_user_borrow_books || prev.maxUserBorrowBooks,
+              dueFinesPerDay: policies.due_fines_per_day || prev.dueFinesPerDay,
+              maxBookReturnDays: policies.max_book_return_days || prev.maxBookReturnDays
+            } : {})
           }));
         }
 
         // Update system settings
-        if (settings.system) {
+        if (isSuperAdmin && settings.system) {
           setSystemSettings(prev => ({
             ...prev,
             ...settings.system
@@ -318,7 +325,7 @@ const AdminSettings = () => {
         }
 
         // Update notification settings
-        if (settings.notifications) {
+        if (isSuperAdmin && settings.notifications) {
           setNotificationSettings(prev => ({
             ...prev,
             ...settings.notifications
@@ -326,7 +333,7 @@ const AdminSettings = () => {
         }
 
         // Update security settings
-        if (settings.security) {
+        if (isSuperAdmin && settings.security) {
           setSecuritySettings(prev => ({
             ...prev,
             ...settings.security
@@ -334,7 +341,7 @@ const AdminSettings = () => {
         }
 
         // Update appearance settings
-        if (settings.appearance) {
+        if (isSuperAdmin && settings.appearance) {
           setAppearanceSettings(prev => ({
             ...prev,
             ...settings.appearance
@@ -348,6 +355,48 @@ const AdminSettings = () => {
       setError('Failed to load settings from server');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadOverview = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const [statsResponse, notificationsResponse] = await Promise.all([
+        axios.get('http://localhost:8000/api/admin/stats', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }),
+        axios.get('http://localhost:8000/api/notifications?limit=1', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+      ]);
+
+      if (statsResponse.data?.success && statsResponse.data?.stats) {
+        const overview = statsResponse.data.stats.overview || {};
+        const byRole = Array.isArray(statsResponse.data.stats.users_by_role) ? statsResponse.data.stats.users_by_role : [];
+        const librarian = byRole.find((r) => String(r.role).toLowerCase() === 'librarian');
+
+        setSystemStatus((prev) => ({
+          ...prev,
+          activeUsers: overview.total_users ?? prev.activeUsers,
+          totalBooks: overview.total_books ?? prev.totalBooks,
+          totalLibrarians: librarian ? Number(librarian.count) : prev.totalLibrarians
+        }));
+      }
+
+      if (notificationsResponse.data?.success) {
+        setSystemStatus((prev) => ({
+          ...prev,
+          messages: notificationsResponse.data.unread_count ?? prev.messages
+        }));
+      }
+    } catch (err) {
+      console.error('Failed to load overview:', err);
     }
   };
 
@@ -426,6 +475,26 @@ const AdminSettings = () => {
           // Split library settings into basic info and policies
           const { maxUserBorrowBooks, dueFinesPerDay, maxBookReturnDays, ...basicLibraryInfo } = librarySettings;
           
+          if (!isSuperAdmin) {
+            const response = await axios.post('http://localhost:8000/api/admin/settings', {
+              category: 'library',
+              settings: basicLibraryInfo
+            }, {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            });
+
+            if (response.data.success) {
+              setSuccess('Library info saved successfully!');
+              await loadSettings();
+            } else {
+              throw new Error('Failed to save library info');
+            }
+            return;
+          }
+
           // Save basic library info
           const libraryInfoResponse = await axios.post('http://localhost:8000/api/admin/settings', {
             category: 'library',
@@ -672,56 +741,59 @@ const AdminSettings = () => {
         />
       </Grid>
 
-      {/* Library Policy Settings */}
-      <Grid item xs={12}>
-        <Divider sx={{ my: 2 }} />
-        <Typography variant="h6" fontWeight={600} gutterBottom>
-          <LibraryBooks sx={{ mr: 1, verticalAlign: 'middle', color: 'primary.main' }} />
-          Library Policies
-        </Typography>
-      </Grid>
-      <Grid item xs={12} md={4}>
-        <TextField
-          fullWidth
-          label="Maximum Books Per User"
-          type="number"
-          value={librarySettings.maxUserBorrowBooks}
-          onChange={(e) => handleLibrarySettingChange('maxUserBorrowBooks', parseInt(e.target.value) || 0)}
-          InputProps={{
-            startAdornment: <MenuBook sx={{ mr: 1, color: 'text.secondary' }} />,
-            inputProps: { min: 1, max: 20 }
-          }}
-          helperText="Maximum number of books a user can borrow at once"
-        />
-      </Grid>
-      <Grid item xs={12} md={4}>
-        <TextField
-          fullWidth
-          label="Fine Per Day (USD)"
-          type="number"
-          inputProps={{ step: '0.01', min: '0' }}
-          value={librarySettings.dueFinesPerDay}
-          onChange={(e) => handleLibrarySettingChange('dueFinesPerDay', parseFloat(e.target.value) || 0)}
-          InputProps={{
-            startAdornment: <AttachMoney sx={{ mr: 1, color: 'text.secondary' }} />
-          }}
-          helperText="Daily fine amount for overdue books"
-        />
-      </Grid>
-      <Grid item xs={12} md={4}>
-        <TextField
-          fullWidth
-          label="Maximum Return Days"
-          type="number"
-          value={librarySettings.maxBookReturnDays}
-          onChange={(e) => handleLibrarySettingChange('maxBookReturnDays', parseInt(e.target.value) || 0)}
-          InputProps={{
-            startAdornment: <CalendarToday sx={{ mr: 1, color: 'text.secondary' }} />,
-            inputProps: { min: 1, max: 365 }
-          }}
-          helperText="Maximum days allowed for book return"
-        />
-      </Grid>
+      {isSuperAdmin && (
+        <>
+          <Grid item xs={12}>
+            <Divider sx={{ my: 2 }} />
+            <Typography variant="h6" fontWeight={600} gutterBottom>
+              <LibraryBooks sx={{ mr: 1, verticalAlign: 'middle', color: 'primary.main' }} />
+              Library Policies
+            </Typography>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <TextField
+              fullWidth
+              label="Maximum Books Per User"
+              type="number"
+              value={librarySettings.maxUserBorrowBooks}
+              onChange={(e) => handleLibrarySettingChange('maxUserBorrowBooks', parseInt(e.target.value) || 0)}
+              InputProps={{
+                startAdornment: <MenuBook sx={{ mr: 1, color: 'text.secondary' }} />,
+                inputProps: { min: 1, max: 20 }
+              }}
+              helperText="Maximum number of books a user can borrow at once"
+            />
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <TextField
+              fullWidth
+              label="Fine Per Day (USD)"
+              type="number"
+              inputProps={{ step: '0.01', min: '0' }}
+              value={librarySettings.dueFinesPerDay}
+              onChange={(e) => handleLibrarySettingChange('dueFinesPerDay', parseFloat(e.target.value) || 0)}
+              InputProps={{
+                startAdornment: <AttachMoney sx={{ mr: 1, color: 'text.secondary' }} />
+              }}
+              helperText="Daily fine amount for overdue books"
+            />
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <TextField
+              fullWidth
+              label="Maximum Return Days"
+              type="number"
+              value={librarySettings.maxBookReturnDays}
+              onChange={(e) => handleLibrarySettingChange('maxBookReturnDays', parseInt(e.target.value) || 0)}
+              InputProps={{
+                startAdornment: <CalendarToday sx={{ mr: 1, color: 'text.secondary' }} />,
+                inputProps: { min: 1, max: 365 }
+              }}
+              helperText="Maximum days allowed for book return"
+            />
+          </Grid>
+        </>
+      )}
 
       {/* Operating Hours */}
       <Grid item xs={12}>
@@ -1933,10 +2005,10 @@ const AdminSettings = () => {
               WebkitTextFillColor: 'transparent'
             }}>
               <Settings sx={{ mr: 1, verticalAlign: 'middle', fontSize: 40 }} />
-              System Settings
+              {isSuperAdmin ? 'System Settings' : 'Library Info'}
             </Typography>
             <Typography variant="h6" color="text.secondary">
-              Configure and manage all system settings and preferences
+              {isSuperAdmin ? 'Configure and manage all system settings and preferences' : 'Update library information and view system summary'}
             </Typography>
           </Box>
           <Chip 
@@ -1949,95 +2021,168 @@ const AdminSettings = () => {
 
         {/* System Status Overview */}
         <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid item xs={12} md={3}>
-            <Card sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box>
-                    <Typography variant="h4" fontWeight={700}>
-                      {systemStatus.activeUsers}
-                    </Typography>
-                    <Typography variant="body2">Active Users</Typography>
-                  </Box>
-                  <Group sx={{ fontSize: 40, opacity: 0.8 }} />
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <Card sx={{ background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', color: 'white' }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box>
-                    <Typography variant="h4" fontWeight={700}>
-                      {systemStatus.totalBooks.toLocaleString()}
-                    </Typography>
-                    <Typography variant="body2">Total Books</Typography>
-                  </Box>
-                  <Book sx={{ fontSize: 40, opacity: 0.8 }} />
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <Card sx={{ background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', color: 'white' }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box>
-                    <Typography variant="h4" fontWeight={700}>
-                      {systemStatus.storage.used}/{systemStatus.storage.total} GB
-                    </Typography>
-                    <Typography variant="body2">Storage Used</Typography>
-                  </Box>
-                  <Storage sx={{ fontSize: 40, opacity: 0.8 }} />
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <Card sx={{ background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', color: 'white' }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box>
-                    <Typography variant="h4" fontWeight={700}>
-                      {systemStatus.systemUptime}
-                    </Typography>
-                    <Typography variant="body2">System Uptime</Typography>
-                  </Box>
-                  <AccessTime sx={{ fontSize: 40, opacity: 0.8 }} />
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+          {isSuperAdmin ? (
+            <>
+              <Grid item xs={12} md={3}>
+                <Card sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Box>
+                        <Typography variant="h4" fontWeight={700}>
+                          {systemStatus.activeUsers}
+                        </Typography>
+                        <Typography variant="body2">Active Users</Typography>
+                      </Box>
+                      <Group sx={{ fontSize: 40, opacity: 0.8 }} />
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <Card sx={{ background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', color: 'white' }}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Box>
+                        <Typography variant="h4" fontWeight={700}>
+                          {systemStatus.totalBooks.toLocaleString()}
+                        </Typography>
+                        <Typography variant="body2">Total Books</Typography>
+                      </Box>
+                      <Book sx={{ fontSize: 40, opacity: 0.8 }} />
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <Card sx={{ background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', color: 'white' }}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Box>
+                        <Typography variant="h4" fontWeight={700}>
+                          {systemStatus.storage.used}/{systemStatus.storage.total} GB
+                        </Typography>
+                        <Typography variant="body2">Storage Used</Typography>
+                      </Box>
+                      <Storage sx={{ fontSize: 40, opacity: 0.8 }} />
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <Card sx={{ background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', color: 'white' }}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Box>
+                        <Typography variant="h4" fontWeight={700}>
+                          {systemStatus.systemUptime}
+                        </Typography>
+                        <Typography variant="body2">System Uptime</Typography>
+                      </Box>
+                      <AccessTime sx={{ fontSize: 40, opacity: 0.8 }} />
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            </>
+          ) : (
+            <>
+              <Grid item xs={12} md={3}>
+                <Card sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Box>
+                        <Typography variant="h4" fontWeight={700}>
+                          {systemStatus.activeUsers}
+                        </Typography>
+                        <Typography variant="body2">Active Users</Typography>
+                      </Box>
+                      <Group sx={{ fontSize: 40, opacity: 0.8 }} />
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <Card sx={{ background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', color: 'white' }}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Box>
+                        <Typography variant="h4" fontWeight={700}>
+                          {systemStatus.totalBooks.toLocaleString()}
+                        </Typography>
+                        <Typography variant="body2">Total Books</Typography>
+                      </Box>
+                      <Book sx={{ fontSize: 40, opacity: 0.8 }} />
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <Card sx={{ background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', color: 'white' }}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Box>
+                        <Typography variant="h4" fontWeight={700}>
+                          {systemStatus.totalLibrarians}
+                        </Typography>
+                        <Typography variant="body2">Total Librarians</Typography>
+                      </Box>
+                      <PeopleAlt sx={{ fontSize: 40, opacity: 0.8 }} />
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <Card sx={{ background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', color: 'white' }}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Box>
+                        <Typography variant="h4" fontWeight={700}>
+                          {systemStatus.messages}
+                        </Typography>
+                        <Typography variant="body2">Messages</Typography>
+                      </Box>
+                      <Notifications sx={{ fontSize: 40, opacity: 0.8 }} />
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            </>
+          )}
         </Grid>
 
-        {/* Main Settings Tabs */}
-        <Paper sx={{ width: '100%' }}>
-          <Tabs
-            value={activeTab}
-            onChange={handleTabChange}
-            variant="scrollable"
-            scrollButtons="auto"
-            sx={{ borderBottom: 1, borderColor: 'divider' }}
-          >
-            <Tab icon={<Business />} label="Library Info" />
-            <Tab icon={<Settings />} label="System" />
-            <Tab icon={<Notifications />} label="Notifications" />
-            <Tab icon={<Security />} label="Security" />
-            <Tab icon={<ColorLens />} label="Appearance" />
-            <Tab icon={<Tune />} label="Maintenance" />
-          </Tabs>
+        {isSuperAdmin ? (
+          <Paper sx={{ width: '100%' }}>
+            <Tabs
+              value={activeTab}
+              onChange={handleTabChange}
+              variant="scrollable"
+              scrollButtons="auto"
+              sx={{ borderBottom: 1, borderColor: 'divider' }}
+            >
+              <Tab icon={<Business />} label="Library Info" />
+              <Tab icon={<Settings />} label="System" />
+              <Tab icon={<Notifications />} label="Notifications" />
+              <Tab icon={<Security />} label="Security" />
+              <Tab icon={<ColorLens />} label="Appearance" />
+              <Tab icon={<Tune />} label="Maintenance" />
+            </Tabs>
 
-          {/* Tab Content */}
-          <Box sx={{ p: 3 }}>
-            {activeTab === 0 && renderLibrarySettings()}
-            {activeTab === 1 && renderSystemSettings()}
-            {activeTab === 2 && renderNotificationSettings()}
-            {activeTab === 3 && renderSecuritySettings()}
-            {activeTab === 4 && renderAppearanceSettings()}
-            {activeTab === 5 && renderMaintenanceSettings()}
-          </Box>
-        </Paper>
+            <Box sx={{ p: 3 }}>
+              {activeTab === 0 && renderLibrarySettings()}
+              {activeTab === 1 && renderSystemSettings()}
+              {activeTab === 2 && renderNotificationSettings()}
+              {activeTab === 3 && renderSecuritySettings()}
+              {activeTab === 4 && renderAppearanceSettings()}
+              {activeTab === 5 && renderMaintenanceSettings()}
+            </Box>
+          </Paper>
+        ) : (
+          <Paper sx={{ width: '100%' }}>
+            <Box sx={{ p: 3 }}>
+              {renderLibrarySettings()}
+            </Box>
+          </Paper>
+        )}
 
         {/* Success/Error Snackbar */}
         <Snackbar
