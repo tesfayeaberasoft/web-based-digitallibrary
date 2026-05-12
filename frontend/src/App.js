@@ -113,7 +113,7 @@ function App() {
                 </ProtectedRoute>
               } />
               <Route path="/admin/users" element={
-                <ProtectedRoute allowedRoles={['admin']}>
+                <ProtectedRoute allowedRoles={['admin', 'super-admin']}>
                   <AdminUsers />
                 </ProtectedRoute>
               } />
@@ -123,12 +123,12 @@ function App() {
                 </ProtectedRoute>
               } />
               <Route path="/admin/analytics" element={
-                <ProtectedRoute allowedRoles={['admin']}>
+                <ProtectedRoute allowedRoles={['admin', 'super-admin']}>
                   <AdminAnalytics />
                 </ProtectedRoute>
               } />
               <Route path="/admin/settings" element={
-                <ProtectedRoute allowedRoles={['admin']}>
+                <ProtectedRoute allowedRoles={['admin', 'super-admin']}>
                   <AdminSettings />
                 </ProtectedRoute>
               } />
@@ -194,7 +194,7 @@ function App() {
                 </ProtectedRoute>
               } />
               <Route path="/profile" element={
-                <ProtectedRoute allowedRoles={['user', 'librarian', 'admin']}>
+                <ProtectedRoute allowedRoles={['user', 'librarian', 'admin', 'super-admin']}>
                   <UserProfile />
                 </ProtectedRoute>
               } />
@@ -221,7 +221,7 @@ function App() {
 
               {/* Shared Protected Routes */}
               <Route path="/notifications" element={
-                <ProtectedRoute allowedRoles={['user', 'librarian', 'admin']}>
+                <ProtectedRoute allowedRoles={['user', 'librarian', 'admin', 'super-admin']}>
                   <NotificationsPage />
                 </ProtectedRoute>
               } />

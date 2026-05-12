@@ -48,6 +48,9 @@ const Navbar = ({ title = "Digital Library", showUserMenu = true }) => {
 
   const handleDashboard = () => {
     switch (user?.role) {
+      case 'super-admin':
+        navigate('/super-admin');
+        break;
       case 'admin':
         navigate('/admin');
         break;
@@ -75,7 +78,8 @@ const Navbar = ({ title = "Digital Library", showUserMenu = true }) => {
         {showUserMenu && user && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Typography variant="body2" sx={{ mr: 2, display: { xs: 'none', sm: 'block' } }}>
-              {user.role === 'admin' ? 'System Administrator' : 
+              {user.role === 'super-admin' ? 'Super Administrator' :
+               user.role === 'admin' ? 'System Administrator' : 
                user.role === 'librarian' ? user.full_name : 
                `Welcome, ${user.full_name}`}
             </Typography>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth, normalizeUserRole } from '../contexts/AuthContext';
 import { CircularProgress, Box } from '@mui/material';
 
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
@@ -27,7 +27,9 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
 
   if (allowedRoles.length > 0 && !hasRole(allowedRoles)) {
     // User doesn't have required role, redirect to appropriate dashboard
-    switch (user.role) {
+    switch (normalizeUserRole(user.role)) {
+      case 'super-admin':
+        return <Navigate to="/super-admin" replace />;
       case 'admin':
         return <Navigate to="/admin" replace />;
       case 'librarian':

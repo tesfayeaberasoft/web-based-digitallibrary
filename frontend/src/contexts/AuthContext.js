@@ -3,6 +3,15 @@ import axios from 'axios';
 
 const AuthContext = createContext();
 
+/** Canonical role strings for routing — tolerant of legacy/alternate spellings */
+export function normalizeUserRole(role) {
+  if (role == null || role === '') return role;
+  const raw = String(role).trim();
+  const compact = raw.toLowerCase().replace(/[\s_-]+/g, '');
+  if (compact === 'superadmin') return 'super-admin';
+  return raw.toLowerCase();
+}
+
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -39,8 +48,17 @@ const AuthProvider = ({ children }) => {
           });
           
           if (response.data.success) {
+            const parsed = JSON.parse(storedUser);
+            const d = response.data.data || {};
+            const merged = {
+              ...parsed,
+              ...(d.email && { email: d.email }),
+              ...(d.role != null && d.role !== '' && { role: d.role }),
+            };
+            merged.role = normalizeUserRole(merged.role);
+            localStorage.setItem('user', JSON.stringify(merged));
             setToken(storedToken);
-            setUser(JSON.parse(storedUser));
+            setUser(merged);
           } else {
             // Token is invalid, clear storage
             localStorage.removeItem('token');
@@ -67,16 +85,17 @@ const AuthProvider = ({ children }) => {
 
       if (response.data.success) {
         const { token: newToken, user: userData } = response.data.data;
+        const normalized = { ...userData, role: normalizeUserRole(userData.role) };
         
         // Store in localStorage
         localStorage.setItem('token', newToken);
-        localStorage.setItem('user', JSON.stringify(userData));
+        localStorage.setItem('user', JSON.stringify(normalized));
         
         // Update state
         setToken(newToken);
-        setUser(userData);
+        setUser(normalized);
         
-        return { success: true, user: userData };
+        return { success: true, user: normalized };
       } else {
         return { success: false, message: response.data.message };
       }
@@ -119,8 +138,9 @@ const AuthProvider = ({ children }) => {
   };
 
   const updateUser = (updatedUser) => {
-    setUser(updatedUser);
-    localStorage.setItem('user', JSON.stringify(updatedUser));
+    const next = { ...updatedUser, role: normalizeUserRole(updatedUser.role) };
+    setUser(next);
+    localStorage.setItem('user', JSON.stringify(next));
   };
 
   const isAuthenticated = () => {
@@ -129,10 +149,11 @@ const AuthProvider = ({ children }) => {
 
   const hasRole = (roles) => {
     if (!user) return false;
+    const myRole = normalizeUserRole(user.role);
     if (Array.isArray(roles)) {
-      return roles.includes(user.role);
+      return roles.some((r) => normalizeUserRole(r) === myRole);
     }
-    return user.role === roles;
+    return normalizeUserRole(roles) === myRole;
   };
 
   const value = {
