@@ -97,12 +97,25 @@ const AuthProvider = ({ children }) => {
         
         return { success: true, user: normalized };
       } else {
-        return { success: false, message: response.data.message };
+        const d = response.data || {};
+        return {
+          success: false,
+          message: d.message,
+          userLockout: d.user_lockout,
+          remainingAttempts: d.remaining_attempts,
+          maxAttempts: d.max_attempts,
+          accountSuspended: d.account_suspended,
+        };
       }
     } catch (error) {
-      return { 
-        success: false, 
-        message: error.response?.data?.message || 'Login failed. Please try again.' 
+      const d = error.response?.data || {};
+      return {
+        success: false,
+        message: d.message || 'Login failed. Please try again.',
+        userLockout: d.user_lockout,
+        remainingAttempts: d.remaining_attempts,
+        maxAttempts: d.max_attempts,
+        accountSuspended: d.account_suspended,
       };
     }
   };

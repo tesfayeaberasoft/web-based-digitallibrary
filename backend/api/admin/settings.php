@@ -19,6 +19,7 @@ try {
     }
     
     require_once __DIR__ . '/../../config/database.php';
+    require_once __DIR__ . '/../../utils/settings-helper.php';
     $db = Database::getInstance()->getConnection();
     
     $method = $_SERVER['REQUEST_METHOD'];
@@ -43,34 +44,40 @@ try {
 
 function handleGetSettings($db) {
     try {
-        // Get all settings from database
-        $stmt = $db->prepare("SELECT * FROM system_settings ORDER BY category, setting_key");
+        createSettingsTable($db);
+
+        $stmt = $db->prepare("SELECT * FROM system_settings WHERE category != 'super_admin' ORDER BY category, setting_key");
         $stmt->execute();
-        $settings = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        // Organize settings by category
-        $organized = [];
-        foreach ($settings as $setting) {
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $organized = getDefaultSettings();
+
+        foreach ($rows as $setting) {
             $category = $setting['category'];
             $key = $setting['setting_key'];
-            $value = json_decode($setting['setting_value'], true) ?? $setting['setting_value'];
-            
+            $value = json_decode($setting['setting_value'], true);
+            if ($value === null && $setting['setting_value'] !== 'null') {
+                $value = $setting['setting_value'];
+            }
+
             if (!isset($organized[$category])) {
                 $organized[$category] = [];
             }
-            $organized[$category][$key] = $value;
+
+            if (is_array($value) && isset($organized[$category][$key]) && is_array($organized[$category][$key])) {
+                $organized[$category][$key] = array_merge($organized[$category][$key], $value);
+            } else {
+                $organized[$category][$key] = $value;
+            }
         }
-        
-        // If no settings exist, return defaults
-        if (empty($organized)) {
-            $organized = getDefaultSettings();
-        }
-        
+
+        $organized = normalizeSettingsResponse($organized);
+
         echo json_encode([
             'success' => true,
             'settings' => $organized
         ]);
-        
+
     } catch (Exception $e) {
         throw new Exception('Failed to retrieve settings: ' . $e->getMessage());
     }
@@ -87,29 +94,21 @@ function handleUpdateSettings($db, $decoded) {
         }
         
         $category = $data['category'];
-        $settings = $data['settings'];
+        [$settings, $policyRedirects] = prepareSettingsForSave($category, $data['settings']);
 
-        if ($decoded['role'] === 'admin' && $category !== 'library') {
+        if ($decoded['role'] === 'admin' && !in_array($category, ['library', 'library_policies'], true)) {
             http_response_code(403);
-            echo json_encode(['success' => false, 'message' => 'Admin can only update library info']);
+            echo json_encode(['success' => false, 'message' => 'Admin can only update library info and library policies']);
             return;
         }
         
-        // Create settings table if it doesn't exist
         createSettingsTable($db);
-        
-        // Update each setting
-        $stmt = $db->prepare("
-            INSERT INTO system_settings (category, setting_key, setting_value, updated_at) 
-            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-            ON DUPLICATE KEY UPDATE 
-            setting_value = VALUES(setting_value), 
-            updated_at = CURRENT_TIMESTAMP
-        ");
-        
+
+        foreach ($policyRedirects as $key => $value) {
+            upsertSystemSetting($db, 'library_policies', $key, $value);
+        }
         foreach ($settings as $key => $value) {
-            $jsonValue = is_array($value) || is_object($value) ? json_encode($value) : $value;
-            $stmt->execute([$category, $key, $jsonValue]);
+            upsertSystemSetting($db, $category, $key, $value);
         }
         
         echo json_encode([
@@ -147,10 +146,6 @@ function getDefaultSettings() {
             'phone' => '+1 (555) 123-4567',
             'email' => 'info@digitallibrary.com',
             'website' => 'https://digitallibrary.com',
-            // New Library Policy Fields
-            'maxUserBorrowBooks' => 5,
-            'dueFinesPerDay' => 0.50,
-            'maxBookReturnDays' => 14,
             'operatingHours' => [
                 'monday' => ['open' => '08:00', 'close' => '20:00', 'closed' => false],
                 'tuesday' => ['open' => '08:00', 'close' => '20:00', 'closed' => false],
@@ -167,10 +162,16 @@ function getDefaultSettings() {
                 'linkedin' => 'https://linkedin.com/company/digitallibrary'
             ]
         ],
+        'library_policies' => [
+            'max_user_borrow_books' => 5,
+            'due_fines_per_day' => 0.50,
+            'max_book_return_days' => 14,
+            'max_reservations_per_user' => 3,
+            'grace_period_days' => 3,
+            'renewal_limit' => 2,
+            'reservation_hold_days' => 7
+        ],
         'system' => [
-            'maxBorrowDays' => 30,
-            'finePerDay' => 0.50,
-            'maxBooksPerUser' => 5,
             'maxReservationsPerUser' => 3,
             'reservationHoldDays' => 7,
             'renewalLimit' => 2,
@@ -233,5 +234,108 @@ function getDefaultSettings() {
             'animationsEnabled' => true
         ]
     ];
+}
+
+/** Policy fields stored only under library_policies (mirrored in API response for legacy UI). */
+function policyMirrorMap() {
+    return [
+        'maxBorrowDays' => 'max_book_return_days',
+        'finePerDay' => 'due_fines_per_day',
+        'maxBooksPerUser' => 'max_user_borrow_books',
+        'maxReservationsPerUser' => 'max_reservations_per_user',
+        'gracePeriodDays' => 'grace_period_days',
+        'renewalLimit' => 'renewal_limit',
+        'reservationHoldDays' => 'reservation_hold_days',
+    ];
+}
+
+function normalizeSettingsResponse(array $organized) {
+    if (isset($organized['library'])) {
+        $organized['library'] = normalizeLibrarySettingsOnRead($organized['library']);
+        foreach (['maxUserBorrowBooks', 'dueFinesPerDay', 'maxBookReturnDays'] as $legacy) {
+            unset($organized['library'][$legacy]);
+        }
+    }
+
+    if (!isset($organized['library_policies'])) {
+        $organized['library_policies'] = getDefaultSettings()['library_policies'];
+    }
+
+    foreach (policyMirrorMap() as $camel => $snake) {
+        if (isset($organized['library_policies'][$snake])) {
+            $organized['system'][$camel] = $organized['library_policies'][$snake];
+        }
+    }
+
+    if (isset($organized['appearance'])) {
+        $organized['appearance'] = normalizeAppearanceSettings($organized['appearance']);
+        if (!empty($organized['appearance']['logo'])) {
+            $organized['appearance']['logo'] = resolveAppearanceAssetUrl($organized['appearance']['logo']);
+        }
+        if (!empty($organized['appearance']['favicon'])) {
+            $organized['appearance']['favicon'] = resolveAppearanceAssetUrl($organized['appearance']['favicon']);
+        }
+    } else {
+        $organized['appearance'] = getDefaultAppearanceSettings();
+    }
+
+    return $organized;
+}
+
+function prepareSettingsForSave($category, array $settings) {
+    $policyRedirects = [];
+
+    if ($category === 'library') {
+        if (isset($settings['library_name']) && empty($settings['libraryName'])) {
+            $settings['libraryName'] = $settings['library_name'];
+        }
+        unset($settings['library_name']);
+        return [array_intersect_key($settings, array_flip(LIBRARY_UI_KEYS)), []];
+    }
+
+    if ($category === 'system') {
+        foreach (policyMirrorMap() as $camel => $snake) {
+            if (array_key_exists($camel, $settings)) {
+                $policyRedirects[$snake] = $settings[$camel];
+                unset($settings[$camel]);
+            }
+        }
+    }
+
+    if ($category === 'library_policies') {
+        return [array_intersect_key($settings, array_flip(LIBRARY_POLICY_KEYS)), []];
+    }
+
+    if ($category === 'appearance') {
+        return [prepareAppearanceForSave($settings), []];
+    }
+
+    return [$settings, $policyRedirects];
+}
+
+function upsertSystemSetting($db, $category, $key, $value) {
+    foreach (DEPRECATED_SETTING_KEYS as [$depCat, $depKey]) {
+        if ($depCat === $category && $depKey === $key) {
+            return;
+        }
+    }
+
+    $jsonValue = is_array($value) || is_object($value) ? json_encode($value) : (string) $value;
+
+    $stmt = $db->prepare('SELECT id FROM system_settings WHERE category = ? AND setting_key = ? LIMIT 1');
+    $stmt->execute([$category, $key]);
+    $existing = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($existing) {
+        $stmt = $db->prepare('UPDATE system_settings SET setting_value = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
+        $stmt->execute([$jsonValue, $existing['id']]);
+        return;
+    }
+
+    $stmt = $db->prepare('
+        INSERT INTO system_settings (category, setting_key, setting_value, updated_at)
+        VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+    ');
+    $stmt->execute([$category, $key, $jsonValue]);
 }
 ?>

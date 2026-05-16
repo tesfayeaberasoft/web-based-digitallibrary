@@ -45,6 +45,10 @@ switch (true) {
         error_log("Matched: POST /auth/login");
         require __DIR__ . '/api/auth/login.php';
         break;
+
+    case preg_match('#^/auth/login-policy$#', $path) && $request_method === 'GET':
+        require __DIR__ . '/api/auth/login-policy.php';
+        break;
     
     case preg_match('#^/auth/register$#', $path) && $request_method === 'POST':
         error_log("Matched: POST /auth/register");
@@ -123,6 +127,14 @@ switch (true) {
     case preg_match('#^/admin/settings$#', $path) && ($request_method === 'POST' || $request_method === 'PUT'):
         error_log("Matched: $request_method /admin/settings");
         require __DIR__ . '/api/admin/settings.php';
+        break;
+
+    case preg_match('#^/admin/appearance-upload$#', $path) && $request_method === 'POST':
+        require __DIR__ . '/api/admin/appearance-upload.php';
+        break;
+
+    case preg_match('#^/settings/appearance$#', $path) && $request_method === 'GET':
+        require __DIR__ . '/api/settings/appearance.php';
         break;
     
     // Admin maintenance routes
@@ -332,9 +344,20 @@ switch (true) {
         require __DIR__ . '/api/super-admin/dashboard.php';
         break;
     
-    case preg_match('#^/super-admin/system-management$#', $path) && $request_method === 'POST':
-        error_log("Matched: POST /super-admin/system-management");
+    case preg_match('#^/super-admin/system-management$#', $path) && in_array($request_method, ['GET', 'POST', 'PUT'], true):
         require __DIR__ . '/api/super-admin/system-management.php';
+        break;
+
+    case preg_match('#^/super-admin/download$#', $path) && $request_method === 'GET':
+        require __DIR__ . '/api/super-admin/download.php';
+        break;
+
+    case preg_match('#^/super-admin/security$#', $path) && in_array($request_method, ['GET', 'POST'], true):
+        require __DIR__ . '/api/super-admin/security.php';
+        break;
+
+    case preg_match('#^/super-admin/analytics$#', $path) && $request_method === 'GET':
+        require __DIR__ . '/api/super-admin/analytics.php';
         break;
     
     // Default - API info

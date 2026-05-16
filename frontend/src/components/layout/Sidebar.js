@@ -35,7 +35,9 @@ import {
   Logout,
   QrCodeScanner,
   LibraryBooks,
-  Queue
+  Queue,
+  AdminPanelSettings,
+  Shield
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -54,9 +56,12 @@ const Sidebar = ({ open = true }) => {
         return [
           { text: 'Super Admin Dashboard', icon: <SupervisorAccount />, path: '/super-admin', color: '#d32f2f' },
           { text: 'System Overview', icon: <Dashboard />, path: '/super-admin', color: '#d32f2f' },
+          { text: 'Admin Management', icon: <AdminPanelSettings />, path: '/super-admin/admins', color: '#d32f2f' },
           { text: 'User Management', icon: <People />, path: '/admin/users', color: '#d32f2f' },
-          { text: 'System Settings', icon: <Settings />, path: '/admin/settings', color: '#d32f2f' },
-          { text: 'Analytics', icon: <TrendingUp />, path: '/admin/analytics', color: '#d32f2f' },
+          { text: 'Librarian Management', icon: <SupervisorAccount />, path: '/super-admin/librarians', color: '#d32f2f' },
+          { text: 'System Settings', icon: <Settings />, path: '/super-admin/settings', color: '#d32f2f' },
+          { text: 'Security Center', icon: <Shield />, path: '/super-admin/security', color: '#d32f2f' },
+          { text: 'Analytics', icon: <TrendingUp />, path: '/super-admin/analytics', color: '#d32f2f' },
         ];
       case 'admin':
         return [

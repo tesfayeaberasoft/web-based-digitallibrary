@@ -12,6 +12,7 @@ try {
     $decoded = requireAuth();
     
     require_once __DIR__ . '/../../config/database.php';
+    require_once __DIR__ . '/../../utils/settings-helper.php';
     $db = Database::getInstance()->getConnection();
     
     $method = $_SERVER['REQUEST_METHOD'];
@@ -312,31 +313,6 @@ function getUserCurrentFines($db, $userId) {
 }
 
 function getSystemSetting($db, $category, $settingKey, $defaultValue) {
-    try {
-        $stmt = $db->prepare("
-            SELECT setting_value 
-            FROM system_settings 
-            WHERE category = ? AND setting_key = ?
-        ");
-        $stmt->execute([$category, $settingKey]);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        if ($result) {
-            $value = $result['setting_value'];
-            // Try to convert to appropriate type
-            if (is_numeric($value)) {
-                return strpos($value, '.') !== false ? floatval($value) : intval($value);
-            }
-            if (in_array(strtolower($value), ['true', 'false'])) {
-                return strtolower($value) === 'true';
-            }
-            return $value;
-        }
-        
-        return $defaultValue;
-    } catch (Exception $e) {
-        error_log("Failed to get system setting {$category}.{$settingKey}: " . $e->getMessage());
-        return $defaultValue;
-    }
+    return getAppSetting($db, $category, $settingKey, $defaultValue);
 }
 ?>

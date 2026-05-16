@@ -12,8 +12,8 @@ try {
     // Require authentication and check role
     $decoded = requireAuth();
     
-    // Only allow admin and librarian roles
-    if (!in_array($decoded['role'], ['admin', 'librarian'])) {
+    // Only allow admin, super-admin and librarian roles
+    if (!in_array($decoded['role'], ['admin', 'super-admin', 'librarian'], true)) {
         http_response_code(403);
         echo json_encode(['success' => false, 'message' => 'Insufficient permissions']);
         exit;

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Card,
@@ -27,6 +28,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TablePagination,
   Paper,
   Divider,
   Avatar,
@@ -207,7 +209,12 @@ import {
   CheckBoxOutlineBlank,
   IndeterminateCheckBox,
   ToggleOn,
-  ToggleOff
+  ToggleOff,
+  LibraryAdd,
+  MenuBook,
+  AssignmentReturn,
+  BookmarkAdd,
+  Login
 } from '@mui/icons-material';
 import { 
   LineChart, 
@@ -238,6 +245,7 @@ import DashboardLayout from '../../components/layout/DashboardLayout';
 import axios from 'axios';
 
 const SuperAdminDashboard = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState(null);
   const [error, setError] = useState('');
@@ -266,6 +274,103 @@ const SuperAdminDashboard = () => {
   const [notifications, setNotifications] = useState([]);
   const [systemAlerts, setSystemAlerts] = useState([]);
   const [performanceHistory, setPerformanceHistory] = useState([]);
+  const [activitiesPage, setActivitiesPage] = useState(0);
+  const [activitiesRowsPerPage, setActivitiesRowsPerPage] = useState(10);
+  const [systemSettings, setSystemSettings] = useState({
+    performance: {
+      caching_enabled: true,
+      auto_optimization: true,
+      debug_mode: false,
+      query_optimization: true,
+      memory_limit_mb: 512,
+      max_execution_time: 300,
+      upload_max_size_mb: 50,
+      compression_enabled: true
+    },
+    security: {
+      two_factor_auth: true,
+      login_monitoring: true,
+      ip_restrictions: false,
+      max_login_attempts: 5,
+      session_timeout_minutes: 60,
+      failed_login_alerts: true,
+      suspicious_activity_detection: true,
+      realtime_security_scanning: false
+    },
+    notifications: {
+      email_notifications: true,
+      sms_alerts: false,
+      system_alerts: true,
+      push_notifications: true,
+      admin_email: 'admin@digitallibrary.com',
+      cpu_usage_alert_threshold: 80,
+      memory_usage_alert_threshold: 85,
+      disk_usage_alert_threshold: 90,
+      failed_login_threshold: 10
+    },
+    backup: {
+      automatic_backups: true,
+      backup_frequency: 'daily',
+      backup_retention_days: 30,
+      detailed_logging: true,
+      log_level: 'info',
+      log_retention_days: 90
+    }
+  });
+
+  const loadSettings = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('http://localhost:8000/api/super-admin/system-management', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        setSystemSettings(response.data.data);
+      }
+    } catch (err) {
+      console.error('Failed to load settings:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (openDialog === 'settings') {
+      loadSettings();
+    }
+  }, [openDialog]);
+
+  const handleSettingChange = (section, field, value) => {
+    setSystemSettings(prev => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        [field]: value
+      }
+    }));
+  };
+
+  const handleSaveSettings = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.put('http://localhost:8000/api/super-admin/system-management', systemSettings, {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (response.data.success) {
+        setSuccess('System settings updated successfully');
+        setOpenDialog('');
+      } else {
+        throw new Error(response.data.message);
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to update settings');
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   // Enhanced color schemes for different themes
   const gradientColors = {
@@ -320,46 +425,77 @@ const SuperAdminDashboard = () => {
     return () => clearInterval(interval);
   }, [realTimeData]);
 
-  // Enhanced notification system
+  // System + security alerts
   useEffect(() => {
-    const checkSystemAlerts = () => {
-      const alerts = [];
-      
-      if (realTimeData.cpuUsage > 80) {
-        alerts.push({
-          id: 'cpu-high',
-          type: 'error',
-          title: 'High CPU Usage',
-          message: `CPU usage is at ${realTimeData.cpuUsage.toFixed(1)}%`,
-          timestamp: new Date()
-        });
-      }
-      
-      if (realTimeData.memoryUsage > 85) {
-        alerts.push({
-          id: 'memory-high',
-          type: 'warning',
-          title: 'High Memory Usage',
-          message: `Memory usage is at ${realTimeData.memoryUsage.toFixed(1)}%`,
-          timestamp: new Date()
-        });
-      }
-      
-      if (realTimeData.activeConnections > 1000) {
-        alerts.push({
-          id: 'connections-high',
-          type: 'info',
-          title: 'High Connection Count',
-          message: `${realTimeData.activeConnections} active connections`,
-          timestamp: new Date()
-        });
-      }
-      
-      setSystemAlerts(alerts);
-    };
+    const alerts = [];
 
-    checkSystemAlerts();
-  }, [realTimeData]);
+    if (realTimeData.cpuUsage > 80) {
+      alerts.push({
+        id: 'cpu-high',
+        type: 'error',
+        title: 'High CPU Usage',
+        message: `CPU usage is at ${Number(realTimeData.cpuUsage || 0).toFixed(1)}%`,
+        timestamp: new Date()
+      });
+    }
+
+    if (realTimeData.memoryUsage > 85) {
+      alerts.push({
+        id: 'memory-high',
+        type: 'warning',
+        title: 'High Memory Usage',
+        message: `Memory usage is at ${Number(realTimeData.memoryUsage || 0).toFixed(1)}%`,
+        timestamp: new Date()
+      });
+    }
+
+    if (realTimeData.activeConnections > 1000) {
+      alerts.push({
+        id: 'connections-high',
+        type: 'info',
+        title: 'High Connection Count',
+        message: `${realTimeData.activeConnections} active connections`,
+        timestamp: new Date()
+      });
+    }
+
+    const sec = dashboardData?.security_status;
+    if (sec) {
+      const threshold = sec.failed_login_threshold ?? 10;
+      if ((sec.failed_logins_24h ?? 0) >= threshold) {
+        alerts.push({
+          id: 'security-failed-logins',
+          type: 'error',
+          title: 'High Failed Login Rate',
+          message: `${sec.failed_logins_24h} failed login attempt(s) in the last 24 hours`,
+          link: '/super-admin/security',
+          timestamp: new Date()
+        });
+      }
+      if ((sec.suspicious_ips ?? 0) > 0) {
+        alerts.push({
+          id: 'security-suspicious-ips',
+          type: 'warning',
+          title: 'Suspicious IP Activity',
+          message: `${sec.suspicious_ips} IP address(es) exceeded the failed-login threshold`,
+          link: '/super-admin/security',
+          timestamp: new Date()
+        });
+      }
+      if ((sec.inactive_admins ?? 0) > 0) {
+        alerts.push({
+          id: 'security-inactive-admins',
+          type: 'warning',
+          title: 'Inactive Admin Accounts',
+          message: `${sec.inactive_admins} admin account(s) inactive for 90+ days`,
+          link: '/super-admin/security',
+          timestamp: new Date()
+        });
+      }
+    }
+
+    setSystemAlerts(alerts);
+  }, [realTimeData, dashboardData]);
 
   useEffect(() => {
     loadDashboardData();
@@ -447,7 +583,26 @@ const SuperAdminDashboard = () => {
       });
 
       if (response.data.success) {
-        setSuccess(response.data.message);
+        const fileLabel = response.data.backup_file || response.data.export_file;
+        setSuccess(response.data.message + (fileLabel ? ` (${fileLabel})` : ''));
+        if (response.data.download_url) {
+          try {
+            const dl = await axios.get(response.data.download_url, {
+              headers: { Authorization: `Bearer ${token}` },
+              responseType: 'blob'
+            });
+            const url = window.URL.createObjectURL(new Blob([dl.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', fileLabel || 'download');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+          } catch (downloadErr) {
+            console.warn('Auto-download failed:', downloadErr);
+          }
+        }
         await loadDashboardData();
         setOpenDialog('');
       } else {
@@ -455,7 +610,7 @@ const SuperAdminDashboard = () => {
       }
     } catch (err) {
       console.error(`Action ${action} failed:`, err);
-      setError(err.response?.data?.message || `Failed to ${action}`);
+      setError(err.response?.data?.message || err.message || `Failed to ${action}`);
     } finally {
       setLoading(false);
     }
@@ -463,11 +618,24 @@ const SuperAdminDashboard = () => {
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
-      case 'healthy': case 'active': case 'online': return 'success';
-      case 'warning': case 'degraded': return 'warning';
-      case 'error': case 'critical': case 'offline': return 'error';
+      case 'healthy': case 'active': case 'online': case 'success': return 'success';
+      case 'warning': case 'degraded': case 'overdue': return 'warning';
+      case 'error': case 'critical': case 'offline': case 'failed': return 'error';
+      case 'info': case 'pending': return 'info';
       default: return 'default';
     }
+  };
+
+  const getActivityIcon = (action) => {
+    const actionLower = action?.toLowerCase() || '';
+    if (actionLower.includes('registration') || actionLower.includes('user')) return <PersonAdd />;
+    if (actionLower.includes('book added')) return <LibraryAdd />;
+    if (actionLower.includes('issued') || actionLower.includes('borrowed')) return <MenuBook />;
+    if (actionLower.includes('returned')) return <AssignmentReturn />;
+    if (actionLower.includes('reserved')) return <BookmarkAdd />;
+    if (actionLower.includes('fine') || actionLower.includes('paid')) return <AttachMoney />;
+    if (actionLower.includes('login')) return <Login />;
+    return <EventNote />;
   };
 
   const formatBytes = (bytes) => {
@@ -636,7 +804,7 @@ const SuperAdminDashboard = () => {
                 }}
               />
               <Typography variant="h6" sx={{ mt: 1 }}>
-                {realTimeData.cpuUsage.toFixed(1)}%
+                {Number(realTimeData.cpuUsage || 0).toFixed(1)}%
               </Typography>
               <Typography variant="caption" color="text.secondary">
                 CPU Usage
@@ -655,7 +823,7 @@ const SuperAdminDashboard = () => {
                 }}
               />
               <Typography variant="h6" sx={{ mt: 1 }}>
-                {realTimeData.memoryUsage.toFixed(1)}%
+                {Number(realTimeData.memoryUsage || 0).toFixed(1)}%
               </Typography>
               <Typography variant="caption" color="text.secondary">
                 Memory Usage
@@ -750,6 +918,13 @@ const SuperAdminDashboard = () => {
                     </Box>
                   }
                 />
+                {alert.link && (
+                  <ListItemSecondaryAction>
+                    <Button size="small" color="error" onClick={() => navigate(alert.link)}>
+                      Review
+                    </Button>
+                  </ListItemSecondaryAction>
+                )}
               </ListItem>
             ))}
           </List>
@@ -902,11 +1077,6 @@ const SuperAdminDashboard = () => {
                   }} />
                 </Button>
               </Tooltip>
-              <Tooltip title="System Settings">
-                <Button onClick={() => setOpenDialog('settings')}>
-                  <Settings />
-                </Button>
-              </Tooltip>
               <Tooltip title="Emergency Actions">
                 <Button onClick={() => setOpenDialog('emergency')} color="error">
                   <PowerSettingsNew />
@@ -923,15 +1093,27 @@ const SuperAdminDashboard = () => {
               severity="warning" 
               sx={{ mb: 3 }}
               action={
-                <Button color="inherit" size="small" onClick={() => setSystemAlerts([])}>
-                  DISMISS ALL
-                </Button>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  {systemAlerts.some((a) => a.link) && (
+                    <Button color="inherit" size="small" onClick={() => navigate('/super-admin/security')}>
+                      SECURITY CENTER
+                    </Button>
+                  )}
+                  <Button color="inherit" size="small" onClick={() => setSystemAlerts([])}>
+                    DISMISS ALL
+                  </Button>
+                </Box>
               }
             >
               <Typography variant="h6">System Alerts ({systemAlerts.length})</Typography>
               {systemAlerts.slice(0, 3).map(alert => (
                 <Typography key={alert.id} variant="body2">
                   • {alert.title}: {alert.message}
+                  {alert.link && (
+                    <Button size="small" sx={{ ml: 1, py: 0 }} onClick={() => navigate(alert.link)}>
+                      Review
+                    </Button>
+                  )}
                 </Typography>
               ))}
             </Alert>
@@ -960,12 +1142,15 @@ const SuperAdminDashboard = () => {
                       </Typography>
                       <Typography variant="h6" sx={{ mb: 1 }}>Total Users</Typography>
                       <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                        Active: {formatNumber(system_overview.totals?.active_users || 0)}
+                      </Typography>
+                      <Typography variant="body2" sx={{ opacity: 0.9 }}>
                         Staff: {formatNumber(system_overview.totals?.total_staff || 0)}
                       </Typography>
                       <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                         <TrendingUp sx={{ fontSize: 16, mr: 0.5 }} />
                         <Typography variant="caption">
-                          +12% from last month
+                          {system_overview.totals?.user_engagement_rate || 0}% engagement rate
                         </Typography>
                       </Box>
                     </Box>
@@ -1009,12 +1194,15 @@ const SuperAdminDashboard = () => {
                       </Typography>
                       <Typography variant="h6" sx={{ mb: 1 }}>Library Collection</Typography>
                       <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                        Active Loans: {formatNumber(system_overview.totals?.active_loans || 0)}
+                        Copies: {formatNumber(system_overview.totals?.total_book_copies || 0)}
+                      </Typography>
+                      <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                        Available: {formatNumber(system_overview.totals?.available_book_copies || 0)}
                       </Typography>
                       <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                         <TrendingUp sx={{ fontSize: 16, mr: 0.5 }} />
                         <Typography variant="caption">
-                          +8% new additions
+                          {system_overview.totals?.borrowed_percentage || 0}% in circulation
                         </Typography>
                       </Box>
                     </Box>
@@ -1025,7 +1213,7 @@ const SuperAdminDashboard = () => {
                   <Box sx={{ mt: 2 }}>
                     <LinearProgress 
                       variant="determinate" 
-                      value={(system_overview.totals?.active_loans / system_overview.totals?.total_books) * 100 || 0}
+                      value={system_overview.totals?.borrowed_percentage || 0}
                       sx={{ 
                         mb: 1, 
                         height: 8, 
@@ -1036,9 +1224,14 @@ const SuperAdminDashboard = () => {
                         }
                       }}
                     />
-                    <Typography variant="caption" sx={{ opacity: 0.9 }}>
-                      {((system_overview.totals?.active_loans / system_overview.totals?.total_books) * 100 || 0).toFixed(1)}% Currently Borrowed
-                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography variant="caption" sx={{ opacity: 0.9 }}>
+                        Active Loans: {formatNumber(system_overview.totals?.active_loans || 0)}
+                      </Typography>
+                      <Typography variant="caption" sx={{ opacity: 0.9 }}>
+                        Overdue: {formatNumber(system_overview.totals?.overdue_loans || 0)}
+                      </Typography>
+                    </Box>
                   </Box>
                 </CardContent>
               </Card>
@@ -1065,12 +1258,15 @@ const SuperAdminDashboard = () => {
                       </Typography>
                       <Typography variant="h6" sx={{ mb: 1 }}>Active Sessions</Typography>
                       <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                        Total Sessions: {active_sessions?.total_sessions || 0}
+                        Today: {system_overview.totals?.users_today || 0}
+                      </Typography>
+                      <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                        This Week: {system_overview.totals?.users_this_week || 0}
                       </Typography>
                       <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                        <TrendingDown sx={{ fontSize: 16, mr: 0.5 }} />
+                        <SignalCellularAlt sx={{ fontSize: 16, mr: 0.5 }} />
                         <Typography variant="caption">
-                          -3% from peak
+                          {system_overview.health_indicators?.book_availability_rate || 0}% availability
                         </Typography>
                       </Box>
                     </Box>
@@ -1080,9 +1276,9 @@ const SuperAdminDashboard = () => {
                   {/* Session Details */}
                   <Box sx={{ mt: 2 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                      <Typography variant="caption">Peak Today:</Typography>
+                      <Typography variant="caption">Reservations:</Typography>
                       <Typography variant="caption" fontWeight={600}>
-                        {Math.max(active_sessions?.online_users || 0, 150)}
+                        {formatNumber(system_overview.totals?.pending_reservations || 0)}
                       </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -1113,16 +1309,19 @@ const SuperAdminDashboard = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <Box>
                       <Typography variant="h3" fontWeight={700} sx={{ mb: 1 }}>
-                        ${(system_overview.totals?.pending_fines * 2.5 || 0).toFixed(0)}
+                        ${Number(system_overview.totals?.total_pending_fine_amount || 0).toFixed(2)}
                       </Typography>
-                      <Typography variant="h6" sx={{ mb: 1 }}>Revenue & Fines</Typography>
+                      <Typography variant="h6" sx={{ mb: 1 }}>Pending Fines</Typography>
                       <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                        Pending: {formatNumber(system_overview.totals?.pending_fines || 0)} fines
+                        Count: {formatNumber(system_overview.totals?.pending_fines || 0)}
+                      </Typography>
+                      <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                        Collected: ${Number(system_overview.totals?.total_collected_fines || 0).toFixed(2)}
                       </Typography>
                       <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                         <TrendingUp sx={{ fontSize: 16, mr: 0.5 }} />
                         <Typography variant="caption">
-                          +15% this month
+                          {system_overview.health_indicators?.fine_collection_rate || 0}% collection rate
                         </Typography>
                       </Box>
                     </Box>
@@ -1132,15 +1331,15 @@ const SuperAdminDashboard = () => {
                   {/* Revenue Details */}
                   <Box sx={{ mt: 2 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                      <Typography variant="caption">This Month:</Typography>
+                      <Typography variant="caption">Paid Fines:</Typography>
                       <Typography variant="caption" fontWeight={600}>
-                        ${((system_overview.totals?.pending_fines || 0) * 15).toFixed(0)}
+                        {formatNumber(system_overview.totals?.paid_fines || 0)}
                       </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography variant="caption">Reservations:</Typography>
+                      <Typography variant="caption">Overdue Rate:</Typography>
                       <Typography variant="caption" fontWeight={600}>
-                        {formatNumber(system_overview.totals?.active_reservations || 0)}
+                        {system_overview.health_indicators?.overdue_rate || 0}%
                       </Typography>
                     </Box>
                   </Box>
@@ -1203,7 +1402,7 @@ const SuperAdminDashboard = () => {
                         }}
                       />
                       <Typography variant="h6" sx={{ mt: 1 }}>
-                        {realTimeData.cpuUsage.toFixed(1)}%
+                        {Number(realTimeData.cpuUsage || 0).toFixed(1)}%
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
                         CPU Usage
@@ -1222,7 +1421,7 @@ const SuperAdminDashboard = () => {
                         }}
                       />
                       <Typography variant="h6" sx={{ mt: 1 }}>
-                        {realTimeData.memoryUsage.toFixed(1)}%
+                        {Number(realTimeData.memoryUsage || 0).toFixed(1)}%
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
                         Memory Usage
@@ -1316,6 +1515,13 @@ const SuperAdminDashboard = () => {
                             </Box>
                           }
                         />
+                        {alert.link && (
+                          <ListItemSecondaryAction>
+                            <Button size="small" color="error" onClick={() => navigate(alert.link)}>
+                              Review
+                            </Button>
+                          </ListItemSecondaryAction>
+                        )}
                       </ListItem>
                     ))}
                   </List>
@@ -1435,7 +1641,7 @@ const SuperAdminDashboard = () => {
                         <Speed sx={{ fontSize: 40, color: 'warning.main', mb: 1 }} />
                         <Typography variant="h6" fontWeight={600}>CPU</Typography>
                         <Typography variant="h4" fontWeight={700} color="warning.main">
-                          {system_health.cpu?.usage_percent || realTimeData.cpuUsage.toFixed(1)}%
+                          {Number(system_health.cpu?.usage_percent || realTimeData.cpuUsage || 0).toFixed(1)}%
                         </Typography>
                         <LinearProgress 
                           variant="determinate" 
@@ -1514,9 +1720,228 @@ const SuperAdminDashboard = () => {
           )}
         </Grid>
 
+        {/* Top Borrowed Books & Most Active Users */}
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          {/* Top Borrowed Books */}
+          <Grid item xs={12} md={6}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <LibraryBooks color="primary" />
+                  Top Borrowed Books
+                </Typography>
+                {system_overview.top_borrowed_books && system_overview.top_borrowed_books.length > 0 ? (
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Title</TableCell>
+                          <TableCell>Author</TableCell>
+                          <TableCell align="center">Borrows</TableCell>
+                          <TableCell align="center">Available</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {system_overview.top_borrowed_books.slice(0, 5).map((book, index) => (
+                          <TableRow key={index} hover>
+                            <TableCell>
+                              <Typography variant="body2" fontWeight={600}>
+                                {book.title}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {book.category}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography variant="body2">
+                                {book.author}
+                              </Typography>
+                            </TableCell>
+                            <TableCell align="center">
+                              <Chip 
+                                label={book.borrow_count} 
+                                size="small" 
+                                color="primary"
+                                sx={{ fontWeight: 600 }}
+                              />
+                            </TableCell>
+                            <TableCell align="center">
+                              <Typography variant="body2">
+                                {book.available_copies}/{book.total_copies}
+                              </Typography>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                ) : (
+                  <Box sx={{ textAlign: 'center', py: 4 }}>
+                    <LibraryBooks sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />
+                    <Typography variant="body2" color="text.secondary">
+                      No borrowing data available
+                    </Typography>
+                  </Box>
+                )}
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Most Active Users */}
+          <Grid item xs={12} md={6}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <People color="secondary" />
+                  Most Active Users
+                </Typography>
+                {system_overview.most_active_users && system_overview.most_active_users.length > 0 ? (
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>User</TableCell>
+                          <TableCell align="center">Total Loans</TableCell>
+                          <TableCell align="center">Current</TableCell>
+                          <TableCell align="center">Last Login</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {system_overview.most_active_users.slice(0, 5).map((user, index) => (
+                          <TableRow key={index} hover>
+                            <TableCell>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main', fontSize: '0.875rem' }}>
+                                  {user.full_name.charAt(0)}
+                                </Avatar>
+                                <Box>
+                                  <Typography variant="body2" fontWeight={600}>
+                                    {user.full_name}
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary">
+                                    {user.user_id}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+                            <TableCell align="center">
+                              <Chip 
+                                label={user.total_loans} 
+                                size="small" 
+                                color="secondary"
+                                sx={{ fontWeight: 600 }}
+                              />
+                            </TableCell>
+                            <TableCell align="center">
+                              <Typography variant="body2">
+                                {user.current_loans}
+                              </Typography>
+                            </TableCell>
+                            <TableCell align="center">
+                              <Typography variant="caption" color="text.secondary">
+                                {user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never'}
+                              </Typography>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                ) : (
+                  <Box sx={{ textAlign: 'center', py: 4 }}>
+                    <People sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />
+                    <Typography variant="body2" color="text.secondary">
+                      No user activity data available
+                    </Typography>
+                  </Box>
+                )}
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+
+        {/* System Health Indicators */}
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid item xs={12}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <HealthAndSafety color="success" />
+                  System Health Indicators
+                </Typography>
+                <Grid container spacing={3} sx={{ mt: 1 }}>
+                  <Grid item xs={12} md={3}>
+                    <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'background.default', borderRadius: 2 }}>
+                      <Typography variant="h4" fontWeight={700} color="primary.main">
+                        {system_overview.health_indicators?.book_availability_rate || 0}%
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Book Availability Rate
+                      </Typography>
+                      <LinearProgress 
+                        variant="determinate" 
+                        value={system_overview.health_indicators?.book_availability_rate || 0}
+                        sx={{ mt: 1, height: 6, borderRadius: 3 }}
+                      />
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} md={3}>
+                    <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'background.default', borderRadius: 2 }}>
+                      <Typography variant="h4" fontWeight={700} color="warning.main">
+                        {system_overview.health_indicators?.overdue_rate || 0}%
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Overdue Rate
+                      </Typography>
+                      <LinearProgress 
+                        variant="determinate" 
+                        value={system_overview.health_indicators?.overdue_rate || 0}
+                        color="warning"
+                        sx={{ mt: 1, height: 6, borderRadius: 3 }}
+                      />
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} md={3}>
+                    <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'background.default', borderRadius: 2 }}>
+                      <Typography variant="h4" fontWeight={700} color="success.main">
+                        {system_overview.health_indicators?.fine_collection_rate || 0}%
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Fine Collection Rate
+                      </Typography>
+                      <LinearProgress 
+                        variant="determinate" 
+                        value={system_overview.health_indicators?.fine_collection_rate || 0}
+                        color="success"
+                        sx={{ mt: 1, height: 6, borderRadius: 3 }}
+                      />
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} md={3}>
+                    <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'background.default', borderRadius: 2 }}>
+                      <Typography variant="h4" fontWeight={700} color="info.main">
+                        {system_overview.health_indicators?.reservation_fulfillment_rate || 0}%
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Reservation Fulfillment
+                      </Typography>
+                      <LinearProgress 
+                        variant="determinate" 
+                        value={system_overview.health_indicators?.reservation_fulfillment_rate || 0}
+                        color="info"
+                        sx={{ mt: 1, height: 6, borderRadius: 3 }}
+                      />
+                    </Box>
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+
         {/* Recent Activities */}
         <Grid container spacing={3}>
-          <Grid item xs={12} md={8}>
+          <Grid item xs={12}>
             <Card>
               <CardContent>
                 <Typography variant="h6" fontWeight={600} gutterBottom>
@@ -1534,158 +1959,96 @@ const SuperAdminDashboard = () => {
                     </Typography>
                   </Box>
                 ) : (
-                  <TableContainer>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Time</TableCell>
-                          <TableCell>User</TableCell>
-                          <TableCell>Action</TableCell>
-                          <TableCell>Details</TableCell>
-                          <TableCell>Status</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {safeRecentActivities.slice(0, 10).map((activity, index) => (
-                          <TableRow key={index} hover>
-                            <TableCell>
-                              <Typography variant="body2">
-                                {new Date(activity.timestamp || Date.now()).toLocaleString()}
-                              </Typography>
-                            </TableCell>
-                            <TableCell>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Avatar sx={{ width: 24, height: 24, fontSize: 12 }}>
-                                  {(activity.user_name || 'U').charAt(0).toUpperCase()}
-                                </Avatar>
-                                <Typography variant="body2">
-                                  {activity.user_name || 'System'}
-                                </Typography>
-                              </Box>
-                            </TableCell>
-                            <TableCell>
-                              <Chip 
-                                label={activity.action || 'Unknown'} 
-                                size="small" 
-                                variant="outlined"
-                                color={activity.action?.includes('login') ? 'primary' : 'default'}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Typography variant="body2" color="text.secondary">
-                                {activity.details || 'No details available'}
-                              </Typography>
-                            </TableCell>
-                            <TableCell>
-                              <Chip 
-                                label={activity.status || 'Success'} 
-                                size="small"
-                                color={getStatusColor(activity.status)}
-                              />
-                            </TableCell>
+                  <>
+                    <TableContainer>
+                      <Table>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Type</TableCell>
+                            <TableCell>Time</TableCell>
+                            <TableCell>User</TableCell>
+                            <TableCell>Action</TableCell>
+                            <TableCell>Details</TableCell>
+                            <TableCell>Status</TableCell>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
+                        </TableHead>
+                        <TableBody>
+                          {safeRecentActivities
+                            .slice(activitiesPage * activitiesRowsPerPage, activitiesPage * activitiesRowsPerPage + activitiesRowsPerPage)
+                            .map((activity, index) => (
+                            <TableRow key={index} hover>
+                              <TableCell>
+                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                  {getActivityIcon(activity.action)}
+                                </Box>
+                              </TableCell>
+                              <TableCell>
+                                <Typography variant="body2" color="text.secondary">
+                                  {new Date(activity.timestamp || Date.now()).toLocaleString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </Typography>
+                              </TableCell>
+                              <TableCell>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                  <Avatar sx={{ width: 28, height: 28, fontSize: 13, bgcolor: 'primary.main' }}>
+                                    {(activity.user_name || 'U').charAt(0).toUpperCase()}
+                                  </Avatar>
+                                  <Typography variant="body2" fontWeight={500}>
+                                    {activity.user_name || 'System'}
+                                  </Typography>
+                                </Box>
+                              </TableCell>
+                              <TableCell>
+                                <Chip 
+                                  label={activity.action || 'Unknown'} 
+                                  size="small" 
+                                  variant="outlined"
+                                  color={
+                                    activity.action?.includes('Login') ? 'primary' : 
+                                    activity.action?.includes('Added') ? 'success' :
+                                    activity.action?.includes('Paid') ? 'info' :
+                                    'default'
+                                  }
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 300 }}>
+                                  {activity.details || 'No details available'}
+                                </Typography>
+                              </TableCell>
+                              <TableCell>
+                                <Chip 
+                                  label={activity.status || 'Success'} 
+                                  size="small"
+                                  color={getStatusColor(activity.status)}
+                                  sx={{ textTransform: 'capitalize' }}
+                                />
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                    <TablePagination
+                      rowsPerPageOptions={[5, 10, 25, 50]}
+                      component="div"
+                      count={safeRecentActivities.length}
+                      rowsPerPage={activitiesRowsPerPage}
+                      page={activitiesPage}
+                      onPageChange={(event, newPage) => setActivitiesPage(newPage)}
+                      onRowsPerPageChange={(event) => {
+                        setActivitiesRowsPerPage(parseInt(event.target.value, 10));
+                        setActivitiesPage(0);
+                      }}
+                    />
+                  </>
                 )}
               </CardContent>
             </Card>
-          </Grid>
-          
-          {/* Security & Backup Status */}
-          <Grid item xs={12} md={4}>
-            <Grid container spacing={2}>
-              {/* Security Status */}
-              <Grid item xs={12}>
-                <Card sx={{ background: 'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)' }}>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                      <Typography variant="h6" fontWeight={600}>
-                        Security Status
-                      </Typography>
-                      <Security color="error" />
-                    </Box>
-                    
-                    <Box sx={{ mb: 2 }}>
-                      <Typography variant="body2" color="text.secondary" gutterBottom>
-                        Failed Logins (24h)
-                      </Typography>
-                      <Typography variant="h4" fontWeight={700} color="error.main">
-                        {security_status.failed_logins_24h || 0}
-                      </Typography>
-                    </Box>
-                    
-                    <Box sx={{ mb: 2 }}>
-                      <Typography variant="body2" color="text.secondary" gutterBottom>
-                        Suspended Users
-                      </Typography>
-                      <Typography variant="h5" fontWeight={600} color="warning.main">
-                        {security_status.suspended_users || 0}
-                      </Typography>
-                    </Box>
-                    
-                    <Button
-                      fullWidth
-                      variant="outlined"
-                      startIcon={<Shield />}
-                      onClick={() => setOpenDialog('security')}
-                      size="small"
-                    >
-                      Security Settings
-                    </Button>
-                  </CardContent>
-                </Card>
-              </Grid>
-              
-              {/* Backup Status */}
-              <Grid item xs={12}>
-                <Card sx={{ background: 'linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%)' }}>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                      <Typography variant="h6" fontWeight={600}>
-                        Backup Status
-                      </Typography>
-                      <Backup color="success" />
-                    </Box>
-                    
-                    <Box sx={{ mb: 2 }}>
-                      <Typography variant="body2" color="text.secondary" gutterBottom>
-                        Last Backup
-                      </Typography>
-                      <Typography variant="body1" fontWeight={600}>
-                        {backup_status.last_backup ? 
-                          new Date(backup_status.last_backup).toLocaleDateString() : 
-                          'Never'
-                        }
-                      </Typography>
-                    </Box>
-                    
-                    <Box sx={{ mb: 2 }}>
-                      <Typography variant="body2" color="text.secondary" gutterBottom>
-                        Auto Backup
-                      </Typography>
-                      <Chip 
-                        label={backup_status.backup_enabled ? 'Enabled' : 'Disabled'}
-                        color={backup_status.backup_enabled ? 'success' : 'error'}
-                        size="small"
-                      />
-                    </Box>
-                    
-                    <Button
-                      fullWidth
-                      variant="outlined"
-                      startIcon={<CloudDownload />}
-                      onClick={() => handleSystemAction('backup_system')}
-                      size="small"
-                      disabled={loading}
-                    >
-                      Create Backup
-                    </Button>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
           </Grid>
         </Grid>
 
@@ -1727,22 +2090,34 @@ const SuperAdminDashboard = () => {
                         Performance Optimization
                       </Typography>
                       <FormControlLabel
-                        control={<Switch defaultChecked />}
+                        control={<Switch 
+                          checked={systemSettings.performance.caching_enabled} 
+                          onChange={(e) => handleSettingChange('performance', 'caching_enabled', e.target.checked)}
+                        />}
                         label="Enable System Caching"
                         sx={{ display: 'block', mb: 2 }}
                       />
                       <FormControlLabel
-                        control={<Switch defaultChecked />}
+                        control={<Switch 
+                          checked={systemSettings.performance.auto_optimization} 
+                          onChange={(e) => handleSettingChange('performance', 'auto_optimization', e.target.checked)}
+                        />}
                         label="Auto Performance Optimization"
                         sx={{ display: 'block', mb: 2 }}
                       />
                       <FormControlLabel
-                        control={<Switch />}
+                        control={<Switch 
+                          checked={systemSettings.performance.debug_mode} 
+                          onChange={(e) => handleSettingChange('performance', 'debug_mode', e.target.checked)}
+                        />}
                         label="Debug Mode"
                         sx={{ display: 'block', mb: 2 }}
                       />
                       <FormControlLabel
-                        control={<Switch defaultChecked />}
+                        control={<Switch 
+                          checked={systemSettings.performance.query_optimization} 
+                          onChange={(e) => handleSettingChange('performance', 'query_optimization', e.target.checked)}
+                        />}
                         label="Database Query Optimization"
                         sx={{ display: 'block', mb: 2 }}
                       />
@@ -1769,25 +2144,31 @@ const SuperAdminDashboard = () => {
                         fullWidth
                         label="Memory Limit (MB)"
                         type="number"
-                        defaultValue={512}
+                        value={systemSettings.performance.memory_limit_mb}
+                        onChange={(e) => handleSettingChange('performance', 'memory_limit_mb', parseInt(e.target.value))}
                         sx={{ mb: 2 }}
                       />
                       <TextField
                         fullWidth
                         label="Max Execution Time (seconds)"
                         type="number"
-                        defaultValue={300}
+                        value={systemSettings.performance.max_execution_time}
+                        onChange={(e) => handleSettingChange('performance', 'max_execution_time', parseInt(e.target.value))}
                         sx={{ mb: 2 }}
                       />
                       <TextField
                         fullWidth
                         label="Upload Max Size (MB)"
                         type="number"
-                        defaultValue={50}
+                        value={systemSettings.performance.upload_max_size_mb}
+                        onChange={(e) => handleSettingChange('performance', 'upload_max_size_mb', parseInt(e.target.value))}
                         sx={{ mb: 2 }}
                       />
                       <FormControlLabel
-                        control={<Switch defaultChecked />}
+                        control={<Switch 
+                          checked={systemSettings.performance.compression_enabled} 
+                          onChange={(e) => handleSettingChange('performance', 'compression_enabled', e.target.checked)}
+                        />}
                         label="Enable Compression"
                         sx={{ display: 'block', mb: 2 }}
                       />
@@ -1800,6 +2181,34 @@ const SuperAdminDashboard = () => {
             {/* Security Settings Tab */}
             {activeTab === 1 && (
               <Grid container spacing={3}>
+                <Grid item xs={12}>
+                  <Grid container spacing={2} sx={{ mb: 3 }}>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Card sx={{ bgcolor: 'error.lighter', p: 2 }}>
+                        <Typography variant="subtitle2" color="error.main">Failed Logins (24h)</Typography>
+                        <Typography variant="h4" fontWeight={700}>{security_status.failed_logins_24h || 0}</Typography>
+                      </Card>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Card sx={{ bgcolor: 'warning.lighter', p: 2 }}>
+                        <Typography variant="subtitle2" color="warning.main">Suspicious IPs</Typography>
+                        <Typography variant="h4" fontWeight={700}>{security_status.suspicious_ips || 0}</Typography>
+                      </Card>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Card sx={{ bgcolor: 'info.lighter', p: 2 }}>
+                        <Typography variant="subtitle2" color="info.main">Inactive Admins</Typography>
+                        <Typography variant="h4" fontWeight={700}>{security_status.inactive_admins || 0}</Typography>
+                      </Card>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Card sx={{ bgcolor: 'success.lighter', p: 2 }}>
+                        <Typography variant="subtitle2" color="success.main">Blocked IPs</Typography>
+                        <Typography variant="h4" fontWeight={700}>{security_status.blocked_ips || 0}</Typography>
+                      </Card>
+                    </Grid>
+                  </Grid>
+                </Grid>
                 <Grid item xs={12} md={6}>
                   <Card variant="outlined" sx={{ height: '100%' }}>
                     <CardContent>
@@ -1808,17 +2217,26 @@ const SuperAdminDashboard = () => {
                         Authentication & Access
                       </Typography>
                       <FormControlLabel
-                        control={<Switch defaultChecked />}
+                        control={<Switch 
+                          checked={systemSettings.security.two_factor_auth} 
+                          onChange={(e) => handleSettingChange('security', 'two_factor_auth', e.target.checked)}
+                        />}
                         label="Two-Factor Authentication"
                         sx={{ display: 'block', mb: 2 }}
                       />
                       <FormControlLabel
-                        control={<Switch defaultChecked />}
+                        control={<Switch 
+                          checked={systemSettings.security.login_monitoring} 
+                          onChange={(e) => handleSettingChange('security', 'login_monitoring', e.target.checked)}
+                        />}
                         label="Login Monitoring"
                         sx={{ display: 'block', mb: 2 }}
                       />
                       <FormControlLabel
-                        control={<Switch />}
+                        control={<Switch 
+                          checked={systemSettings.security.ip_restrictions} 
+                          onChange={(e) => handleSettingChange('security', 'ip_restrictions', e.target.checked)}
+                        />}
                         label="IP Address Restrictions"
                         sx={{ display: 'block', mb: 2 }}
                       />
@@ -1826,14 +2244,16 @@ const SuperAdminDashboard = () => {
                         fullWidth
                         label="Max Login Attempts"
                         type="number"
-                        defaultValue={5}
+                        value={systemSettings.security.max_login_attempts}
+                        onChange={(e) => handleSettingChange('security', 'max_login_attempts', parseInt(e.target.value))}
                         sx={{ mb: 2 }}
                       />
                       <TextField
                         fullWidth
                         label="Session Timeout (minutes)"
                         type="number"
-                        defaultValue={60}
+                        value={systemSettings.security.session_timeout_minutes}
+                        onChange={(e) => handleSettingChange('security', 'session_timeout_minutes', parseInt(e.target.value))}
                         sx={{ mb: 2 }}
                       />
                     </CardContent>
@@ -1847,17 +2267,26 @@ const SuperAdminDashboard = () => {
                         Security Monitoring
                       </Typography>
                       <FormControlLabel
-                        control={<Switch defaultChecked />}
+                        control={<Switch 
+                          checked={systemSettings.security.failed_login_alerts} 
+                          onChange={(e) => handleSettingChange('security', 'failed_login_alerts', e.target.checked)}
+                        />}
                         label="Failed Login Alerts"
                         sx={{ display: 'block', mb: 2 }}
                       />
                       <FormControlLabel
-                        control={<Switch defaultChecked />}
+                        control={<Switch 
+                          checked={systemSettings.security.suspicious_activity_detection} 
+                          onChange={(e) => handleSettingChange('security', 'suspicious_activity_detection', e.target.checked)}
+                        />}
                         label="Suspicious Activity Detection"
                         sx={{ display: 'block', mb: 2 }}
                       />
                       <FormControlLabel
-                        control={<Switch />}
+                        control={<Switch 
+                          checked={systemSettings.security.realtime_security_scanning} 
+                          onChange={(e) => handleSettingChange('security', 'realtime_security_scanning', e.target.checked)}
+                        />}
                         label="Real-time Security Scanning"
                         sx={{ display: 'block', mb: 2 }}
                       />
@@ -1876,9 +2305,18 @@ const SuperAdminDashboard = () => {
                         startIcon={<Shield />}
                         onClick={() => handleSystemAction('security_scan')}
                         disabled={loading}
-                        sx={{ mt: 2 }}
+                        sx={{ mt: 2, mr: 1 }}
                       >
                         Run Security Scan
+                      </Button>
+                      <Button
+                        variant="contained"
+                        color="error"
+                        startIcon={<Security />}
+                        onClick={() => navigate('/super-admin/security')}
+                        sx={{ mt: 2 }}
+                      >
+                        Open Security Center
                       </Button>
                     </CardContent>
                   </Card>
@@ -1897,22 +2335,34 @@ const SuperAdminDashboard = () => {
                         Notification Channels
                       </Typography>
                       <FormControlLabel
-                        control={<Switch defaultChecked />}
+                        control={<Switch 
+                          checked={systemSettings.notifications.email_notifications} 
+                          onChange={(e) => handleSettingChange('notifications', 'email_notifications', e.target.checked)}
+                        />}
                         label="Email Notifications"
                         sx={{ display: 'block', mb: 2 }}
                       />
                       <FormControlLabel
-                        control={<Switch />}
+                        control={<Switch 
+                          checked={systemSettings.notifications.sms_alerts} 
+                          onChange={(e) => handleSettingChange('notifications', 'sms_alerts', e.target.checked)}
+                        />}
                         label="SMS Alerts"
                         sx={{ display: 'block', mb: 2 }}
                       />
                       <FormControlLabel
-                        control={<Switch defaultChecked />}
+                        control={<Switch 
+                          checked={systemSettings.notifications.system_alerts} 
+                          onChange={(e) => handleSettingChange('notifications', 'system_alerts', e.target.checked)}
+                        />}
                         label="System Alerts"
                         sx={{ display: 'block', mb: 2 }}
                       />
                       <FormControlLabel
-                        control={<Switch defaultChecked />}
+                        control={<Switch 
+                          checked={systemSettings.notifications.push_notifications} 
+                          onChange={(e) => handleSettingChange('notifications', 'push_notifications', e.target.checked)}
+                        />}
                         label="Push Notifications"
                         sx={{ display: 'block', mb: 2 }}
                       />
@@ -1920,7 +2370,8 @@ const SuperAdminDashboard = () => {
                         fullWidth
                         label="Admin Email"
                         type="email"
-                        defaultValue="admin@digitallibrary.com"
+                        value={systemSettings.notifications.admin_email}
+                        onChange={(e) => handleSettingChange('notifications', 'admin_email', e.target.value)}
                         sx={{ mb: 2 }}
                       />
                     </CardContent>
@@ -1937,28 +2388,32 @@ const SuperAdminDashboard = () => {
                         fullWidth
                         label="CPU Usage Alert (%)"
                         type="number"
-                        defaultValue={80}
+                        value={systemSettings.notifications.cpu_usage_alert_threshold}
+                        onChange={(e) => handleSettingChange('notifications', 'cpu_usage_alert_threshold', parseInt(e.target.value))}
                         sx={{ mb: 2 }}
                       />
                       <TextField
                         fullWidth
                         label="Memory Usage Alert (%)"
                         type="number"
-                        defaultValue={85}
+                        value={systemSettings.notifications.memory_usage_alert_threshold}
+                        onChange={(e) => handleSettingChange('notifications', 'memory_usage_alert_threshold', parseInt(e.target.value))}
                         sx={{ mb: 2 }}
                       />
                       <TextField
                         fullWidth
                         label="Disk Usage Alert (%)"
                         type="number"
-                        defaultValue={90}
+                        value={systemSettings.notifications.disk_usage_alert_threshold}
+                        onChange={(e) => handleSettingChange('notifications', 'disk_usage_alert_threshold', parseInt(e.target.value))}
                         sx={{ mb: 2 }}
                       />
                       <TextField
                         fullWidth
                         label="Failed Login Threshold"
                         type="number"
-                        defaultValue={10}
+                        value={systemSettings.notifications.failed_login_threshold}
+                        onChange={(e) => handleSettingChange('notifications', 'failed_login_threshold', parseInt(e.target.value))}
                         sx={{ mb: 2 }}
                       />
                     </CardContent>
@@ -2044,6 +2499,28 @@ const SuperAdminDashboard = () => {
             {/* Backup & Maintenance Tab */}
             {activeTab === 4 && (
               <Grid container spacing={3}>
+                <Grid item xs={12}>
+                  <Grid container spacing={2} sx={{ mb: 3 }}>
+                    <Grid item xs={12} md={6}>
+                      <Card sx={{ bgcolor: 'success.lighter', p: 2 }}>
+                        <Typography variant="subtitle2" color="success.main">Last Backup</Typography>
+                        <Typography variant="h5" fontWeight={700}>
+                          {backup_status.last_backup ? new Date(backup_status.last_backup).toLocaleString() : 'Never'}
+                        </Typography>
+                      </Card>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Card sx={{ bgcolor: backup_status.backup_enabled ? 'success.lighter' : 'error.lighter', p: 2 }}>
+                        <Typography variant="subtitle2" color={backup_status.backup_enabled ? 'success.main' : 'error.main'}>
+                          Auto Backup Status
+                        </Typography>
+                        <Typography variant="h5" fontWeight={700}>
+                          {backup_status.backup_enabled ? 'Active' : 'Disabled'}
+                        </Typography>
+                      </Card>
+                    </Grid>
+                  </Grid>
+                </Grid>
                 <Grid item xs={12} md={6}>
                   <Card variant="outlined" sx={{ height: '100%' }}>
                     <CardContent>
@@ -2052,7 +2529,10 @@ const SuperAdminDashboard = () => {
                         Backup Management
                       </Typography>
                       <FormControlLabel
-                        control={<Switch defaultChecked />}
+                        control={<Switch 
+                          checked={systemSettings.backup.automatic_backups} 
+                          onChange={(e) => handleSettingChange('backup', 'automatic_backups', e.target.checked)}
+                        />}
                         label="Automatic Backups"
                         sx={{ display: 'block', mb: 2 }}
                       />
@@ -2060,7 +2540,8 @@ const SuperAdminDashboard = () => {
                         fullWidth
                         label="Backup Frequency"
                         select
-                        defaultValue="daily"
+                        value={systemSettings.backup.backup_frequency}
+                        onChange={(e) => handleSettingChange('backup', 'backup_frequency', e.target.value)}
                         sx={{ mb: 2 }}
                       >
                         <MenuItem value="hourly">Hourly</MenuItem>
@@ -2072,7 +2553,8 @@ const SuperAdminDashboard = () => {
                         fullWidth
                         label="Backup Retention (days)"
                         type="number"
-                        defaultValue={30}
+                        value={systemSettings.backup.backup_retention_days}
+                        onChange={(e) => handleSettingChange('backup', 'backup_retention_days', parseInt(e.target.value))}
                         sx={{ mb: 2 }}
                       />
                       <Button
@@ -2105,7 +2587,10 @@ const SuperAdminDashboard = () => {
                         Log Management
                       </Typography>
                       <FormControlLabel
-                        control={<Switch defaultChecked />}
+                        control={<Switch 
+                          checked={systemSettings.backup.detailed_logging} 
+                          onChange={(e) => handleSettingChange('backup', 'detailed_logging', e.target.checked)}
+                        />}
                         label="Enable Detailed Logging"
                         sx={{ display: 'block', mb: 2 }}
                       />
@@ -2113,7 +2598,8 @@ const SuperAdminDashboard = () => {
                         fullWidth
                         label="Log Level"
                         select
-                        defaultValue="info"
+                        value={systemSettings.backup.log_level}
+                        onChange={(e) => handleSettingChange('backup', 'log_level', e.target.value)}
                         sx={{ mb: 2 }}
                       >
                         <MenuItem value="debug">Debug</MenuItem>
@@ -2125,7 +2611,8 @@ const SuperAdminDashboard = () => {
                         fullWidth
                         label="Log Retention (days)"
                         type="number"
-                        defaultValue={90}
+                        value={systemSettings.backup.log_retention_days}
+                        onChange={(e) => handleSettingChange('backup', 'log_retention_days', parseInt(e.target.value))}
                         sx={{ mb: 2 }}
                       />
                       <Button
@@ -2226,10 +2713,7 @@ const SuperAdminDashboard = () => {
             <Button onClick={() => setOpenDialog('')}>Cancel</Button>
             <Button 
               variant="contained" 
-              onClick={() => {
-                setSuccess('System settings updated successfully');
-                setOpenDialog('');
-              }}
+              onClick={handleSaveSettings}
               disabled={loading}
             >
               Save All Settings
@@ -2297,113 +2781,7 @@ const SuperAdminDashboard = () => {
           </DialogActions>
         </Dialog>
 
-        {/* User Management Dialog */}
-        <Dialog 
-          open={openDialog === 'userManagement'} 
-          onClose={() => setOpenDialog('')}
-          maxWidth="lg"
-          fullWidth
-        >
-          <DialogTitle>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Group />
-              User Management
-            </Box>
-          </DialogTitle>
-          <DialogContent>
-            <Grid container spacing={3} sx={{ mt: 1 }}>
-              <Grid item xs={12} md={4}>
-                <Card variant="outlined">
-                  <CardContent sx={{ textAlign: 'center' }}>
-                    <PersonAdd sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
-                    <Typography variant="h6" gutterBottom>Create User</Typography>
-                    <Button variant="contained" fullWidth>
-                      Add New User
-                    </Button>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <Card variant="outlined">
-                  <CardContent sx={{ textAlign: 'center' }}>
-                    <Edit sx={{ fontSize: 40, color: 'warning.main', mb: 1 }} />
-                    <Typography variant="h6" gutterBottom>Bulk Actions</Typography>
-                    <Button variant="outlined" fullWidth>
-                      Manage Users
-                    </Button>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <Card variant="outlined">
-                  <CardContent sx={{ textAlign: 'center' }}>
-                    <AdminPanelSettings sx={{ fontSize: 40, color: 'success.main', mb: 1 }} />
-                    <Typography variant="h6" gutterBottom>Permissions</Typography>
-                    <Button variant="outlined" fullWidth>
-                      Manage Roles
-                    </Button>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenDialog('')}>Close</Button>
-          </DialogActions>
-        </Dialog>
 
-        {/* Maintenance Mode Dialog */}
-        <Dialog 
-          open={openDialog === 'maintenance'} 
-          onClose={() => setOpenDialog('')}
-          maxWidth="sm"
-          fullWidth
-        >
-          <DialogTitle>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <SystemUpdateAlt />
-              Maintenance Mode
-            </Box>
-          </DialogTitle>
-          <DialogContent>
-            <Typography variant="body1" gutterBottom>
-              Maintenance mode will temporarily disable user access to perform system updates.
-            </Typography>
-            <Grid container spacing={2} sx={{ mt: 2 }}>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Maintenance Message"
-                  multiline
-                  rows={3}
-                  defaultValue="System is under maintenance. Please try again later."
-                  variant="outlined"
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Estimated Duration (minutes)"
-                  type="number"
-                  defaultValue={30}
-                  variant="outlined"
-                />
-              </Grid>
-            </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenDialog('')}>Cancel</Button>
-            <Button 
-              variant="contained" 
-              color="warning"
-              onClick={() => {
-                handleSystemAction('maintenance_mode', { enabled: true, duration: 30 });
-              }}
-            >
-              Enable Maintenance
-            </Button>
-          </DialogActions>
-        </Dialog>
 
         {/* System Logs Dialog */}
         <Dialog 
@@ -2475,406 +2853,8 @@ const SuperAdminDashboard = () => {
           </DialogActions>
         </Dialog>
 
-        {/* Security Settings Dialog */}
-        <Dialog 
-          open={openDialog === 'security'} 
-          onClose={() => setOpenDialog('')}
-          maxWidth="md"
-          fullWidth
-        >
-          <DialogTitle>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Shield />
-              Security Settings
-            </Box>
-          </DialogTitle>
-          <DialogContent>
-            <Grid container spacing={3} sx={{ mt: 1 }}>
-              <Grid item xs={12} md={6}>
-                <Card variant="outlined">
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>Login Security</Typography>
-                    <FormControlLabel
-                      control={<Switch defaultChecked />}
-                      label="Enable 2FA"
-                    />
-                    <FormControlLabel
-                      control={<Switch defaultChecked />}
-                      label="Login Attempts Limit"
-                    />
-                    <TextField
-                      fullWidth
-                      label="Max Login Attempts"
-                      type="number"
-                      defaultValue={5}
-                      size="small"
-                      sx={{ mt: 2 }}
-                    />
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Card variant="outlined">
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>Access Control</Typography>
-                    <FormControlLabel
-                      control={<Switch />}
-                      label="IP Whitelist"
-                    />
-                    <FormControlLabel
-                      control={<Switch defaultChecked />}
-                      label="Session Timeout"
-                    />
-                    <TextField
-                      fullWidth
-                      label="Session Duration (minutes)"
-                      type="number"
-                      defaultValue={60}
-                      size="small"
-                      sx={{ mt: 2 }}
-                    />
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenDialog('')}>Cancel</Button>
-            <Button variant="contained" onClick={() => {
-              setSuccess('Security settings updated');
-              setOpenDialog('');
-            }}>
-              Save Settings
-            </Button>
-          </DialogActions>
-        </Dialog>
 
-        {/* Recent Activities */}
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={8}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" fontWeight={600} gutterBottom>
-                  <History sx={{ mr: 1, verticalAlign: 'middle' }} />
-                  Recent System Activities
-                </Typography>
-                {safeRecentActivities.length === 0 ? (
-                  <Box sx={{ textAlign: 'center', py: 4 }}>
-                    <EventNote sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />
-                    <Typography variant="h6" color="text.secondary">
-                      No Recent Activities
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      System activities will appear here
-                    </Typography>
-                  </Box>
-                ) : (
-                  <TableContainer>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Time</TableCell>
-                          <TableCell>User</TableCell>
-                          <TableCell>Action</TableCell>
-                          <TableCell>Details</TableCell>
-                          <TableCell>Status</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {safeRecentActivities.slice(0, 10).map((activity, index) => (
-                          <TableRow key={index} hover>
-                            <TableCell>
-                              <Typography variant="body2">
-                                {new Date(activity.timestamp || Date.now()).toLocaleString()}
-                              </Typography>
-                            </TableCell>
-                            <TableCell>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Avatar sx={{ width: 24, height: 24, fontSize: 12 }}>
-                                  {(activity.user_name || 'U').charAt(0).toUpperCase()}
-                                </Avatar>
-                                <Typography variant="body2">
-                                  {activity.user_name || 'System'}
-                                </Typography>
-                              </Box>
-                            </TableCell>
-                            <TableCell>
-                              <Chip 
-                                label={activity.action || 'Unknown'} 
-                                size="small" 
-                                variant="outlined"
-                                color={activity.action?.includes('login') ? 'primary' : 'default'}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Typography variant="body2" color="text.secondary">
-                                {activity.details || 'No details available'}
-                              </Typography>
-                            </TableCell>
-                            <TableCell>
-                              <Chip 
-                                label={activity.status || 'Success'} 
-                                size="small"
-                                color={getStatusColor(activity.status)}
-                              />
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                )}
-              </CardContent>
-            </Card>
-          </Grid>
-          
-          {/* Security & Backup Status */}
-          <Grid item xs={12} md={4}>
-            <Grid container spacing={2}>
-              {/* Security Status */}
-              <Grid item xs={12}>
-                <Card sx={{ background: 'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)' }}>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                      <Typography variant="h6" fontWeight={600}>
-                        Security Status
-                      </Typography>
-                      <Security color="error" />
-                    </Box>
-                    
-                    <Box sx={{ mb: 2 }}>
-                      <Typography variant="body2" color="text.secondary" gutterBottom>
-                        Failed Logins (24h)
-                      </Typography>
-                      <Typography variant="h4" fontWeight={700} color="error.main">
-                        {security_status.failed_logins_24h || 0}
-                      </Typography>
-                    </Box>
-                    
-                    <Box sx={{ mb: 2 }}>
-                      <Typography variant="body2" color="text.secondary" gutterBottom>
-                        Suspended Users
-                      </Typography>
-                      <Typography variant="h5" fontWeight={600} color="warning.main">
-                        {security_status.suspended_users || 0}
-                      </Typography>
-                    </Box>
-                    
-                    <Button
-                      fullWidth
-                      variant="outlined"
-                      startIcon={<Shield />}
-                      onClick={() => setOpenDialog('security')}
-                      size="small"
-                    >
-                      Security Settings
-                    </Button>
-                  </CardContent>
-                </Card>
-              </Grid>
-              
-              {/* Backup Status */}
-              <Grid item xs={12}>
-                <Card sx={{ background: 'linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%)' }}>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                      <Typography variant="h6" fontWeight={600}>
-                        Backup Status
-                      </Typography>
-                      <Backup color="success" />
-                    </Box>
-                    
-                    <Box sx={{ mb: 2 }}>
-                      <Typography variant="body2" color="text.secondary" gutterBottom>
-                        Last Backup
-                      </Typography>
-                      <Typography variant="body1" fontWeight={600}>
-                        {backup_status.last_backup ? 
-                          new Date(backup_status.last_backup).toLocaleDateString() : 
-                          'Never'
-                        }
-                      </Typography>
-                    </Box>
-                    
-                    <Box sx={{ mb: 2 }}>
-                      <Typography variant="body2" color="text.secondary" gutterBottom>
-                        Auto Backup
-                      </Typography>
-                      <Chip 
-                        label={backup_status.backup_enabled ? 'Enabled' : 'Disabled'}
-                        color={backup_status.backup_enabled ? 'success' : 'error'}
-                        size="small"
-                      />
-                    </Box>
-                    
-                    <Button
-                      fullWidth
-                      variant="outlined"
-                      startIcon={<CloudDownload />}
-                      onClick={() => handleSystemAction('backup_system')}
-                      size="small"
-                      disabled={loading}
-                    >
-                      Create Backup
-                    </Button>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
-          </Grid>
-        </Grid>
 
-        {/* Performance Metrics Section */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} md={4}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" fontWeight={600} gutterBottom>
-                  <Insights sx={{ mr: 1, verticalAlign: 'middle' }} />
-                  Performance Metrics
-                </Typography>
-                <List>
-                  <ListItem>
-                    <ListItemText
-                      primary="Average Query Time"
-                      secondary={`${performance_metrics.query_performance?.average_ms || 0}ms`}
-                    />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemText
-                      primary="PHP Version"
-                      secondary={performance_metrics.uptime?.php_version || 'Unknown'}
-                    />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemText
-                      primary="Server Start"
-                      secondary={performance_metrics.uptime?.server_start || 'Unknown'}
-                    />
-                  </ListItem>
-                </List>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-
-        {/* Dialogs */}
-        {/* Maintenance Mode Dialog */}
-        <Dialog open={openDialog === 'maintenance'} onClose={() => setOpenDialog('')} maxWidth="sm" fullWidth>
-          <DialogTitle>System Maintenance</DialogTitle>
-          <DialogContent>
-            <Typography gutterBottom>
-              Choose a maintenance action to perform:
-            </Typography>
-            <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={12}>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  onClick={() => handleSystemAction('system_maintenance', { maintenance_type: 'enable_maintenance_mode' })}
-                >
-                  Enable Maintenance Mode
-                </Button>
-              </Grid>
-              <Grid item xs={12}>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  onClick={() => handleSystemAction('system_maintenance', { maintenance_type: 'disable_maintenance_mode' })}
-                >
-                  Disable Maintenance Mode
-                </Button>
-              </Grid>
-            </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenDialog('')}>Cancel</Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* User Management Dialog */}
-        <Dialog open={openDialog === 'userManagement'} onClose={() => setOpenDialog('')} maxWidth="md" fullWidth>
-          <DialogTitle>User Management</DialogTitle>
-          <DialogContent>
-            <Typography gutterBottom>
-              Bulk user management actions:
-            </Typography>
-            <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={12} md={6}>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  startIcon={<Security />}
-                  onClick={() => handleSystemAction('security_action', { security_action: 'clear_failed_logins' })}
-                >
-                  Clear Failed Logins
-                </Button>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  startIcon={<Delete />}
-                  onClick={() => handleSystemAction('clear_logs', { log_type: 'all', older_than_days: 30 })}
-                >
-                  Clear Old Logs
-                </Button>
-              </Grid>
-            </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenDialog('')}>Cancel</Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* Floating Action Button for Quick Actions */}
-        <SpeedDial
-          ariaLabel="Quick Actions"
-          sx={{ position: 'fixed', bottom: 16, right: 16 }}
-          icon={<SpeedDialIcon />}
-        >
-          <SpeedDialAction
-            icon={<Refresh />}
-            tooltipTitle="Refresh Dashboard"
-            onClick={handleRefresh}
-          />
-          <SpeedDialAction
-            icon={<Backup />}
-            tooltipTitle="Create Backup"
-            onClick={() => handleSystemAction('backup_system')}
-          />
-          <SpeedDialAction
-            icon={<Settings />}
-            tooltipTitle="System Settings"
-            onClick={() => setOpenDialog('settings')}
-          />
-          <SpeedDialAction
-            icon={<PowerSettingsNew />}
-            tooltipTitle="Emergency Actions"
-            onClick={() => setOpenDialog('emergency')}
-          />
-        </SpeedDial>
-
-        {/* Success/Error Snackbars */}
-        <Snackbar
-          open={!!success}
-          autoHideDuration={6000}
-          onClose={() => setSuccess('')}
-        >
-          <Alert onClose={() => setSuccess('')} severity="success">
-            {success}
-          </Alert>
-        </Snackbar>
-
-        <Snackbar
-          open={!!error}
-          autoHideDuration={6000}
-          onClose={() => setError('')}
-        >
-          <Alert onClose={() => setError('')} severity="error">
-            {error}
-          </Alert>
-        </Snackbar>
       </Box>
     </DashboardLayout>
   );

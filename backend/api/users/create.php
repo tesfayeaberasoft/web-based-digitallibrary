@@ -11,8 +11,8 @@ try {
     require_once __DIR__ . '/../../utils/jwt.php';
     $decoded = requireAuth();
     
-    // Only admins can create users
-    if ($decoded['role'] !== 'admin') {
+    // Only admins and super-admins can create users
+    if ($decoded['role'] !== 'admin' && $decoded['role'] !== 'super-admin') {
         http_response_code(403);
         echo json_encode(['success' => false, 'message' => 'Admin access required']);
         exit;

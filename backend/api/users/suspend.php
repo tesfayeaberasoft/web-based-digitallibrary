@@ -11,14 +11,15 @@ try {
     require_once __DIR__ . '/../../utils/jwt.php';
     $decoded = requireAuth();
     
-    // Only admins can suspend/activate users
-    if ($decoded['role'] !== 'admin') {
+    // Only admins and super-admins can suspend/activate users
+    if ($decoded['role'] !== 'admin' && $decoded['role'] !== 'super-admin') {
         http_response_code(403);
         echo json_encode(['success' => false, 'message' => 'Admin access required']);
         exit;
     }
     
     require_once __DIR__ . '/../../config/database.php';
+    require_once __DIR__ . '/../../utils/security-helper.php';
     $db = Database::getInstance()->getConnection();
     
     // Get user ID from URL or request body
@@ -57,8 +58,8 @@ try {
         exit;
     }
     
-    // Prevent suspending other admins (unless you're a super admin)
-    if ($user['role'] === 'admin') {
+    // Prevent suspending other admins (unless you're a super-admin)
+    if ($user['role'] === 'admin' && $decoded['role'] !== 'super-admin') {
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'Cannot suspend admin accounts']);
         exit;
@@ -96,10 +97,17 @@ try {
     $result = $stmt->execute([$new_status, $user_id]);
     
     if ($result) {
-        // If suspending user, cancel all active reservations
         if ($new_status === 'suspended') {
             $stmt = $db->prepare("UPDATE book_reservations SET status = 'cancelled' WHERE user_id = ? AND status = 'pending'");
             $stmt->execute([$user_id]);
+        }
+
+        if ($new_status === 'active' && isRegularUserRole($user['role'])) {
+            clearFailedLoginAttempts($db, null, $user['email']);
+            if (securityTableHasColumn($db, 'users', 'suspension_reason')) {
+                $stmt = $db->prepare("UPDATE users SET suspension_reason = NULL WHERE id = ?");
+                $stmt->execute([$user_id]);
+            }
         }
         
         // Get updated user data

@@ -259,7 +259,7 @@ const AdminSettings = () => {
     activeUsers: 142,
     totalBooks: 15847,
     totalLibrarians: 0,
-    messages: 0,
+    totalAdmins: 0,
     activeLoans: 892,
     overdueBooks: 23,
     systemUptime: '15 days, 7 hours',
@@ -308,11 +308,9 @@ const AdminSettings = () => {
           setLibrarySettings(prev => ({
             ...prev,
             ...basicInfo,
-            ...(isSuperAdmin ? {
-              maxUserBorrowBooks: policies.max_user_borrow_books || prev.maxUserBorrowBooks,
-              dueFinesPerDay: policies.due_fines_per_day || prev.dueFinesPerDay,
-              maxBookReturnDays: policies.max_book_return_days || prev.maxBookReturnDays
-            } : {})
+            maxUserBorrowBooks: policies.max_user_borrow_books || prev.maxUserBorrowBooks,
+            dueFinesPerDay: policies.due_fines_per_day || prev.dueFinesPerDay,
+            maxBookReturnDays: policies.max_book_return_days || prev.maxBookReturnDays
           }));
         }
 
@@ -361,38 +359,25 @@ const AdminSettings = () => {
   const loadOverview = async () => {
     try {
       const token = localStorage.getItem('token');
-      const [statsResponse, notificationsResponse] = await Promise.all([
-        axios.get('http://localhost:8000/api/admin/stats', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }),
-        axios.get('http://localhost:8000/api/notifications?limit=1', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        })
-      ]);
+      const statsResponse = await axios.get('http://localhost:8000/api/admin/stats', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
 
       if (statsResponse.data?.success && statsResponse.data?.stats) {
         const overview = statsResponse.data.stats.overview || {};
         const byRole = Array.isArray(statsResponse.data.stats.users_by_role) ? statsResponse.data.stats.users_by_role : [];
         const librarian = byRole.find((r) => String(r.role).toLowerCase() === 'librarian');
+        const admin = byRole.find((r) => String(r.role).toLowerCase() === 'admin');
 
         setSystemStatus((prev) => ({
           ...prev,
           activeUsers: overview.total_users ?? prev.activeUsers,
           totalBooks: overview.total_books ?? prev.totalBooks,
-          totalLibrarians: librarian ? Number(librarian.count) : prev.totalLibrarians
-        }));
-      }
-
-      if (notificationsResponse.data?.success) {
-        setSystemStatus((prev) => ({
-          ...prev,
-          messages: notificationsResponse.data.unread_count ?? prev.messages
+          totalLibrarians: librarian ? Number(librarian.count) : prev.totalLibrarians,
+          totalAdmins: admin ? Number(admin.count) : prev.totalAdmins
         }));
       }
     } catch (err) {
@@ -475,26 +460,6 @@ const AdminSettings = () => {
           // Split library settings into basic info and policies
           const { maxUserBorrowBooks, dueFinesPerDay, maxBookReturnDays, ...basicLibraryInfo } = librarySettings;
           
-          if (!isSuperAdmin) {
-            const response = await axios.post('http://localhost:8000/api/admin/settings', {
-              category: 'library',
-              settings: basicLibraryInfo
-            }, {
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              }
-            });
-
-            if (response.data.success) {
-              setSuccess('Library info saved successfully!');
-              await loadSettings();
-            } else {
-              throw new Error('Failed to save library info');
-            }
-            return;
-          }
-
           // Save basic library info
           const libraryInfoResponse = await axios.post('http://localhost:8000/api/admin/settings', {
             category: 'library',
@@ -741,59 +706,57 @@ const AdminSettings = () => {
         />
       </Grid>
 
-      {isSuperAdmin && (
-        <>
-          <Grid item xs={12}>
-            <Divider sx={{ my: 2 }} />
-            <Typography variant="h6" fontWeight={600} gutterBottom>
-              <LibraryBooks sx={{ mr: 1, verticalAlign: 'middle', color: 'primary.main' }} />
-              Library Policies
-            </Typography>
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <TextField
-              fullWidth
-              label="Maximum Books Per User"
-              type="number"
-              value={librarySettings.maxUserBorrowBooks}
-              onChange={(e) => handleLibrarySettingChange('maxUserBorrowBooks', parseInt(e.target.value) || 0)}
-              InputProps={{
-                startAdornment: <MenuBook sx={{ mr: 1, color: 'text.secondary' }} />,
-                inputProps: { min: 1, max: 20 }
-              }}
-              helperText="Maximum number of books a user can borrow at once"
-            />
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <TextField
-              fullWidth
-              label="Fine Per Day (USD)"
-              type="number"
-              inputProps={{ step: '0.01', min: '0' }}
-              value={librarySettings.dueFinesPerDay}
-              onChange={(e) => handleLibrarySettingChange('dueFinesPerDay', parseFloat(e.target.value) || 0)}
-              InputProps={{
-                startAdornment: <AttachMoney sx={{ mr: 1, color: 'text.secondary' }} />
-              }}
-              helperText="Daily fine amount for overdue books"
-            />
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <TextField
-              fullWidth
-              label="Maximum Return Days"
-              type="number"
-              value={librarySettings.maxBookReturnDays}
-              onChange={(e) => handleLibrarySettingChange('maxBookReturnDays', parseInt(e.target.value) || 0)}
-              InputProps={{
-                startAdornment: <CalendarToday sx={{ mr: 1, color: 'text.secondary' }} />,
-                inputProps: { min: 1, max: 365 }
-              }}
-              helperText="Maximum days allowed for book return"
-            />
-          </Grid>
-        </>
-      )}
+      <>
+        <Grid item xs={12}>
+          <Divider sx={{ my: 2 }} />
+          <Typography variant="h6" fontWeight={600} gutterBottom>
+            <LibraryBooks sx={{ mr: 1, verticalAlign: 'middle', color: 'primary.main' }} />
+            Library Policies
+          </Typography>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <TextField
+            fullWidth
+            label="Maximum Books Per User"
+            type="number"
+            value={librarySettings.maxUserBorrowBooks}
+            onChange={(e) => handleLibrarySettingChange('maxUserBorrowBooks', parseInt(e.target.value) || 0)}
+            InputProps={{
+              startAdornment: <MenuBook sx={{ mr: 1, color: 'text.secondary' }} />,
+              inputProps: { min: 1, max: 20 }
+            }}
+            helperText="Maximum number of books a user can borrow at once"
+          />
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <TextField
+            fullWidth
+            label="Fine Per Day (USD)"
+            type="number"
+            inputProps={{ step: '0.01', min: '0' }}
+            value={librarySettings.dueFinesPerDay}
+            onChange={(e) => handleLibrarySettingChange('dueFinesPerDay', parseFloat(e.target.value) || 0)}
+            InputProps={{
+              startAdornment: <AttachMoney sx={{ mr: 1, color: 'text.secondary' }} />
+            }}
+            helperText="Daily fine amount for overdue books"
+          />
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <TextField
+            fullWidth
+            label="Maximum Return Days"
+            type="number"
+            value={librarySettings.maxBookReturnDays}
+            onChange={(e) => handleLibrarySettingChange('maxBookReturnDays', parseInt(e.target.value) || 0)}
+            InputProps={{
+              startAdornment: <CalendarToday sx={{ mr: 1, color: 'text.secondary' }} />,
+              inputProps: { min: 1, max: 365 }
+            }}
+            helperText="Maximum days allowed for book return"
+          />
+        </Grid>
+      </>
 
       {/* Operating Hours */}
       <Grid item xs={12}>
@@ -1420,10 +1383,12 @@ const AdminSettings = () => {
               <Grid item xs={12} md={4}>
                 <TextField
                   fullWidth
-                  label="Max Login Attempts"
+                  label="Max Login Attempts (members)"
                   type="number"
+                  inputProps={{ min: 3, max: 20 }}
+                  helperText="Regular member accounts are auto-suspended after this many failed logins. Shown on the sign-in page."
                   value={securitySettings.loginAttempts}
-                  onChange={(e) => handleSecuritySettingChange('loginAttempts', parseInt(e.target.value))}
+                  onChange={(e) => handleSecuritySettingChange('loginAttempts', parseInt(e.target.value, 10))}
                 />
               </Grid>
               <Grid item xs={12} md={4}>
@@ -2137,11 +2102,11 @@ const AdminSettings = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <Box>
                         <Typography variant="h4" fontWeight={700}>
-                          {systemStatus.messages}
+                          {systemStatus.totalAdmins}
                         </Typography>
-                        <Typography variant="body2">Messages</Typography>
+                        <Typography variant="body2">Total Admins</Typography>
                       </Box>
-                      <Notifications sx={{ fontSize: 40, opacity: 0.8 }} />
+                      <AdminPanelSettings sx={{ fontSize: 40, opacity: 0.8 }} />
                     </Box>
                   </CardContent>
                 </Card>

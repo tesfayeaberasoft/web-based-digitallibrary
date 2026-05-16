@@ -21,6 +21,11 @@ import AdminLibrarians from './pages/admin/AdminLibrarians';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
 import AdminSettings from './pages/admin/AdminSettings';
 import SuperAdminDashboard from './pages/admin/SuperAdminDashboard';
+import LibrarianManagement from './pages/admin/LibrarianManagement';
+import AdminManagement from './pages/admin/AdminManagement';
+import SuperAdminAnalytics from './pages/admin/SuperAdminAnalytics';
+import SuperAdminSettingsPage from './pages/admin/SuperAdminSettings';
+import SuperAdminSecurity from './pages/admin/SuperAdminSecurity';
 
 // Librarian Pages
 import LibrarianDashboard from './pages/librarian/LibrarianDashboard';
@@ -137,6 +142,31 @@ function App() {
               <Route path="/super-admin" element={
                 <ProtectedRoute allowedRoles={['super-admin']}>
                   <SuperAdminDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/super-admin/librarians" element={
+                <ProtectedRoute allowedRoles={['super-admin']}>
+                  <LibrarianManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="/super-admin/admins" element={
+                <ProtectedRoute allowedRoles={['super-admin']}>
+                  <AdminManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="/super-admin/analytics" element={
+                <ProtectedRoute allowedRoles={['super-admin']}>
+                  <SuperAdminAnalytics />
+                </ProtectedRoute>
+              } />
+              <Route path="/super-admin/settings" element={
+                <ProtectedRoute allowedRoles={['super-admin']}>
+                  <SuperAdminSettingsPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/super-admin/security" element={
+                <ProtectedRoute allowedRoles={['super-admin']}>
+                  <SuperAdminSecurity />
                 </ProtectedRoute>
               } />
 

@@ -7,8 +7,8 @@ header('Content-Type: application/json');
 
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../utils/jwt.php';
+require_once __DIR__ . '/../../utils/security-helper.php';
 
-// Get posted data
 $data = json_decode(file_get_contents("php://input"));
 
 if (!isset($data->email) || !isset($data->password)) {
@@ -27,17 +27,29 @@ try {
         throw new Exception('Database connection failed');
     }
 
-    // Query user
+    $clientIp = getClientIpAddress();
+    if (isIpBlocked($db, $clientIp)) {
+        http_response_code(403);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Access denied. Your IP address has been blocked. Contact the administrator.'
+        ]);
+        exit();
+    }
+
+    $email = trim($data->email);
+
     $query = "SELECT id, user_id, full_name, email, password_hash, role, status, profile_image 
               FROM users 
               WHERE email = :email 
               LIMIT 1";
-    
+
     $stmt = $db->prepare($query);
-    $stmt->bindParam(':email', $data->email);
+    $stmt->bindParam(':email', $email);
     $stmt->execute();
 
     if ($stmt->rowCount() === 0) {
+        logLoginAttempt($db, $email, false, $clientIp);
         http_response_code(401);
         echo json_encode([
             'success' => false,
@@ -47,9 +59,50 @@ try {
     }
 
     $user = $stmt->fetch();
+    $isRegularUser = isRegularUserRole($user['role']);
+    $maxAttempts = getUserMaxLoginAttempts($db);
 
-    // Verify password
+    if ($isRegularUser && $user['status'] === 'suspended') {
+        logLoginAttempt($db, $email, false, $clientIp);
+        http_response_code(403);
+        echo json_encode(array_merge([
+            'success' => false,
+            'message' => 'Your account is suspended. Contact an administrator to restore access.',
+        ], loginLockoutJsonExtras([
+            'max_attempts' => $maxAttempts,
+            'failed_attempts' => countFailedAttemptsSinceLastSuccess($db, $email),
+            'remaining_attempts' => 0,
+            'account_suspended' => true,
+        ])));
+        exit();
+    }
+
     if (!password_verify($data->password, $user['password_hash'])) {
+        if ($isRegularUser) {
+            $lockout = handleRegularUserFailedLogin($db, $user, $clientIp);
+            $extras = loginLockoutJsonExtras($lockout);
+
+            if ($lockout['account_suspended']) {
+                http_response_code(403);
+                echo json_encode(array_merge([
+                    'success' => false,
+                    'message' => "Your account has been suspended after {$maxAttempts} failed login attempts. Contact an administrator.",
+                ], $extras));
+                exit();
+            }
+
+            $remaining = (int) $lockout['remaining_attempts'];
+            http_response_code(401);
+            echo json_encode(array_merge([
+                'success' => false,
+                'message' => $remaining === 1
+                    ? 'Invalid email or password. 1 attempt remaining before your account is suspended.'
+                    : "Invalid email or password. {$remaining} attempts remaining before your account is suspended.",
+            ], $extras));
+            exit();
+        }
+
+        logLoginAttempt($db, $email, false, $clientIp);
         http_response_code(401);
         echo json_encode([
             'success' => false,
@@ -58,8 +111,8 @@ try {
         exit();
     }
 
-    // Check if user is active
     if ($user['status'] !== 'active') {
+        logLoginAttempt($db, $email, false, $clientIp);
         http_response_code(403);
         echo json_encode([
             'success' => false,
@@ -68,20 +121,19 @@ try {
         exit();
     }
 
-    // Update last login
+    logLoginAttempt($db, $email, true, $clientIp);
+
     $updateQuery = "UPDATE users SET last_login = NOW() WHERE id = :id";
     $updateStmt = $db->prepare($updateQuery);
     $updateStmt->bindParam(':id', $user['id']);
     $updateStmt->execute();
 
-    // Generate JWT token
     $token = generateJWT([
         'user_id' => $user['id'],
         'email' => $user['email'],
         'role' => $user['role']
     ]);
 
-    // Remove password from response
     unset($user['password_hash']);
 
     echo json_encode([
@@ -101,4 +153,3 @@ try {
         'error' => $e->getMessage()
     ]);
 }
-?>

@@ -41,6 +41,20 @@ try {
         echo json_encode(['success' => false, 'message' => 'User not found']);
         exit;
     }
+
+    // Protect super-admin accounts from role/status changes by others
+    if ($user['role'] === 'super-admin') {
+        if ((int) $decoded['user_id'] !== (int) $user_id) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Cannot modify another super administrator account']);
+            exit;
+        }
+        if (isset($data['role']) || isset($data['status'])) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Super administrator role and status cannot be changed']);
+            exit;
+        }
+    }
     
     // Build update query dynamically
     $updates = [];
@@ -61,11 +75,12 @@ try {
         // Columns don't exist, continue with basic fields only
     }
     
-    // Admins can update role and status
-    if ($decoded['role'] === 'admin') {
+    // Admins and super-admins can update role and status
+    if ($decoded['role'] === 'admin' || $decoded['role'] === 'super-admin') {
         $allowed_fields[] = 'role';
         $allowed_fields[] = 'status';
         $allowed_fields[] = 'suspension_reason';
+        $allowed_fields[] = 'demotion_reason';
     }
     
     // Librarians can update status (but not role)

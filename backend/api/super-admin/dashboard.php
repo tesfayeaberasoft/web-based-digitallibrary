@@ -62,48 +62,212 @@ function handleGetDashboardData($db) {
 
 function getSystemOverview($db) {
     try {
-        // Get total counts
         $overview = [];
         
-        // Total users by role
+        // Get total counts with more detailed information
+        $stmt = $db->query("
+            SELECT 
+                (SELECT COUNT(*) FROM users) as total_users,
+                (SELECT COUNT(*) FROM users WHERE role = 'user') as regular_users,
+                (SELECT COUNT(*) FROM users WHERE role = 'librarian') as librarians,
+                (SELECT COUNT(*) FROM users WHERE role = 'admin') as admins,
+                (SELECT COUNT(*) FROM users WHERE role IN ('admin', 'librarian', 'super-admin')) as total_staff,
+                (SELECT COUNT(*) FROM users WHERE status = 'active') as active_users,
+                (SELECT COUNT(*) FROM users WHERE status = 'suspended') as suspended_users,
+                (SELECT COUNT(*) FROM users WHERE last_login >= DATE_SUB(NOW(), INTERVAL 24 HOUR)) as users_today,
+                (SELECT COUNT(*) FROM users WHERE last_login >= DATE_SUB(NOW(), INTERVAL 7 DAY)) as users_this_week,
+                (SELECT COUNT(*) FROM books) as total_books,
+                (SELECT COUNT(*) FROM books WHERE status = 'active') as active_books,
+                (SELECT SUM(total_copies) FROM books) as total_book_copies,
+                (SELECT SUM(available_copies) FROM books) as available_book_copies,
+                (SELECT COUNT(*) FROM book_loans WHERE status = 'active') as active_loans,
+                (SELECT COUNT(*) FROM book_loans WHERE status = 'overdue') as overdue_loans,
+                (SELECT COUNT(*) FROM book_loans WHERE return_date IS NOT NULL) as total_returns,
+                (SELECT COUNT(*) FROM book_reservations WHERE status = 'pending') as pending_reservations,
+                (SELECT COUNT(*) FROM book_reservations WHERE status = 'available') as available_reservations,
+                (SELECT COUNT(*) FROM fines WHERE status = 'pending') as pending_fines,
+                (SELECT COUNT(*) FROM fines WHERE status = 'paid') as paid_fines,
+                (SELECT CAST(COALESCE(SUM(amount), 0) AS DECIMAL(10,2)) FROM fines WHERE status = 'pending') as total_pending_fine_amount,
+                (SELECT CAST(COALESCE(SUM(paid_amount), 0) AS DECIMAL(10,2)) FROM fines WHERE status = 'paid') as total_collected_fines,
+                (SELECT COUNT(*) FROM categories) as total_categories,
+                (SELECT COUNT(*) FROM notifications WHERE status = 'unread') as unread_notifications,
+                (SELECT COUNT(*) FROM book_reviews) as total_reviews,
+                (SELECT COALESCE(AVG(rating), 0) FROM book_reviews) as average_rating
+        ");
+        $totals = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        // Calculate additional metrics
+        $totals['borrowed_percentage'] = $totals['total_book_copies'] > 0 
+            ? round((($totals['total_book_copies'] - $totals['available_book_copies']) / $totals['total_book_copies']) * 100, 2)
+            : 0;
+        
+        $totals['user_engagement_rate'] = $totals['total_users'] > 0
+            ? round(($totals['users_this_week'] / $totals['total_users']) * 100, 2)
+            : 0;
+        
+        // Convert numeric strings to proper numbers
+        $totals['total_pending_fine_amount'] = floatval($totals['total_pending_fine_amount']);
+        $totals['total_collected_fines'] = floatval($totals['total_collected_fines']);
+        $totals['average_rating'] = floatval($totals['average_rating']);
+        
+        $overview['totals'] = $totals;
+        
+        // Users by role with detailed breakdown
         $stmt = $db->query("
             SELECT 
                 role,
                 COUNT(*) as count,
-                SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_count
+                SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_count,
+                SUM(CASE WHEN status = 'suspended' THEN 1 ELSE 0 END) as suspended_count,
+                SUM(CASE WHEN last_login >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 ELSE 0 END) as active_this_week
             FROM users 
             GROUP BY role
+            ORDER BY count DESC
         ");
-        $usersByRole = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $overview['users_by_role'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        $overview['users_by_role'] = $usersByRole;
-        
-        // Total system counts
+        // Books by category with availability
         $stmt = $db->query("
             SELECT 
-                (SELECT COUNT(*) FROM users) as total_users,
-                (SELECT COUNT(*) FROM users WHERE role IN ('admin', 'librarian', 'super-admin')) as total_staff,
-                (SELECT COUNT(*) FROM books) as total_books,
-                (SELECT COUNT(*) FROM book_loans WHERE status = 'active') as active_loans,
-                (SELECT COUNT(*) FROM reservations WHERE status = 'active') as active_reservations,
-                (SELECT COUNT(*) FROM fines WHERE status = 'pending') as pending_fines
+                c.name as category,
+                c.color_code,
+                COUNT(b.id) as total_books,
+                SUM(b.total_copies) as total_copies,
+                SUM(b.available_copies) as available_copies,
+                ROUND((SUM(b.total_copies) - SUM(b.available_copies)) / SUM(b.total_copies) * 100, 2) as utilization_rate
+            FROM categories c
+            LEFT JOIN books b ON c.id = b.category_id AND b.status = 'active'
+            GROUP BY c.id, c.name, c.color_code
+            ORDER BY total_books DESC
+            LIMIT 10
         ");
-        $totals = $stmt->fetch(PDO::FETCH_ASSOC);
+        $overview['books_by_category'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        $overview['totals'] = $totals;
+        // Recent activity summary (last 7 days)
+        $stmt = $db->query("
+            SELECT 
+                DATE(created_at) as date,
+                COUNT(*) as new_users
+            FROM users 
+            WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+            GROUP BY DATE(created_at)
+            ORDER BY date DESC
+        ");
+        $overview['recent_user_registrations'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Loan activity (last 7 days)
+        $stmt = $db->query("
+            SELECT 
+                DATE(loan_date) as date,
+                COUNT(*) as loans_issued,
+                SUM(CASE WHEN return_date IS NOT NULL THEN 1 ELSE 0 END) as books_returned
+            FROM book_loans 
+            WHERE loan_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+            GROUP BY DATE(loan_date)
+            ORDER BY date DESC
+        ");
+        $overview['recent_loan_activity'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Top borrowed books
+        $stmt = $db->query("
+            SELECT 
+                b.title,
+                b.author,
+                b.isbn,
+                c.name as category,
+                COUNT(bl.id) as borrow_count,
+                b.available_copies,
+                b.total_copies
+            FROM books b
+            LEFT JOIN book_loans bl ON b.id = bl.book_id
+            LEFT JOIN categories c ON b.category_id = c.id
+            WHERE b.status = 'active'
+            GROUP BY b.id
+            ORDER BY borrow_count DESC
+            LIMIT 10
+        ");
+        $overview['top_borrowed_books'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Most active users
+        $stmt = $db->query("
+            SELECT 
+                u.full_name,
+                u.email,
+                u.user_id,
+                COUNT(bl.id) as total_loans,
+                SUM(CASE WHEN bl.status = 'active' THEN 1 ELSE 0 END) as current_loans,
+                u.last_login
+            FROM users u
+            LEFT JOIN book_loans bl ON u.id = bl.user_id
+            WHERE u.role = 'user' AND u.status = 'active'
+            GROUP BY u.id
+            ORDER BY total_loans DESC
+            LIMIT 10
+        ");
+        $overview['most_active_users'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Fine statistics
+        $stmt = $db->query("
+            SELECT 
+                fine_type,
+                COUNT(*) as count,
+                SUM(amount) as total_amount,
+                SUM(CASE WHEN status = 'paid' THEN paid_amount ELSE 0 END) as collected_amount
+            FROM fines
+            GROUP BY fine_type
+            ORDER BY total_amount DESC
+        ");
+        $overview['fine_statistics'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Monthly trends (last 12 months)
+        $stmt = $db->query("
+            SELECT 
+                DATE_FORMAT(loan_date, '%Y-%m') as month,
+                COUNT(*) as loans,
+                COUNT(DISTINCT user_id) as unique_users
+            FROM book_loans
+            WHERE loan_date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+            GROUP BY DATE_FORMAT(loan_date, '%Y-%m')
+            ORDER BY month DESC
+        ");
+        $overview['monthly_trends'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // System health indicators
+        $overview['health_indicators'] = [
+            'overdue_rate' => $totals['active_loans'] > 0 
+                ? round(($totals['overdue_loans'] / $totals['active_loans']) * 100, 2)
+                : 0,
+            'reservation_fulfillment_rate' => ($totals['pending_reservations'] + $totals['available_reservations']) > 0
+                ? round(($totals['available_reservations'] / ($totals['pending_reservations'] + $totals['available_reservations'])) * 100, 2)
+                : 0,
+            'fine_collection_rate' => ($totals['total_pending_fine_amount'] + $totals['total_collected_fines']) > 0
+                ? round(($totals['total_collected_fines'] / ($totals['total_pending_fine_amount'] + $totals['total_collected_fines'])) * 100, 2)
+                : 0,
+            'book_availability_rate' => $totals['total_book_copies'] > 0
+                ? round(($totals['available_book_copies'] / $totals['total_book_copies']) * 100, 2)
+                : 0
+        ];
         
         return $overview;
         
     } catch (Exception $e) {
+        error_log("Error in getSystemOverview: " . $e->getMessage());
         return [
             'users_by_role' => [],
+            'books_by_category' => [],
             'totals' => [
                 'total_users' => 0,
                 'total_staff' => 0,
                 'total_books' => 0,
                 'active_loans' => 0,
-                'active_reservations' => 0,
+                'pending_reservations' => 0,
                 'pending_fines' => 0
+            ],
+            'health_indicators' => [
+                'overdue_rate' => 0,
+                'reservation_fulfillment_rate' => 0,
+                'fine_collection_rate' => 0,
+                'book_availability_rate' => 0
             ]
         ];
     }
@@ -290,43 +454,39 @@ function getSystemHealth($db) {
 
 function getSecurityStatus($db) {
     try {
-        $security = [];
-        
-        // Failed login attempts (last 24 hours)
-        $stmt = $db->query("
-            SELECT COUNT(*) as failed_attempts
-            FROM login_attempts 
-            WHERE success = 0 AND attempted_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
-        ");
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        $security['failed_logins_24h'] = $result['failed_attempts'] ?? 0;
-        
-        // Suspended users
+        require_once __DIR__ . '/../../utils/security-helper.php';
+        $settings = getSuperAdminSecuritySettings($db);
+        $threshold = (int) ($settings['failed_login_threshold'] ?? 10);
+        $failed24 = getFailedLoginSummary($db, 24);
+        $suspicious = getSuspiciousIpRows($db, 24, $threshold);
+        $inactiveAdmins = getInactiveAdminAccounts($db);
+        $blockedIps = getBlockedIpList($db);
+
         $stmt = $db->query("SELECT COUNT(*) as count FROM users WHERE status = 'suspended'");
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        $security['suspended_users'] = $result['count'];
-        
-        // Recent security events
-        $stmt = $db->query("
-            SELECT 
-                'failed_login' as event_type,
-                ip_address,
-                attempted_at as timestamp,
-                'Failed login attempt' as description
-            FROM login_attempts 
-            WHERE success = 0 AND attempted_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-            ORDER BY attempted_at DESC
-            LIMIT 10
-        ");
-        $security['recent_events'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        return $security;
-        
+        $suspended = (int) ($stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0);
+
+        return [
+            'failed_logins_24h' => $failed24['total_failed'],
+            'failed_logins_7d' => getFailedLoginSummary($db, 168)['total_failed'],
+            'failed_login_threshold' => $threshold,
+            'suspicious_ips' => count($suspicious),
+            'inactive_admins' => count($inactiveAdmins),
+            'blocked_ips' => count($blockedIps),
+            'suspended_users' => $suspended,
+            'recent_events' => getRecentLoginAttempts($db, 10),
+            'security_panel_url' => '/super-admin/security',
+        ];
     } catch (Exception $e) {
         return [
             'failed_logins_24h' => 0,
+            'failed_logins_7d' => 0,
+            'failed_login_threshold' => 10,
+            'suspicious_ips' => 0,
+            'inactive_admins' => 0,
+            'blocked_ips' => 0,
             'suspended_users' => 0,
-            'recent_events' => []
+            'recent_events' => [],
+            'security_panel_url' => '/super-admin/security',
         ];
     }
 }
@@ -335,61 +495,198 @@ function getRecentActivities($db) {
     try {
         $activities = [];
         
-        // Recent user registrations
-        $stmt = $db->query("
-            SELECT 
-                'user_registration' as activity_type,
-                full_name as user_name,
-                email,
-                role,
-                created_at as timestamp
-            FROM users 
-            WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-            ORDER BY created_at DESC
-            LIMIT 5
-        ");
-        $registrations = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        // Recent user registrations (last 90 days or all if less)
+        try {
+            $stmt = $db->query("
+                SELECT 
+                    'User Registration' as action,
+                    full_name as user_name,
+                    CONCAT('New ', role, ' account created: ', email) as details,
+                    'success' as status,
+                    created_at as timestamp
+                FROM users 
+                ORDER BY created_at DESC
+                LIMIT 10
+            ");
+            $registrations = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            error_log("Registrations count: " . count($registrations));
+        } catch (Exception $e) {
+            error_log("Error fetching registrations: " . $e->getMessage());
+            $registrations = [];
+        }
         
-        // Recent book additions
-        $stmt = $db->query("
-            SELECT 
-                'book_added' as activity_type,
-                title as book_title,
-                author,
-                category,
-                created_at as timestamp
-            FROM books 
-            WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-            ORDER BY created_at DESC
-            LIMIT 5
-        ");
-        $bookAdditions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        // Recent book additions (all books)
+        try {
+            $stmt = $db->query("
+                SELECT 
+                    'Book Added' as action,
+                    'System' as user_name,
+                    CONCAT('\"', title, '\" by ', author, ' (', COALESCE(c.name, category), ')') as details,
+                    'success' as status,
+                    b.created_at as timestamp
+                FROM books b
+                LEFT JOIN categories c ON b.category_id = c.id
+                ORDER BY b.created_at DESC
+                LIMIT 10
+            ");
+            $bookAdditions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            error_log("Book additions count: " . count($bookAdditions));
+        } catch (Exception $e) {
+            error_log("Error fetching book additions: " . $e->getMessage());
+            $bookAdditions = [];
+        }
         
-        // Recent loans
-        $stmt = $db->query("
-            SELECT 
-                'book_loan' as activity_type,
-                u.full_name as user_name,
-                b.title as book_title,
-                bl.loan_date as timestamp
-            FROM book_loans bl
-            JOIN users u ON bl.user_id = u.id
-            JOIN books b ON bl.book_id = b.id
-            WHERE bl.loan_date >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-            ORDER BY bl.loan_date DESC
-            LIMIT 5
-        ");
-        $loans = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        // Recent loans (all loans)
+        try {
+            $stmt = $db->query("
+                SELECT 
+                    'Book Issued' as action,
+                    u.full_name as user_name,
+                    CONCAT('Borrowed \"', b.title, '\"') as details,
+                    CASE 
+                        WHEN bl.status = 'active' THEN 'success'
+                        WHEN bl.status = 'overdue' THEN 'warning'
+                        ELSE 'info'
+                    END as status,
+                    bl.created_at as timestamp
+                FROM book_loans bl
+                JOIN users u ON bl.user_id = u.id
+                JOIN books b ON bl.book_id = b.id
+                ORDER BY bl.created_at DESC
+                LIMIT 10
+            ");
+            $loans = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            error_log("Loans count: " . count($loans));
+        } catch (Exception $e) {
+            error_log("Error fetching loans: " . $e->getMessage());
+            $loans = [];
+        }
+        
+        // Recent returns (all returns)
+        try {
+            $stmt = $db->query("
+                SELECT 
+                    'Book Returned' as action,
+                    u.full_name as user_name,
+                    CONCAT('Returned \"', b.title, '\"') as details,
+                    CASE 
+                        WHEN bl.return_date <= bl.due_date THEN 'success'
+                        WHEN bl.return_date > bl.due_date THEN 'warning'
+                        ELSE 'info'
+                    END as status,
+                    bl.return_date as timestamp
+                FROM book_loans bl
+                JOIN users u ON bl.user_id = u.id
+                JOIN books b ON bl.book_id = b.id
+                WHERE bl.return_date IS NOT NULL
+                ORDER BY bl.return_date DESC
+                LIMIT 10
+            ");
+            $returns = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            error_log("Returns count: " . count($returns));
+        } catch (Exception $e) {
+            error_log("Error fetching returns: " . $e->getMessage());
+            $returns = [];
+        }
+        
+        // Recent reservations (all reservations)
+        try {
+            $stmt = $db->query("
+                SELECT 
+                    'Book Reserved' as action,
+                    u.full_name as user_name,
+                    CONCAT('Reserved \"', b.title, '\"') as details,
+                    CASE 
+                        WHEN br.status = 'pending' THEN 'info'
+                        WHEN br.status = 'available' THEN 'success'
+                        WHEN br.status = 'cancelled' THEN 'error'
+                        ELSE 'info'
+                    END as status,
+                    br.reservation_date as timestamp
+                FROM book_reservations br
+                JOIN users u ON br.user_id = u.id
+                JOIN books b ON br.book_id = b.id
+                ORDER BY br.reservation_date DESC
+                LIMIT 10
+            ");
+            $reservations = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            error_log("Reservations count: " . count($reservations));
+        } catch (Exception $e) {
+            error_log("Error fetching reservations: " . $e->getMessage());
+            $reservations = [];
+        }
+        
+        // Recent fine payments (all payments)
+        try {
+            $stmt = $db->query("
+                SELECT 
+                    'Fine Paid' as action,
+                    u.full_name as user_name,
+                    CONCAT('Paid fine: $', COALESCE(f.paid_amount, 0), ' (', f.fine_type, ')') as details,
+                    'success' as status,
+                    f.paid_date as timestamp
+                FROM fines f
+                JOIN users u ON f.user_id = u.id
+                WHERE f.status = 'paid' 
+                AND f.paid_date IS NOT NULL
+                ORDER BY f.paid_date DESC
+                LIMIT 10
+            ");
+            $finePayments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            error_log("Fine payments count: " . count($finePayments));
+        } catch (Exception $e) {
+            error_log("Error fetching fine payments: " . $e->getMessage());
+            $finePayments = [];
+        }
+        
+        // Recent user logins (if login_attempts table exists)
+        try {
+            $stmt = $db->query("
+                SELECT 
+                    CASE WHEN success = 1 THEN 'User Login' ELSE 'Failed Login' END as action,
+                    COALESCE(u.full_name, 'Unknown User') as user_name,
+                    CONCAT('Login from IP: ', la.ip_address) as details,
+                    CASE WHEN success = 1 THEN 'success' ELSE 'error' END as status,
+                    la.attempted_at as timestamp
+                FROM login_attempts la
+                LEFT JOIN users u ON la.user_id = u.id
+                ORDER BY la.attempted_at DESC
+                LIMIT 10
+            ");
+            $logins = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            error_log("Logins count: " . count($logins));
+        } catch (Exception $e) {
+            error_log("Error fetching logins (table may not exist): " . $e->getMessage());
+            $logins = [];
+        }
         
         // Combine and sort all activities
-        $allActivities = array_merge($registrations, $bookAdditions, $loans);
+        $allActivities = array_merge(
+            $registrations, 
+            $bookAdditions, 
+            $loans, 
+            $returns, 
+            $reservations, 
+            $finePayments,
+            $logins
+        );
+        
+        // Filter out activities with null timestamps
+        $allActivities = array_filter($allActivities, function($activity) {
+            return !empty($activity['timestamp']);
+        });
+        
         usort($allActivities, function($a, $b) {
             return strtotime($b['timestamp']) - strtotime($a['timestamp']);
         });
         
-        return array_slice($allActivities, 0, 15);
+        $result = array_slice($allActivities, 0, 50);
+        error_log("Total activities returned: " . count($result));
+        
+        return $result;
         
     } catch (Exception $e) {
+        error_log("Error in getRecentActivities: " . $e->getMessage());
         return []; // Return empty array instead of error object
     }
 }

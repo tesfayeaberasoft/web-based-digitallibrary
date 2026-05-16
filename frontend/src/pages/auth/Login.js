@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import {
   Box,
   Card,
@@ -41,11 +42,29 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [userMaxAttempts, setUserMaxAttempts] = useState(5);
+  const [lockoutInfo, setLockoutInfo] = useState(null);
+
+  useEffect(() => {
+    axios
+      .get('http://localhost:8000/api/auth/login-policy')
+      .then((res) => {
+        const max = res.data?.data?.user_max_login_attempts;
+        if (res.data?.success && max) {
+          setUserMaxAttempts(max);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const from = location.state?.from?.pathname || '/dashboard';
 
   const handleChange = (e) => {
     const { name, value, checked } = e.target;
+    if (name === 'email') {
+      setLockoutInfo(null);
+      setError('');
+    }
     setFormData(prev => ({
       ...prev,
       [name]: name === 'rememberMe' ? checked : value
@@ -56,10 +75,12 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setLockoutInfo(null);
 
     const result = await login(formData.email, formData.password);
     
     if (result.success) {
+      setLockoutInfo(null);
       toast.success('Login successful!');
       
       // Redirect based on user role
@@ -78,6 +99,13 @@ const Login = () => {
       }
     } else {
       setError(result.message);
+      if (result.userLockout) {
+        setLockoutInfo({
+          remaining: result.remainingAttempts,
+          max: result.maxAttempts ?? userMaxAttempts,
+          suspended: result.accountSuspended,
+        });
+      }
       toast.error(result.message);
     }
     
@@ -228,6 +256,35 @@ const Login = () => {
                 Or continue with email
               </Typography>
             </Divider>
+
+            <Alert severity="info" sx={{ mb: 2 }} icon={false}>
+              <Typography variant="body2">
+                <strong>Member accounts:</strong> after {userMaxAttempts} failed sign-in attempts,
+                your account is automatically suspended until an administrator reactivates it.
+              </Typography>
+            </Alert>
+
+            {lockoutInfo && !lockoutInfo.suspended && lockoutInfo.remaining != null && (
+              <Alert severity="warning" sx={{ mb: 2 }}>
+                <Typography variant="body2" fontWeight={600}>
+                  {lockoutInfo.remaining} of {lockoutInfo.max} attempt{lockoutInfo.max === 1 ? '' : 's'} remaining
+                </Typography>
+                <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
+                  Your account will be suspended if you exceed the limit.
+                </Typography>
+              </Alert>
+            )}
+
+            {lockoutInfo?.suspended && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                <Typography variant="body2" fontWeight={600}>
+                  Account suspended
+                </Typography>
+                <Typography variant="caption">
+                  Contact your library administrator to restore access.
+                </Typography>
+              </Alert>
+            )}
 
             {error && (
               <Alert severity="error" sx={{ mb: 3 }}>
