@@ -61,6 +61,7 @@ const Sidebar = ({ open = true }) => {
           { text: 'Librarian Management', icon: <SupervisorAccount />, path: '/super-admin/librarians', color: '#d32f2f' },
           { text: 'System Settings', icon: <Settings />, path: '/super-admin/settings', color: '#d32f2f' },
           { text: 'Security Center', icon: <Shield />, path: '/super-admin/security', color: '#d32f2f' },
+          { text: 'Audit Logs', icon: <History />, path: '/super-admin/audit-logs', color: '#d32f2f' },
           { text: 'Analytics', icon: <TrendingUp />, path: '/super-admin/analytics', color: '#d32f2f' },
         ];
       case 'admin':

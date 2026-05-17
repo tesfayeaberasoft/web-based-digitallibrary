@@ -251,7 +251,9 @@ const SuperAdminDashboard = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [openDialog, setOpenDialog] = useState('');
-  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [selectedBackup, setSelectedBackup] = useState(null);
+  const [restoreConfirmation, setRestoreConfirmation] = useState('');
+  const [backups, setBackups] = useState([]);
   const [bulkAction, setBulkAction] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
@@ -614,6 +616,75 @@ const SuperAdminDashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRestoreBackup = async () => {
+    if (!selectedBackup) {
+      setError('Please select a backup file');
+      return;
+    }
+
+    if (restoreConfirmation !== 'RESTORE') {
+      setError('Please type "RESTORE" to confirm');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post('http://localhost:8000/api/super-admin/system-management', {
+        action: 'restore_backup',
+        data: {
+          backup_file: selectedBackup.name,
+          confirmation: 'RESTORE'
+        }
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.data.success) {
+        setSuccess('Database restored successfully! The system has been taken out of maintenance mode.');
+        setOpenDialog('');
+        setSelectedBackup(null);
+        setRestoreConfirmation('');
+        await loadDashboardData();
+      } else {
+        throw new Error(response.data.message || 'Restore failed');
+      }
+    } catch (err) {
+      console.error('Restore backup failed:', err);
+      setError(err.response?.data?.message || err.message || 'Failed to restore backup');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openRestoreDialog = async () => {
+    setSelectedBackup(null);
+    setRestoreConfirmation('');
+    
+    // Load backups
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('http://localhost:8000/api/super-admin/system-management', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.data.backups) {
+        setBackups(response.data.backups);
+        // Update dashboard data with backups
+        setDashboardData(prev => ({
+          ...prev,
+          backups: response.data.backups
+        }));
+      }
+    } catch (err) {
+      console.error('Failed to load backups:', err);
+    }
+    
+    setOpenDialog('restore_backup');
   };
 
   const getStatusColor = (status) => {
@@ -2570,7 +2641,7 @@ const SuperAdminDashboard = () => {
                       <Button
                         variant="outlined"
                         startIcon={<CloudDownload />}
-                        onClick={() => handleSystemAction('restore_backup')}
+                        onClick={openRestoreDialog}
                         disabled={loading}
                         fullWidth
                       >
@@ -2855,6 +2926,148 @@ const SuperAdminDashboard = () => {
 
 
 
+      </Box>
+    </DashboardLayout>
+  );
+};
+
+        {/* Restore Backup Dialog */}
+        <Dialog 
+          open={openDialog === 'restore_backup'} 
+          onClose={() => setOpenDialog('')}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle sx={{ bgcolor: 'warning.main', color: 'white' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <CloudDownload />
+              <Typography variant="h6" fontWeight={600}>
+                Restore Database Backup
+              </Typography>
+            </Box>
+          </DialogTitle>
+          <DialogContent sx={{ pt: 3 }}>
+            <Alert severity="error" icon={<Warning />} sx={{ mb: 3 }}>
+              <Typography variant="h6" fontWeight={600} sx={{ mb: 1 }}>
+                ⚠️ WARNING: DESTRUCTIVE OPERATION
+              </Typography>
+              <Typography variant="body2">
+                Restoring a backup will:
+              </Typography>
+              <ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
+                <li>
+                  <Typography variant="body2">Replace ALL current database data</Typography>
+                </li>
+                <li>
+                  <Typography variant="body2">Enable maintenance mode during restore</Typography>
+                </li>
+                <li>
+                  <Typography variant="body2">Temporarily block all user access</Typography>
+                </li>
+                <li>
+                  <Typography variant="body2">May take several minutes to complete</Typography>
+                </li>
+              </ul>
+            </Alert>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
+                Select Backup File
+              </Typography>
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <Select
+                  value={selectedBackup ? selectedBackup.name : ''}
+                  onChange={(e) => {
+                    const backup = dashboardData?.backups?.find(b => b.name === e.target.value);
+                    setSelectedBackup(backup);
+                  }}
+                  displayEmpty
+                >
+                  <MenuItem value="" disabled>
+                    Choose a backup file...
+                  </MenuItem>
+                  {dashboardData?.backups?.map((backup) => (
+                    <MenuItem key={backup.name} value={backup.name}>
+                      <Box sx={{ width: '100%' }}>
+                        <Typography variant="body2">
+                          {backup.name}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {backup.size} • {backup.created_at}
+                        </Typography>
+                      </Box>
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              {selectedBackup && (
+                <Card variant="outlined" sx={{ bgcolor: 'background.default', p: 2, mb: 2 }}>
+                  <Grid container spacing={1}>
+                    <Grid item xs={6}>
+                      <Typography variant="caption" color="text.secondary">File:</Typography>
+                      <Typography variant="body2" fontWeight={600}>{selectedBackup.name}</Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="caption" color="text.secondary">Size:</Typography>
+                      <Typography variant="body2" fontWeight={600}>{selectedBackup.size}</Typography>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Typography variant="caption" color="text.secondary">Created:</Typography>
+                      <Typography variant="body2" fontWeight={600}>{selectedBackup.created_at}</Typography>
+                    </Grid>
+                  </Grid>
+                </Card>
+              )}
+            </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
+                Safety Confirmation
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                Type <strong>"RESTORE"</strong> below to confirm you want to proceed:
+              </Typography>
+              <TextField
+                fullWidth
+                placeholder='Type "RESTORE" to confirm'
+                value={restoreConfirmation}
+                onChange={(e) => setRestoreConfirmation(e.target.value.toUpperCase())}
+                inputProps={{ style: { textAlign: 'center', fontWeight: 600, letterSpacing: '2px' } }}
+                sx={{ 
+                  '& .MuiOutlinedInput-root': {
+                    fontSize: '18px'
+                  }
+                }}
+              />
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                This prevents accidental restoration
+              </Typography>
+            </Box>
+
+            {restoreConfirmation === 'RESTORE' && (
+              <Alert severity="info">
+                <Typography variant="body2">
+                  ✓ Confirmation accepted. Click "Restore" to proceed.
+                </Typography>
+              </Alert>
+            )}
+          </DialogContent>
+          <DialogActions sx={{ p: 2, bgcolor: 'background.default' }}>
+            <Button onClick={() => setOpenDialog('')}>
+              Cancel
+            </Button>
+            <Button 
+              variant="contained" 
+              color="error"
+              onClick={handleRestoreBackup}
+              disabled={!selectedBackup || restoreConfirmation !== 'RESTORE' || loading}
+              startIcon={loading ? <CircularProgress size={20} /> : <CloudDownload />}
+            >
+              {loading ? 'Restoring...' : 'Restore Database'}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </DashboardLayout>
   );

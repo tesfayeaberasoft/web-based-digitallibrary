@@ -647,7 +647,10 @@ function performBulkUserOperations($db, $data) {
 
 function restoreBackup($data) {
     try {
+        global $db;
+        
         $backupFile = $data['backup_file'] ?? '';
+        $confirmation = $data['confirmation'] ?? '';
         
         if (empty($backupFile)) {
             return [
@@ -656,12 +659,84 @@ function restoreBackup($data) {
             ];
         }
         
-        // This is a placeholder for backup restoration
-        return [
-            'success' => true,
-            'message' => 'Backup restoration initiated. This may take several minutes.',
-            'timestamp' => date('Y-m-d H:i:s')
-        ];
+        // Validate confirmation
+        if ($confirmation !== 'RESTORE') {
+            return [
+                'success' => false,
+                'message' => 'Safety confirmation required - type "RESTORE" to proceed'
+            ];
+        }
+        
+        // Validate backup file exists and is safe
+        $backupDir = __DIR__ . '/../../backups';
+        $fullPath = realpath($backupDir . '/' . $backupFile);
+        
+        if (!$fullPath || strpos($fullPath, realpath($backupDir)) !== 0) {
+            return [
+                'success' => false,
+                'message' => 'Invalid backup file path'
+            ];
+        }
+        
+        if (!file_exists($fullPath)) {
+            return [
+                'success' => false,
+                'message' => 'Backup file not found'
+            ];
+        }
+        
+        // Enable maintenance mode
+        setMaintenanceMode(true);
+        
+        try {
+            // Read and execute backup SQL
+            $sqlContent = file_get_contents($fullPath);
+            
+            if ($sqlContent === false) {
+                throw new Exception('Failed to read backup file');
+            }
+            
+            // Split SQL statements carefully
+            $statements = preg_split('/;(?=(?:[^\'"`]*[\'"`][^\'"`]*[\'"`])*[^\'"`]*$)/', $sqlContent);
+            
+            $db = Database::getInstance()->getConnection();
+            $executedCount = 0;
+            $errors = [];
+            
+            foreach ($statements as $statement) {
+                $statement = trim($statement);
+                
+                // Skip empty statements and comments
+                if (empty($statement) || substr($statement, 0, 2) === '--') {
+                    continue;
+                }
+                
+                try {
+                    $db->exec($statement);
+                    $executedCount++;
+                } catch (PDOException $e) {
+                    // Log non-critical errors but continue
+                    $errors[] = 'Statement error: ' . $e->getMessage();
+                }
+            }
+            
+            // Disable maintenance mode
+            setMaintenanceMode(false);
+            
+            return [
+                'success' => true,
+                'message' => 'Database restored successfully from backup',
+                'statements_executed' => $executedCount,
+                'errors' => !empty($errors) ? $errors : null,
+                'timestamp' => date('Y-m-d H:i:s'),
+                'backup_source' => $backupFile
+            ];
+            
+        } catch (Exception $e) {
+            // Ensure maintenance mode is disabled on error
+            setMaintenanceMode(false);
+            throw $e;
+        }
         
     } catch (Exception $e) {
         return [
@@ -908,5 +983,22 @@ function buildSuperAdminDownloadUrl($type, $filename) {
     $base = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http')
         . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost:8000');
     return $base . '/api/super-admin/download?type=' . urlencode($type) . '&file=' . urlencode($filename);
+}
+
+function setMaintenanceMode($enabled) {
+    $file = __DIR__ . '/../../maintenance.flag';
+    
+    if ($enabled) {
+        $data = [
+            'enabled' => true,
+            'started_at' => date('Y-m-d H:i:s'),
+            'reason' => 'Database restore in progress'
+        ];
+        file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT));
+    } else {
+        if (file_exists($file)) {
+            unlink($file);
+        }
+    }
 }
 ?>

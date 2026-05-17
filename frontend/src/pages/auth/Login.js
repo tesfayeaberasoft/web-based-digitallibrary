@@ -257,24 +257,6 @@ const Login = () => {
               </Typography>
             </Divider>
 
-            <Alert severity="info" sx={{ mb: 2 }} icon={false}>
-              <Typography variant="body2">
-                <strong>Member accounts:</strong> after {userMaxAttempts} failed sign-in attempts,
-                your account is automatically suspended until an administrator reactivates it.
-              </Typography>
-            </Alert>
-
-            {lockoutInfo && !lockoutInfo.suspended && lockoutInfo.remaining != null && (
-              <Alert severity="warning" sx={{ mb: 2 }}>
-                <Typography variant="body2" fontWeight={600}>
-                  {lockoutInfo.remaining} of {lockoutInfo.max} attempt{lockoutInfo.max === 1 ? '' : 's'} remaining
-                </Typography>
-                <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
-                  Your account will be suspended if you exceed the limit.
-                </Typography>
-              </Alert>
-            )}
-
             {lockoutInfo?.suspended && (
               <Alert severity="error" sx={{ mb: 2 }}>
                 <Typography variant="body2" fontWeight={600}>

@@ -72,7 +72,8 @@ import {
   AdminPanelSettings,
   PowerSettingsNew,
   Memory,
-  MonitorHeart
+  MonitorHeart,
+  History
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import axios from 'axios';
@@ -674,6 +675,9 @@ const SuperAdminSettings = () => {
                   </Grid>
                   <Grid item xs={12} sm={6} md={4}>
                     <ActionCard title="Export logs" description="Zip log files for download" icon={<Download />} color="#9c27b0" loading={actionLoading === 'export_logs'} onClick={() => runAction('export_logs')} />
+                  </Grid>
+                  <Grid item xs={12} sm={6} md={4}>
+                    <ActionCard title="Audit logs" description="Search activity & accountability" icon={<History />} color="#5c6bc0" onClick={() => navigate('/super-admin/audit-logs')} />
                   </Grid>
                   <Grid item xs={12} sm={6} md={4}>
                     <ActionCard title="Restart services" description="Clear PHP opcache" icon={<RestartAlt />} color="#ed6c02" loading={actionLoading === 'restart_system'} onClick={() => setConfirmDialog({ action: 'restart_system', title: 'Restart system services?' })} />

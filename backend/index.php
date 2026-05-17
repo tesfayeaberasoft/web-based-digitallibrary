@@ -356,6 +356,10 @@ switch (true) {
         require __DIR__ . '/api/super-admin/security.php';
         break;
 
+    case preg_match('#^/super-admin/audit-logs$#', $path) && $request_method === 'GET':
+        require __DIR__ . '/api/super-admin/audit-logs.php';
+        break;
+
     case preg_match('#^/super-admin/analytics$#', $path) && $request_method === 'GET':
         require __DIR__ . '/api/super-admin/analytics.php';
         break;

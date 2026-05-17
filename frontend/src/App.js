@@ -26,6 +26,7 @@ import AdminManagement from './pages/admin/AdminManagement';
 import SuperAdminAnalytics from './pages/admin/SuperAdminAnalytics';
 import SuperAdminSettingsPage from './pages/admin/SuperAdminSettings';
 import SuperAdminSecurity from './pages/admin/SuperAdminSecurity';
+import SuperAdminAuditLogs from './pages/admin/SuperAdminAuditLogs';
 
 // Librarian Pages
 import LibrarianDashboard from './pages/librarian/LibrarianDashboard';
@@ -167,6 +168,11 @@ function App() {
               <Route path="/super-admin/security" element={
                 <ProtectedRoute allowedRoles={['super-admin']}>
                   <SuperAdminSecurity />
+                </ProtectedRoute>
+              } />
+              <Route path="/super-admin/audit-logs" element={
+                <ProtectedRoute allowedRoles={['super-admin']}>
+                  <SuperAdminAuditLogs />
                 </ProtectedRoute>
               } />
 
