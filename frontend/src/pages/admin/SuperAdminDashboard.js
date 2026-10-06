@@ -2926,11 +2926,6 @@ const SuperAdminDashboard = () => {
 
 
 
-      </Box>
-    </DashboardLayout>
-  );
-};
-
         {/* Restore Backup Dialog */}
         <Dialog 
           open={openDialog === 'restore_backup'} 
