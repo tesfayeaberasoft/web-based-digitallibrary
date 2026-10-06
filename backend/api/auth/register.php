@@ -62,11 +62,21 @@ try {
         exit();
     }
 
-    // Generate user ID
-    $userIdQuery = "SELECT COUNT(*) as count FROM users WHERE role = 'user'";
-    $userIdStmt = $db->query($userIdQuery);
-    $userCount = $userIdStmt->fetch()['count'];
-    $userId = 'USR' . str_pad($userCount + 1, 3, '0', STR_PAD_LEFT);
+    // Generate unique user ID — keep trying until we find one not already taken
+    $userId = null;
+    $attempts = 0;
+    do {
+        $totalQuery = "SELECT COUNT(*) as count FROM users";
+        $totalStmt  = $db->query($totalQuery);
+        $base = $totalStmt->fetch()['count'] + 1 + $attempts;
+        $candidate = 'USR' . str_pad($base, 3, '0', STR_PAD_LEFT);
+        $checkId = $db->prepare("SELECT id FROM users WHERE user_id = ? LIMIT 1");
+        $checkId->execute([$candidate]);
+        if ($checkId->rowCount() === 0) {
+            $userId = $candidate;
+        }
+        $attempts++;
+    } while ($userId === null && $attempts < 1000);
 
     // Hash password
     $passwordHash = password_hash($data->password, PASSWORD_DEFAULT);
