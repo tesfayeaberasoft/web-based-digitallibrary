@@ -48,6 +48,9 @@ define('CHAPA_SECRET_KEY', 'your-chapa-secret-key');
 define('CHAPA_PUBLIC_KEY', 'your-chapa-public-key');
 define('CHAPA_CALLBACK_URL', 'http://localhost:8000/api/payments/callback');
 
+// Google OAuth
+define('GOOGLE_CLIENT_ID', '22900232380-bu194bg29pvdauj1ac9tu5i588onh6u8.apps.googleusercontent.com');
+
 // Google Books API
 define('GOOGLE_BOOKS_API_KEY', 'your-google-books-api-key');
 
