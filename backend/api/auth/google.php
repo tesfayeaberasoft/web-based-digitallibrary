@@ -1,29 +1,14 @@
 <?php
-/**
- * Google OAuth Authentication Endpoint
- *
- * The frontend sends a Google ID token (JWT) obtained from Google's
- * Identity Services popup. We verify it by:
- *   1. Decoding the JWT payload (base64url)
- *   2. Checking expiry, issuer, and audience fields locally
- *   3. Optionally confirming with Google's tokeninfo API (best-effort)
- *
- * This approach works reliably on localhost/XAMPP without network issues.
- */
-
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../utils/jwt.php';
 
-// ─── Read the Google Client ID from config ─────────────────────────────────
-// Allow it to be set in config.php or fall back to the hardcoded value below.
-// To override, add:  define('GOOGLE_CLIENT_ID', 'YOUR_ID');  in config.php
+// Google Client ID - must match frontend .env REACT_APP_GOOGLE_CLIENT_ID
 if (!defined('GOOGLE_CLIENT_ID')) {
     define('GOOGLE_CLIENT_ID', '22900232380-bu194bg29pvdauj1ac9tu5i588onh6u8.apps.googleusercontent.com');
 }
 
-// ─── Input ──────────────────────────────────────────────────────────────────
 $raw  = file_get_contents('php://input');
 $data = json_decode($raw);
 
@@ -33,78 +18,74 @@ if (empty($data->credential)) {
     exit();
 }
 
-/**
- * Decode a base64url-encoded JWT segment into an associative array.
- */
-function decodeJwtPart(string $part): ?array {
-    $rem = strlen($part) % 4;
-    if ($rem) {
-        $part .= str_repeat('=', 4 - $rem);
-    }
-    $json = base64_decode(strtr($part, '-_', '+/'));
-    if ($json === false) return null;
-    $arr  = json_decode($json, true);
-    return is_array($arr) ? $arr : null;
-}
-
-/**
- * Verify a Google ID token by decoding its payload and validating claims.
- * Also does a best-effort network check via Google's tokeninfo endpoint.
- *
- * Returns the payload array on success, false on failure.
- */
-function verifyGoogleIdToken(string $idToken): array|false {
-    // ── 1. Split the JWT ─────────────────────────────────────────────────
+function decodeGoogleJwtPayload($idToken) {
     $parts = explode('.', $idToken);
     if (count($parts) !== 3) {
-        error_log('google.php: token does not have 3 parts');
         return false;
     }
+    $segment = $parts[1];
+    $rem = strlen($segment) % 4;
+    if ($rem) {
+        $segment .= str_repeat('=', 4 - $rem);
+    }
+    $json = base64_decode(strtr($segment, '-_', '+/'));
+    if ($json === false) {
+        return false;
+    }
+    $payload = json_decode($json, true);
+    if (!is_array($payload)) {
+        return false;
+    }
+    return $payload;
+}
 
-    $payload = decodeJwtPart($parts[1]);
+function verifyGoogleToken($idToken) {
+    $payload = decodeGoogleJwtPayload($idToken);
     if (!$payload) {
-        error_log('google.php: could not decode payload');
+        error_log('google.php: failed to decode JWT payload');
         return false;
     }
 
-    // ── 2. Check issuer ──────────────────────────────────────────────────
+    // Check issuer
     $iss = $payload['iss'] ?? '';
-    if (!in_array($iss, ['accounts.google.com', 'https://accounts.google.com'], true)) {
-        error_log("google.php: invalid issuer: $iss");
+    $validIssuers = ['accounts.google.com', 'https://accounts.google.com'];
+    if (!in_array($iss, $validIssuers, true)) {
+        error_log('google.php: bad issuer: ' . $iss);
         return false;
     }
 
-    // ── 3. Check expiry ──────────────────────────────────────────────────
+    // Check expiry
     $exp = (int)($payload['exp'] ?? 0);
     if ($exp === 0 || $exp < time()) {
-        error_log('google.php: token expired or missing exp');
+        error_log('google.php: token expired. exp=' . $exp . ' now=' . time());
         return false;
     }
 
-    // ── 4. Check audience matches our Client ID ──────────────────────────
+    // Check audience
     $aud = $payload['aud'] ?? '';
     if ($aud !== GOOGLE_CLIENT_ID) {
-        error_log("google.php: aud mismatch. got=$aud expected=" . GOOGLE_CLIENT_ID);
+        error_log('google.php: aud mismatch. got=' . $aud . ' expected=' . GOOGLE_CLIENT_ID);
         return false;
     }
 
-    // ── 5. Must have an email ────────────────────────────────────────────
+    // Must have email
     if (empty($payload['email'])) {
-        error_log('google.php: token missing email');
+        error_log('google.php: no email in payload');
         return false;
     }
 
     return $payload;
 }
 
-// ─── Main Logic ─────────────────────────────────────────────────────────────
 try {
     $db = Database::getInstance()->getConnection();
-    if (!$db) throw new Exception('Database connection failed');
+    if (!$db) {
+        throw new Exception('Database connection failed');
+    }
 
-    $googleUser = verifyGoogleIdToken($data->credential);
+    $googleUser = verifyGoogleToken($data->credential);
 
-    if (!$googleUser) {
+    if ($googleUser === false) {
         http_response_code(401);
         echo json_encode([
             'success' => false,
@@ -118,7 +99,7 @@ try {
     $name     = $googleUser['name']    ?? ($googleUser['given_name'] ?? 'Google User');
     $picture  = $googleUser['picture'] ?? '';
 
-    // ── Find existing user by google_id OR email ─────────────────────────
+    // Find existing user by google_id OR email
     $stmt = $db->prepare(
         "SELECT id, user_id, full_name, email, role, status, profile_image, google_id
          FROM users
@@ -129,7 +110,7 @@ try {
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($user) {
-        // ── Existing user ────────────────────────────────────────────────
+        // Existing user
         if ($user['status'] === 'suspended') {
             http_response_code(403);
             echo json_encode(['success' => false, 'message' => 'Account suspended. Contact an administrator.']);
@@ -143,6 +124,7 @@ try {
 
         $updates = ['last_login = NOW()'];
         $params  = [];
+
         if (empty($user['google_id']) && $googleId) {
             $updates[] = 'google_id = ?';
             $params[]  = $googleId;
@@ -152,28 +134,31 @@ try {
             $params[]  = $picture;
         }
         $params[] = $user['id'];
-        $db->prepare('UPDATE users SET ' . implode(', ', $updates) . ' WHERE id = ?')->execute($params);
+        $db->prepare('UPDATE users SET ' . implode(', ', $updates) . ' WHERE id = ?')
+           ->execute($params);
 
         $stmt2 = $db->prepare('SELECT id, user_id, full_name, email, role, status, profile_image FROM users WHERE id = ?');
         $stmt2->execute([$user['id']]);
         $user = $stmt2->fetch(PDO::FETCH_ASSOC);
 
     } else {
-        // ── New user: auto-register ──────────────────────────────────────
+        // New user — auto-register
         $userId   = null;
         $attempts = 0;
         do {
-            $base      = (int) $db->query('SELECT COUNT(*) FROM users')->fetchColumn() + 1 + $attempts;
+            $base      = (int)$db->query('SELECT COUNT(*) FROM users')->fetchColumn() + 1 + $attempts;
             $candidate = 'USR' . str_pad($base, 3, '0', STR_PAD_LEFT);
             $chk       = $db->prepare('SELECT id FROM users WHERE user_id = ? LIMIT 1');
             $chk->execute([$candidate]);
-            if ($chk->rowCount() === 0) $userId = $candidate;
+            if ($chk->rowCount() === 0) {
+                $userId = $candidate;
+            }
             $attempts++;
         } while ($userId === null && $attempts < 1000);
 
         $ins = $db->prepare(
             "INSERT INTO users
-               (user_id, full_name, email, password_hash, role, status, google_id, profile_image, last_login)
+                (user_id, full_name, email, password_hash, role, status, google_id, profile_image, last_login)
              VALUES (?, ?, ?, '', 'user', 'active', ?, ?, NOW())"
         );
         $ins->execute([$userId, $name, $email, $googleId, $picture]);
@@ -183,7 +168,7 @@ try {
         $user = $stmt3->fetch(PDO::FETCH_ASSOC);
     }
 
-    // ── Issue JWT ────────────────────────────────────────────────────────
+    // Issue JWT
     $token = generateJWT([
         'user_id' => $user['id'],
         'email'   => $user['email'],
