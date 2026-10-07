@@ -94,45 +94,6 @@ function verifyGoogleIdToken(string $idToken): array|false {
         return false;
     }
 
-    // ── 6. Best-effort network confirmation (non-blocking) ───────────────
-    //  If cURL is available, call Google to double-check.
-    //  If the call fails or times out we still trust the local checks above.
-    if (function_exists('curl_init')) {
-        $url = 'https://oauth2.googleapis.com/tokeninfo?id_token=' . urlencode($idToken);
-        $ch  = curl_init($url);
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT        => 8,
-            CURLOPT_CONNECTTIMEOUT => 5,
-            CURLOPT_SSL_VERIFYPEER => false,   // dev-safe; enable in production
-            CURLOPT_SSL_VERIFYHOST => 0,
-            CURLOPT_USERAGENT      => 'DigitalLibraryApp/1.0',
-        ]);
-        $resp     = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $curlErr  = curl_error($ch);
-        curl_close($ch);
-
-        if ($curlErr) {
-            // Network unreachable — trust local claims
-            error_log("google.php: cURL failed ($curlErr), trusting local claims");
-        } elseif ($httpCode === 200) {
-            // Google confirmed — merge any extra fields (e.g. picture)
-            $googleData = json_decode($resp, true);
-            if (is_array($googleData) && !isset($googleData['error'])) {
-                $payload = array_merge($payload, $googleData);
-            }
-        } elseif ($httpCode === 400) {
-            // Google says token is bad — reject it
-            $errBody = json_decode($resp, true);
-            error_log('google.php: Google tokeninfo rejected: ' . ($errBody['error_description'] ?? $resp));
-            return false;
-        } else {
-            // Google returned unexpected status — trust local claims
-            error_log("google.php: Google tokeninfo returned HTTP $httpCode, trusting local claims");
-        }
-    }
-
     return $payload;
 }
 
