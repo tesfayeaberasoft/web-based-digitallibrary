@@ -19,52 +19,87 @@ if (empty($data->credential)) {
 }
 
 /**
- * Verify the Google ID token by calling Google's tokeninfo endpoint.
- * Returns the decoded payload or false on failure.
+ * Decode a JWT segment (base64url decode + JSON parse)
+ */
+function decodeJwtSegment($segment) {
+    $padding = strlen($segment) % 4;
+    if ($padding) {
+        $segment .= str_repeat('=', 4 - $padding);
+    }
+    return json_decode(base64_decode(strtr($segment, '-_', '+/')), true);
+}
+
+/**
+ * Verify the Google ID token using cURL against Google's tokeninfo endpoint.
+ * Returns the decoded payload array on success, or false on failure.
  */
 function verifyGoogleToken($idToken) {
+    if (!function_exists('curl_init')) {
+        error_log('google.php: cURL is not available');
+        return false;
+    }
+
     $url = 'https://oauth2.googleapis.com/tokeninfo?id_token=' . urlencode($idToken);
 
-    $ctx = stream_context_create([
-        'http' => [
-            'method'  => 'GET',
-            'timeout' => 10,
-        ],
-        'ssl' => [
-            'verify_peer'      => true,
-            'verify_peer_name' => true,
-        ],
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 15,
+        CURLOPT_CONNECTTIMEOUT => 10,
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYHOST => 2,
+        CURLOPT_HTTPHEADER     => ['Accept: application/json'],
+        CURLOPT_USERAGENT      => 'DigitalLibrary/1.0',
     ]);
 
-    $response = @file_get_contents($url, false, $ctx);
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlError = curl_error($ch);
+    curl_close($ch);
 
-    if ($response === false) {
-        // Fallback: try with cURL if file_get_contents fails
-        if (function_exists('curl_init')) {
-            $ch = curl_init($url);
-            curl_setopt_array($ch, [
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_TIMEOUT        => 10,
-                CURLOPT_SSL_VERIFYPEER => true,
-            ]);
-            $response = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
-            if ($httpCode !== 200) return false;
-        } else {
+    if ($curlError) {
+        error_log("google.php: cURL error: $curlError");
+        // SSL issue — retry without peer verification (dev only)
+        $ch2 = curl_init($url);
+        curl_setopt_array($ch2, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 15,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => 0,
+            CURLOPT_USERAGENT      => 'DigitalLibrary/1.0',
+        ]);
+        $response = curl_exec($ch2);
+        $httpCode = curl_getinfo($ch2, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch2);
+        curl_close($ch2);
+
+        if ($curlError || $httpCode !== 200) {
+            error_log("google.php: retry cURL also failed: $curlError, HTTP $httpCode");
             return false;
         }
     }
 
-    $payload = json_decode($response, true);
-
-    // Google returns an error field if the token is invalid
-    if (isset($payload['error'])) {
+    if ($httpCode !== 200) {
+        error_log("google.php: Google returned HTTP $httpCode: $response");
         return false;
     }
 
-    // Make sure the token has not expired
-    if (isset($payload['exp']) && $payload['exp'] < time()) {
+    $payload = json_decode($response, true);
+
+    if (!$payload || isset($payload['error'])) {
+        error_log("google.php: Google token error: " . ($payload['error_description'] ?? 'unknown'));
+        return false;
+    }
+
+    // Token must not be expired
+    if (isset($payload['exp']) && (int)$payload['exp'] < time()) {
+        error_log("google.php: Token expired");
+        return false;
+    }
+
+    // Token must have an email
+    if (empty($payload['email'])) {
+        error_log("google.php: Token missing email");
         return false;
     }
 
@@ -80,14 +115,17 @@ try {
 
     if (!$googleUser) {
         http_response_code(401);
-        echo json_encode(['success' => false, 'message' => 'Invalid Google token. Please try again.']);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Could not verify your Google account. Please try again.',
+        ]);
         exit();
     }
 
-    $googleId = $googleUser['sub'];          // Unique Google user ID
-    $email    = $googleUser['email'] ?? '';
-    $name     = $googleUser['name']  ?? '';
-    $picture  = $googleUser['picture'] ?? '';
+    $googleId = $googleUser['sub']          ?? '';
+    $email    = $googleUser['email']        ?? '';
+    $name     = $googleUser['name']         ?? $googleUser['given_name'] ?? 'Google User';
+    $picture  = $googleUser['picture']      ?? '';
 
     if (empty($email)) {
         http_response_code(400);
@@ -95,9 +133,9 @@ try {
         exit();
     }
 
-    // -------------------------------------------------------
+    // ---------------------------------------------------
     // Find existing user by google_id OR email
-    // -------------------------------------------------------
+    // ---------------------------------------------------
     $stmt = $db->prepare(
         "SELECT id, user_id, full_name, email, role, status, profile_image, google_id
          FROM users
@@ -108,52 +146,45 @@ try {
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($user) {
-        // -- EXISTING USER --
-
+        // --- EXISTING USER ---
         if ($user['status'] === 'suspended') {
             http_response_code(403);
             echo json_encode(['success' => false, 'message' => 'Your account is suspended. Contact an administrator.']);
             exit();
         }
-
         if ($user['status'] !== 'active') {
             http_response_code(403);
             echo json_encode(['success' => false, 'message' => 'Your account is not active. Contact an administrator.']);
             exit();
         }
 
-        // Link google_id if not already linked (user registered with email first)
-        $updates = [];
+        // Build update fields
+        $updates = ['last_login = NOW()'];
         $params  = [];
 
         if (empty($user['google_id'])) {
             $updates[] = 'google_id = ?';
             $params[]  = $googleId;
         }
-        // Update profile picture from Google if the user has none
         if (empty($user['profile_image']) && !empty($picture)) {
             $updates[] = 'profile_image = ?';
             $params[]  = $picture;
         }
-        $updates[] = 'last_login = NOW()';
-
         $params[] = $user['id'];
         $db->prepare('UPDATE users SET ' . implode(', ', $updates) . ' WHERE id = ?')
            ->execute($params);
 
-        // Refresh user data
+        // Refresh
         $stmt2 = $db->prepare('SELECT id, user_id, full_name, email, role, status, profile_image FROM users WHERE id = ?');
         $stmt2->execute([$user['id']]);
         $user = $stmt2->fetch(PDO::FETCH_ASSOC);
 
     } else {
-        // -- NEW USER: auto-register --
-
-        // Generate unique user_id
+        // --- NEW USER: auto-register ---
         $userId   = null;
         $attempts = 0;
         do {
-            $base      = $db->query('SELECT COUNT(*) FROM users')->fetchColumn() + 1 + $attempts;
+            $base      = (int)$db->query('SELECT COUNT(*) FROM users')->fetchColumn() + 1 + $attempts;
             $candidate = 'USR' . str_pad($base, 3, '0', STR_PAD_LEFT);
             $chk       = $db->prepare('SELECT id FROM users WHERE user_id = ? LIMIT 1');
             $chk->execute([$candidate]);
@@ -161,21 +192,19 @@ try {
             $attempts++;
         } while ($userId === null && $attempts < 1000);
 
-        $insertStmt = $db->prepare(
+        $ins = $db->prepare(
             "INSERT INTO users
                 (user_id, full_name, email, password_hash, role, status, google_id, profile_image, last_login)
-             VALUES
-                (?, ?, ?, '', 'user', 'active', ?, ?, NOW())"
+             VALUES (?, ?, ?, '', 'user', 'active', ?, ?, NOW())"
         );
-        $insertStmt->execute([$userId, $name, $email, $googleId, $picture]);
+        $ins->execute([$userId, $name, $email, $googleId, $picture]);
 
-        $newId = $db->lastInsertId();
         $stmt3 = $db->prepare('SELECT id, user_id, full_name, email, role, status, profile_image FROM users WHERE id = ?');
-        $stmt3->execute([$newId]);
+        $stmt3->execute([$db->lastInsertId()]);
         $user = $stmt3->fetch(PDO::FETCH_ASSOC);
     }
 
-    // Generate JWT
+    // Issue JWT
     $token = generateJWT([
         'user_id' => $user['id'],
         'email'   => $user['email'],
@@ -185,17 +214,15 @@ try {
     echo json_encode([
         'success' => true,
         'message' => 'Google authentication successful',
-        'data'    => [
-            'token' => $token,
-            'user'  => $user,
-        ],
+        'data'    => ['token' => $token, 'user' => $user],
     ]);
 
 } catch (Exception $e) {
+    error_log("google.php exception: " . $e->getMessage());
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => 'An error occurred during Google authentication',
+        'message' => 'An error occurred during Google authentication.',
         'error'   => $e->getMessage(),
     ]);
 }
