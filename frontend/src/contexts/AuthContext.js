@@ -76,6 +76,29 @@ const AuthProvider = ({ children }) => {
     checkAuth();
   }, []);
 
+  const googleLogin = async (credential) => {
+    try {
+      const response = await axios.post('http://localhost:8000/api/auth/google', { credential });
+
+      if (response.data.success) {
+        const { token: newToken, user: userData } = response.data.data;
+        const normalized = { ...userData, role: normalizeUserRole(userData.role) };
+        localStorage.setItem('token', newToken);
+        localStorage.setItem('user', JSON.stringify(normalized));
+        setToken(newToken);
+        setUser(normalized);
+        return { success: true, user: normalized };
+      } else {
+        return { success: false, message: response.data.message };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Google login failed. Please try again.',
+      };
+    }
+  };
+
   const login = async (email, password) => {
     try {
       const response = await axios.post('http://localhost:8000/api/auth/login', {
@@ -174,6 +197,7 @@ const AuthProvider = ({ children }) => {
     token,
     loading,
     login,
+    googleLogin,
     register,
     logout,
     updateUser,

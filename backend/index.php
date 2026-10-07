@@ -54,6 +54,11 @@ switch (true) {
         error_log("Matched: POST /auth/register");
         require __DIR__ . '/api/auth/register.php';
         break;
+
+    case preg_match('#^/auth/google$#', $path) && $request_method === 'POST':
+        error_log("Matched: POST /auth/google");
+        require __DIR__ . '/api/auth/google.php';
+        break;
     
     case preg_match('#^/auth/verify$#', $path) && $request_method === 'GET':
         error_log("Matched: GET /auth/verify");

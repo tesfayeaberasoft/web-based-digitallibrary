@@ -15,24 +15,23 @@ import {
   InputAdornment,
   Alert,
   Grid,
-  Chip
+  Chip,
+  CircularProgress
 } from '@mui/material';
 import {
   Visibility,
   VisibilityOff,
-  Google,
-  GitHub,
-  Facebook,
   MenuBook
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-toastify';
+import { GoogleLogin } from '@react-oauth/google';
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
+  const { login, googleLogin } = useAuth();
   
   const [formData, setFormData] = useState({
     email: '',
@@ -110,6 +109,30 @@ const Login = () => {
     }
     
     setLoading(false);
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setLoading(true);
+    setError('');
+    const result = await googleLogin(credentialResponse.credential);
+    if (result.success) {
+      toast.success('Signed in with Google!');
+      switch (result.user.role) {
+        case 'super-admin': navigate('/super-admin'); break;
+        case 'admin':       navigate('/admin');       break;
+        case 'librarian':   navigate('/librarian');   break;
+        default:            navigate(from);
+      }
+    } else {
+      setError(result.message || 'Google sign-in failed. Please try again.');
+      toast.error(result.message || 'Google sign-in failed.');
+    }
+    setLoading(false);
+  };
+
+  const handleGoogleError = () => {
+    setError('Google sign-in was cancelled or failed. Please try again.');
+    toast.error('Google sign-in failed.');
   };
 
   const handleQuickAccess = (role) => {
@@ -215,40 +238,25 @@ const Login = () => {
               </Typography>
             </Box>
 
-            {/* Social Login Buttons */}
-            <Box sx={{ mb: 3 }}>
-              <Grid container spacing={1}>
-                <Grid item xs={4}>
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    startIcon={<Google />}
-                    sx={{ py: 1.5 }}
-                  >
-                    Google
-                  </Button>
-                </Grid>
-                <Grid item xs={4}>
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    startIcon={<GitHub />}
-                    sx={{ py: 1.5 }}
-                  >
-                    GitHub
-                  </Button>
-                </Grid>
-                <Grid item xs={4}>
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    startIcon={<Facebook />}
-                    sx={{ py: 1.5 }}
-                  >
-                    Facebook
-                  </Button>
-                </Grid>
-              </Grid>
+            {/* Google Sign-In Button */}
+            <Box sx={{ mb: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+              {loading ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CircularProgress size={20} />
+                  <Typography variant="body2" color="text.secondary">Signing in with Google...</Typography>
+                </Box>
+              ) : (
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                  useOneTap
+                  theme="outline"
+                  size="large"
+                  width="100%"
+                  text="signin_with"
+                  shape="rectangular"
+                />
+              )}
             </Box>
 
             <Divider sx={{ mb: 3 }}>

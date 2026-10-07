@@ -4,6 +4,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 
 // Import components
 import AuthProvider from './contexts/AuthContext';
@@ -100,6 +101,7 @@ const theme = createTheme({
 
 function App() {
   return (
+    <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID || ''}>
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider>
@@ -281,6 +283,7 @@ function App() {
         </Router>
       </AuthProvider>
     </ThemeProvider>
+    </GoogleOAuthProvider>
   );
 }
 

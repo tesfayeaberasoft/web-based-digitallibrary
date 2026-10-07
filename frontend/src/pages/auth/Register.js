@@ -14,14 +14,12 @@ import {
   IconButton,
   InputAdornment,
   Alert,
-  Divider
+  Divider,
+  CircularProgress
 } from '@mui/material';
 import {
   Visibility,
   VisibilityOff,
-  Google,
-  GitHub,
-  Facebook,
   MenuBook,
   Person,
   Security,
@@ -30,12 +28,13 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-toastify';
+import { GoogleLogin } from '@react-oauth/google';
 
 const steps = ['Personal Info', 'Security', 'Confirmation'];
 
 const Register = () => {
   const navigate = useNavigate();
-  const { register } = useAuth();
+  const { register, googleLogin } = useAuth();
   
   const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState({
@@ -127,6 +126,24 @@ const Register = () => {
     }
     
     setLoading(false);
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setLoading(true);
+    setError('');
+    const result = await googleLogin(credentialResponse.credential);
+    if (result.success) {
+      toast.success('Account created with Google!');
+      navigate('/dashboard');
+    } else {
+      setError(result.message || 'Google sign-up failed. Please try again.');
+      toast.error(result.message || 'Google sign-up failed.');
+    }
+    setLoading(false);
+  };
+
+  const handleGoogleError = () => {
+    setError('Google sign-up was cancelled or failed. Please try again.');
   };
 
   const renderStepContent = () => {
@@ -362,40 +379,24 @@ const Register = () => {
               </Typography>
             </Box>
 
-            {/* Social Registration Buttons */}
-            <Box sx={{ mb: 3 }}>
-              <Grid container spacing={1}>
-                <Grid item xs={4}>
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    startIcon={<Google />}
-                    sx={{ py: 1.5 }}
-                  >
-                    Google
-                  </Button>
-                </Grid>
-                <Grid item xs={4}>
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    startIcon={<GitHub />}
-                    sx={{ py: 1.5 }}
-                  >
-                    GitHub
-                  </Button>
-                </Grid>
-                <Grid item xs={4}>
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    startIcon={<Facebook />}
-                    sx={{ py: 1.5 }}
-                  >
-                    Facebook
-                  </Button>
-                </Grid>
-              </Grid>
+            {/* Google Sign-Up Button */}
+            <Box sx={{ mb: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+              {loading ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CircularProgress size={20} />
+                  <Typography variant="body2" color="text.secondary">Connecting to Google...</Typography>
+                </Box>
+              ) : (
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                  theme="outline"
+                  size="large"
+                  width="100%"
+                  text="signup_with"
+                  shape="rectangular"
+                />
+              )}
             </Box>
 
             <Divider sx={{ mb: 3 }}>
