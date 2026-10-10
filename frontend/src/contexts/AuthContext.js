@@ -89,9 +89,11 @@ const AuthProvider = ({ children }) => {
         setUser(normalized);
         return { success: true, user: normalized };
       } else {
+        console.error('Google auth failed:', response.data);
         return { success: false, message: response.data.message };
       }
     } catch (error) {
+      console.error('Google auth error:', error.response?.data || error.message);
       return {
         success: false,
         message: error.response?.data?.message || 'Google login failed. Please try again.',

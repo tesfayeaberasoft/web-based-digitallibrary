@@ -4,10 +4,10 @@ header('Content-Type: application/json');
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../utils/jwt.php';
 
-// Google Client ID - must match frontend .env REACT_APP_GOOGLE_CLIENT_ID
-if (!defined('GOOGLE_CLIENT_ID')) {
-    define('GOOGLE_CLIENT_ID', '22900232380-bu194bg29pvdauj1ac9tu5i588onh6u8.apps.googleusercontent.com');
-}
+define('GOOGLE_CLIENT_ID_VALUE', defined('GOOGLE_CLIENT_ID')
+    ? GOOGLE_CLIENT_ID
+    : '22900232380-bu194bg29pvdauj1ac9tu5i588onh6u8.apps.googleusercontent.com'
+);
 
 $raw  = file_get_contents('php://input');
 $data = json_decode($raw);
@@ -18,82 +18,75 @@ if (empty($data->credential)) {
     exit();
 }
 
-function decodeGoogleJwtPayload($idToken) {
+function verifyGoogleToken($idToken) {
+    // Split JWT into 3 parts
     $parts = explode('.', $idToken);
     if (count($parts) !== 3) {
-        return false;
+        return ['ok' => false, 'reason' => 'token_parts_' . count($parts)];
     }
-    $segment = $parts[1];
-    $rem = strlen($segment) % 4;
-    if ($rem) {
-        $segment .= str_repeat('=', 4 - $rem);
-    }
-    $json = base64_decode(strtr($segment, '-_', '+/'));
+
+    // Decode payload segment
+    $seg = $parts[1];
+    $pad = strlen($seg) % 4;
+    if ($pad) $seg .= str_repeat('=', 4 - $pad);
+    $json = base64_decode(strtr($seg, '-_', '+/'));
     if ($json === false) {
-        return false;
+        return ['ok' => false, 'reason' => 'base64_decode_failed'];
     }
     $payload = json_decode($json, true);
     if (!is_array($payload)) {
-        return false;
-    }
-    return $payload;
-}
-
-function verifyGoogleToken($idToken) {
-    $payload = decodeGoogleJwtPayload($idToken);
-    if (!$payload) {
-        error_log('google.php: failed to decode JWT payload');
-        return false;
+        return ['ok' => false, 'reason' => 'json_decode_failed'];
     }
 
     // Check issuer
     $iss = $payload['iss'] ?? '';
-    $validIssuers = ['accounts.google.com', 'https://accounts.google.com'];
-    if (!in_array($iss, $validIssuers, true)) {
-        error_log('google.php: bad issuer: ' . $iss);
-        return false;
+    if (!in_array($iss, ['accounts.google.com', 'https://accounts.google.com'], true)) {
+        return ['ok' => false, 'reason' => 'bad_issuer', 'iss' => $iss];
     }
 
     // Check expiry
     $exp = (int)($payload['exp'] ?? 0);
-    if ($exp === 0 || $exp < time()) {
-        error_log('google.php: token expired. exp=' . $exp . ' now=' . time());
-        return false;
+    $now = time();
+    if ($exp === 0 || $exp < $now) {
+        return ['ok' => false, 'reason' => 'expired', 'exp' => $exp, 'now' => $now];
     }
 
     // Check audience
     $aud = $payload['aud'] ?? '';
-    if ($aud !== GOOGLE_CLIENT_ID) {
-        error_log('google.php: aud mismatch. got=' . $aud . ' expected=' . GOOGLE_CLIENT_ID);
-        return false;
+    if ($aud !== GOOGLE_CLIENT_ID_VALUE) {
+        return ['ok' => false, 'reason' => 'aud_mismatch', 'got' => $aud, 'expected' => GOOGLE_CLIENT_ID_VALUE];
     }
 
     // Must have email
     if (empty($payload['email'])) {
-        error_log('google.php: no email in payload');
-        return false;
+        return ['ok' => false, 'reason' => 'no_email'];
     }
 
-    return $payload;
+    return ['ok' => true, 'payload' => $payload];
 }
 
 try {
     $db = Database::getInstance()->getConnection();
     if (!$db) {
-        throw new Exception('Database connection failed');
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Database connection failed. Make sure MySQL is running in XAMPP.']);
+        exit();
     }
 
-    $googleUser = verifyGoogleToken($data->credential);
+    $result = verifyGoogleToken($data->credential);
 
-    if ($googleUser === false) {
+    if (!$result['ok']) {
+        // Return the exact failure reason so we can diagnose
         http_response_code(401);
         echo json_encode([
             'success' => false,
-            'message' => 'Google sign-in failed. Please try again or use email/password.',
+            'message' => 'Google token verification failed: ' . $result['reason'],
+            'debug'   => $result,
         ]);
         exit();
     }
 
+    $googleUser = $result['payload'];
     $googleId = $googleUser['sub']     ?? '';
     $email    = $googleUser['email']   ?? '';
     $name     = $googleUser['name']    ?? ($googleUser['given_name'] ?? 'Google User');
@@ -102,15 +95,12 @@ try {
     // Find existing user by google_id OR email
     $stmt = $db->prepare(
         "SELECT id, user_id, full_name, email, role, status, profile_image, google_id
-         FROM users
-         WHERE google_id = ? OR email = ?
-         LIMIT 1"
+         FROM users WHERE google_id = ? OR email = ? LIMIT 1"
     );
     $stmt->execute([$googleId, $email]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($user) {
-        // Existing user
         if ($user['status'] === 'suspended') {
             http_response_code(403);
             echo json_encode(['success' => false, 'message' => 'Account suspended. Contact an administrator.']);
@@ -124,7 +114,6 @@ try {
 
         $updates = ['last_login = NOW()'];
         $params  = [];
-
         if (empty($user['google_id']) && $googleId) {
             $updates[] = 'google_id = ?';
             $params[]  = $googleId;
@@ -134,15 +123,14 @@ try {
             $params[]  = $picture;
         }
         $params[] = $user['id'];
-        $db->prepare('UPDATE users SET ' . implode(', ', $updates) . ' WHERE id = ?')
-           ->execute($params);
+        $db->prepare('UPDATE users SET ' . implode(', ', $updates) . ' WHERE id = ?')->execute($params);
 
         $stmt2 = $db->prepare('SELECT id, user_id, full_name, email, role, status, profile_image FROM users WHERE id = ?');
         $stmt2->execute([$user['id']]);
         $user = $stmt2->fetch(PDO::FETCH_ASSOC);
 
     } else {
-        // New user — auto-register
+        // New user — auto register
         $userId   = null;
         $attempts = 0;
         do {
@@ -150,15 +138,12 @@ try {
             $candidate = 'USR' . str_pad($base, 3, '0', STR_PAD_LEFT);
             $chk       = $db->prepare('SELECT id FROM users WHERE user_id = ? LIMIT 1');
             $chk->execute([$candidate]);
-            if ($chk->rowCount() === 0) {
-                $userId = $candidate;
-            }
+            if ($chk->rowCount() === 0) $userId = $candidate;
             $attempts++;
         } while ($userId === null && $attempts < 1000);
 
         $ins = $db->prepare(
-            "INSERT INTO users
-                (user_id, full_name, email, password_hash, role, status, google_id, profile_image, last_login)
+            "INSERT INTO users (user_id, full_name, email, password_hash, role, status, google_id, profile_image, last_login)
              VALUES (?, ?, ?, '', 'user', 'active', ?, ?, NOW())"
         );
         $ins->execute([$userId, $name, $email, $googleId, $picture]);
@@ -168,7 +153,6 @@ try {
         $user = $stmt3->fetch(PDO::FETCH_ASSOC);
     }
 
-    // Issue JWT
     $token = generateJWT([
         'user_id' => $user['id'],
         'email'   => $user['email'],
@@ -182,11 +166,10 @@ try {
     ]);
 
 } catch (Exception $e) {
-    error_log('google.php exception: ' . $e->getMessage());
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => 'An error occurred during Google authentication.',
+        'message' => 'Server error: ' . $e->getMessage(),
     ]);
 }
 ?>
