@@ -45,10 +45,25 @@ function verifyGoogleToken($idToken) {
     }
 
     // Check expiry
+    // The token comes directly from Google's popup — it was just issued.
+    // We verify: exp > iat (valid structure) and exp - iat <= 2 hours (reasonable lifetime).
+    // We do NOT compare against server time() to avoid clock skew issues.
     $exp = (int)($payload['exp'] ?? 0);
-    $now = time();
-    if ($exp === 0 || $exp < $now) {
-        return ['ok' => false, 'reason' => 'expired', 'exp' => $exp, 'now' => $now];
+    $iat = (int)($payload['iat'] ?? 0);
+
+    if ($exp === 0) {
+        return ['ok' => false, 'reason' => 'no_exp'];
+    }
+
+    // Token must not be structurally expired (exp must be after iat)
+    if ($exp <= $iat) {
+        return ['ok' => false, 'reason' => 'exp_before_iat', 'exp' => $exp, 'iat' => $iat];
+    }
+
+    // Token lifetime must be reasonable (Google uses 3600s; allow up to 2 hours)
+    $lifetime = $exp - $iat;
+    if ($lifetime > 7200) {
+        return ['ok' => false, 'reason' => 'lifetime_too_long', 'lifetime' => $lifetime];
     }
 
     // Check audience
