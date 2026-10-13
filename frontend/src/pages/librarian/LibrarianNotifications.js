@@ -221,10 +221,11 @@ const LibrarianNotifications = () => {
 
       const data = await response.json();
       
-      if (data.success) {
-        showAlert(`Notification sent successfully: ${data.sent_count} sent, ${data.failed_count} failed`, 'success');
+      if (response.ok && data.success) {
+        showAlert(`In-app notification delivered to ${data.sent_count} users (${data.sent_notifications} notifications)`, 'success');
         setManualDialog(false);
         setManualForm({ type: 'general', recipients: 'all', subject: '', message: '' });
+        fetchDashboardStats();
         if (activeTab === 1) {
           fetchNotificationLogs();
         }
@@ -232,7 +233,7 @@ const LibrarianNotifications = () => {
         showAlert(data.message || 'Failed to send notification', 'error');
       }
     } catch (error) {
-      showAlert('Failed to send notification', 'error');
+      showAlert(error.message || 'Failed to send notification', 'error');
     } finally {
       setLoading(false);
     }
@@ -934,6 +935,7 @@ const LibrarianNotifications = () => {
                           label="Type"
                         >
                           <MenuItem value="">All Types</MenuItem>
+                          <MenuItem value="in_app">🔔 In-App</MenuItem>
                           <MenuItem value="email">📧 Email</MenuItem>
                           <MenuItem value="sms">📱 SMS</MenuItem>
                           <MenuItem value="push">🔔 Push</MenuItem>
@@ -1481,7 +1483,7 @@ const LibrarianNotifications = () => {
                   📤 Create Notification Campaign
                 </Typography>
                 <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                  Send targeted messages to library users
+                  Deliver in-app system notifications to library users
                 </Typography>
               </Box>
             </DialogTitle>
@@ -1586,8 +1588,7 @@ const LibrarianNotifications = () => {
                 <Grid item xs={12}>
                   <Alert severity="info" sx={{ borderRadius: 3 }}>
                     <Typography variant="body2">
-                      💡 <strong>Pro Tip:</strong> Keep your message concise and include clear next steps for users. 
-                      The system will automatically format your message with professional templates.
+                      This message will appear in each recipient's Notifications page. Due-date and fine reminders include the related book or balance details automatically.
                     </Typography>
                   </Alert>
                 </Grid>

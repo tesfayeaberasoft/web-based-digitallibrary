@@ -51,7 +51,7 @@ const NotificationsPage = () => {
     try {
       const token = localStorage.getItem('token');
       const params = {
-        is_read: tabValue === 1 ? 'true' : tabValue === 2 ? 'false' : undefined
+        status: tabValue === 1 ? 'read' : tabValue === 2 ? 'unread' : undefined
       };
       
       const response = await axios.get('http://localhost:8000/api/notifications', {
