@@ -49,6 +49,7 @@ import {
   Delete,
   Block,
   Visibility,
+  VisibilityOff,
   Person,
   Email,
   Phone,
@@ -129,6 +130,7 @@ const AdminLibrarians = () => {
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [suspendReason, setSuspendReason] = useState('');
   const [demotionReason, setDemotionReason] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     fetchLibrarians();
@@ -803,10 +805,22 @@ const AdminLibrarians = () => {
                   <TextField
                     fullWidth
                     label="Password"
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     value={formData.password || ''}
                     onChange={(e) => handleInputChange('password', e.target.value)}
                     required
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() => setShowPassword(!showPassword)}
+                            edge="end"
+                          >
+                            {showPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        </InputAdornment>
+                      )
+                    }}
                   />
                 </Grid>
               )}
@@ -815,10 +829,22 @@ const AdminLibrarians = () => {
                   <TextField
                     fullWidth
                     label="New Password (leave empty to keep current)"
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     value={formData.password || ''}
                     onChange={(e) => handleInputChange('password', e.target.value)}
                     helperText="Only enter a password if you want to change it"
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() => setShowPassword(!showPassword)}
+                            edge="end"
+                          >
+                            {showPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        </InputAdornment>
+                      )
+                    }}
                   />
                 </Grid>
               )}

@@ -52,6 +52,7 @@ import {
   Block,
   CheckCircle,
   Visibility,
+  VisibilityOff,
   Person,
   Email,
   Phone,
@@ -98,6 +99,7 @@ const AdminManagement = () => {
   const [suspendReason, setSuspendReason] = useState('');
   const [demotionReason, setDemotionReason] = useState('');
   const [promotionReason, setPromotionReason] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [showLibrarians, setShowLibrarians] = useState(false);
 
   const authHeaders = () => ({
@@ -623,11 +625,23 @@ const AdminManagement = () => {
                 <TextField
                   fullWidth
                   label={openDialog === 'add' ? 'Password' : 'New password (optional)'}
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   required={openDialog === 'add'}
                   value={formData.password || ''}
                   onChange={(e) => handleInputChange('password', e.target.value)}
-                  InputProps={openDialog === 'edit' ? { startAdornment: <InputAdornment position="start"><Key /></InputAdornment> } : undefined}
+                  InputProps={{
+                    startAdornment: openDialog === 'edit' ? <InputAdornment position="start"><Key /></InputAdornment> : undefined,
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={() => setShowPassword(!showPassword)}
+                          edge="end"
+                        >
+                          {showPassword ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    )
+                  }}
                 />
               </Grid>
               <Grid item xs={12} md={6}>

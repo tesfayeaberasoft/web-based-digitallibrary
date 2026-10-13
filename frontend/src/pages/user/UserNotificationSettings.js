@@ -1,379 +1,311 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  Paper,
-  Typography,
-  Grid,
-  Switch,
-  FormControlLabel,
-  FormGroup,
-  Button,
-  Alert,
-  Divider,
-  Card,
-  CardContent,
-  Chip,
-  Fade,
-  CircularProgress
+  Box, Typography, Grid, Switch, Button, Alert, Divider,
+  Card, CardContent, Chip, Fade, CircularProgress, Avatar, Paper, Grow
 } from '@mui/material';
 import {
-  Notifications as NotificationsIcon,
-  Email as EmailIcon,
-  Sms as SmsIcon,
-  Schedule as ScheduleIcon,
-  MonetizationOn as MoneyIcon,
-  BookmarkBorder as ReservationIcon,
-  Info as InfoIcon
+  Notifications as NotifIcon, Email as EmailIcon,
+  Sms as SmsIcon, Schedule as ScheduleIcon,
+  MonetizationOn as MoneyIcon, BookmarkBorder as ReservationIcon,
+  Info as InfoIcon, CheckCircle, Save, Settings
 } from '@mui/icons-material';
-import Layout from '../../components/layout/Layout';
+import DashboardLayout from '../../components/layout/DashboardLayout';
 
-const UserNotificationSettings = () => {
+const C = {
+  primary: '#2d6a4f', secondary: '#52b788',
+  light: '#d8f3dc', lighter: '#f0fdf4',
+  dark: '#1b4332', accent: '#95d5b2'
+};
+
+const GreenSwitch = ({ checked, onChange }) => (
+  <Switch checked={checked} onChange={onChange}
+    sx={{
+      '& .MuiSwitch-switchBase.Mui-checked': { color: C.primary },
+      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { bgcolor: C.secondary },
+    }}
+  />
+);
+
+export default function UserNotificationSettings() {
   const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [alert, setAlert] = useState({ show: false, message: '', severity: 'info' });
+  const [saving,  setSaving]  = useState(false);
+  const [alert,   setAlert]   = useState({ show:false, msg:'', sev:'info' });
   const [settings, setSettings] = useState({
-    email_enabled: true,
-    sms_enabled: false,
-    push_enabled: true,
-    due_reminder_days: [3, 1],
-    overdue_reminder_days: [1, 3, 7],
-    reservation_notifications: true,
-    fine_notifications: true,
-    general_notifications: true
+    email_enabled:              true,
+    sms_enabled:                false,
+    push_enabled:               true,
+    due_reminder_days:          [3, 1],
+    overdue_reminder_days:      [1, 3, 7],
+    reservation_notifications:  true,
+    fine_notifications:         true,
+    general_notifications:      true,
   });
 
-  useEffect(() => {
-    fetchSettings();
-  }, []);
+  useEffect(() => { fetchSettings(); }, []);
 
   const fetchSettings = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8000/api/notifications/settings', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+      const res = await fetch('http://localhost:8000/api/notifications/settings', {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.settings) {
-          setSettings(data.settings);
-        }
+      if (res.ok) {
+        const d = await res.json();
+        if (d.success && d.settings) setSettings(d.settings);
       }
-    } catch (error) {
-      showAlert('Failed to load notification settings', 'error');
-    } finally {
-      setLoading(false);
-    }
+    } catch { /* use defaults */ }
+    finally { setLoading(false); }
   };
 
   const saveSettings = async () => {
     setSaving(true);
     try {
-      const response = await fetch('http://localhost:8000/api/notifications/settings', {
+      const res = await fetch('http://localhost:8000/api/notifications/settings', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
+        headers: { 'Content-Type':'application/json', Authorization:`Bearer ${localStorage.getItem('token')}` },
         body: JSON.stringify(settings)
       });
-
-      const data = await response.json();
-      
-      if (data.success) {
-        showAlert('Notification settings saved successfully', 'success');
-      } else {
-        showAlert(data.message || 'Failed to save settings', 'error');
-      }
-    } catch (error) {
-      showAlert('Failed to save notification settings', 'error');
-    } finally {
-      setSaving(false);
-    }
+      const d = await res.json();
+      flash(d.success ? 'Settings saved!' : d.message || 'Failed to save.', d.success ? 'success' : 'error');
+    } catch { flash('Failed to save settings.', 'error'); }
+    finally { setSaving(false); }
   };
 
-  const showAlert = (message, severity) => {
-    setAlert({ show: true, message, severity });
-    setTimeout(() => setAlert({ show: false, message: '', severity: 'info' }), 5000);
+  const flash = (msg, sev) => {
+    setAlert({ show:true, msg, sev });
+    setTimeout(() => setAlert({ show:false, msg:'', sev:'info' }), 4000);
   };
 
-  const handleSettingChange = (key, value) => {
-    setSettings(prev => ({
-      ...prev,
-      [key]: value
-    }));
+  const set  = (k, v) => setSettings(p => ({ ...p, [k]: v }));
+  const toggleDay = (type, day) => {
+    const cur = settings[type] || [];
+    set(type, cur.includes(day) ? cur.filter(d => d !== day) : [...cur, day].sort((a,b)=>a-b));
   };
 
-  const handleReminderDaysChange = (type, day, checked) => {
-    const currentDays = settings[type] || [];
-    let newDays;
-    
-    if (checked) {
-      newDays = [...currentDays, day].sort((a, b) => a - b);
-    } else {
-      newDays = currentDays.filter(d => d !== day);
-    }
-    
-    handleSettingChange(type, newDays);
-  };
-
-  if (loading) {
-    return (
-      <Layout>
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-          <CircularProgress />
+  /* ── reusable toggle row ── */
+  const ToggleRow = ({ icon, iconColor, label, sub, settingKey }) => (
+    <Box sx={{
+      display:'flex', alignItems:'center', justifyContent:'space-between',
+      p:2, borderRadius:2, border:`1px solid ${C.light}`, mb:1.5,
+      bgcolor: settings[settingKey] ? C.lighter : 'white',
+      transition:'all 0.2s ease',
+      '&:hover':{ borderColor: C.secondary, boxShadow:`0 2px 8px ${C.light}` }
+    }}>
+      <Box sx={{ display:'flex', alignItems:'center', gap:2 }}>
+        <Avatar sx={{ width:40, height:40, bgcolor: settings[settingKey] ? iconColor : '#e5e7eb' }}>
+          {React.cloneElement(icon, { sx:{ fontSize:20, color:'white' } })}
+        </Avatar>
+        <Box>
+          <Typography variant="body1" fontWeight={700} sx={{ color: C.dark }}>{label}</Typography>
+          {sub && <Typography variant="caption" color="text.secondary">{sub}</Typography>}
         </Box>
-      </Layout>
-    );
-  }
+      </Box>
+      <GreenSwitch checked={!!settings[settingKey]} onChange={e => set(settingKey, e.target.checked)} />
+    </Box>
+  );
+
+  if (loading) return (
+    <DashboardLayout title="Notification Settings">
+      <Box sx={{ display:'flex', justifyContent:'center', alignItems:'center', minHeight:'60vh', flexDirection:'column', gap:2 }}>
+        <CircularProgress size={56} sx={{ color:C.primary }} />
+        <Typography color="text.secondary">Loading settings…</Typography>
+      </Box>
+    </DashboardLayout>
+  );
 
   return (
-    <Layout>
-      <Box p={3}>
-        <Fade in timeout={300}>
-          <Box>
-            <Typography variant="h4" gutterBottom fontWeight="bold" color="#4a9b8e">
-              🔔 Notification Settings
+    <DashboardLayout title="Notification Settings">
+      <Fade in timeout={500}>
+        <Box>
+          {/* header */}
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h4" fontWeight={800} sx={{
+              background:`linear-gradient(135deg,${C.primary},${C.secondary})`,
+              WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', mb:0.5
+            }}>Notification Settings</Typography>
+            <Typography variant="body1" color="text.secondary">
+              Customize how and when you receive library notifications
             </Typography>
-            <Typography variant="subtitle1" color="text.secondary" mb={3}>
-              Customize how and when you receive notifications from the library
-            </Typography>
+          </Box>
 
-            {alert.show && (
-              <Alert severity={alert.severity} sx={{ mb: 3 }}>
-                {alert.message}
+          {alert.show && (
+            <Grow in timeout={300}>
+              <Alert severity={alert.sev} icon={alert.sev === 'success' ? <CheckCircle /> : undefined}
+                sx={{ mb:3, borderRadius:2, ...(alert.sev === 'success' ? { border:`1px solid ${C.secondary}`, bgcolor:C.lighter } : {}) }}>
+                {alert.msg}
               </Alert>
-            )}
+            </Grow>
+          )}
 
-            <Grid container spacing={3}>
-              {/* Notification Methods */}
-              <Grid item xs={12} md={6}>
-                <Card sx={{ height: '100%' }}>
-                  <CardContent>
-                    <Box display="flex" alignItems="center" mb={2}>
-                      <NotificationsIcon sx={{ mr: 1, color: '#4a9b8e' }} />
-                      <Typography variant="h6" fontWeight="bold">
-                        Notification Methods
-                      </Typography>
+          <Grid container spacing={3}>
+            {/* ── Delivery Methods ── */}
+            <Grid item xs={12} md={6}>
+              <Grow in timeout={400}>
+                <Card elevation={0} sx={{ border:`2px solid ${C.light}`, borderRadius:3, height:'100%',
+                  transition:'box-shadow 0.3s', '&:hover':{ boxShadow:`0 8px 24px ${C.light}` } }}>
+                  <CardContent sx={{ p:3 }}>
+                    <Box sx={{ display:'flex', alignItems:'center', gap:1.5, mb:2.5 }}>
+                      <Avatar sx={{ bgcolor:C.lighter, width:42, height:42 }}>
+                        <NotifIcon sx={{ color:C.primary }} />
+                      </Avatar>
+                      <Box>
+                        <Typography variant="h6" fontWeight={700} sx={{ color:C.dark }}>Delivery Methods</Typography>
+                        <Typography variant="caption" color="text.secondary">Choose how to receive alerts</Typography>
+                      </Box>
                     </Box>
-                    
-                    <FormGroup>
-                      <FormControlLabel
-                        control={
-                          <Switch
-                            checked={settings.email_enabled}
-                            onChange={(e) => handleSettingChange('email_enabled', e.target.checked)}
-                            color="primary"
-                          />
-                        }
-                        label={
-                          <Box display="flex" alignItems="center">
-                            <EmailIcon sx={{ mr: 1, fontSize: 20 }} />
-                            Email Notifications
-                          </Box>
-                        }
-                      />
-                      
-                      <FormControlLabel
-                        control={
-                          <Switch
-                            checked={settings.sms_enabled}
-                            onChange={(e) => handleSettingChange('sms_enabled', e.target.checked)}
-                            color="primary"
-                          />
-                        }
-                        label={
-                          <Box display="flex" alignItems="center">
-                            <SmsIcon sx={{ mr: 1, fontSize: 20 }} />
-                            SMS Notifications
-                          </Box>
-                        }
-                      />
-                      
-                      <FormControlLabel
-                        control={
-                          <Switch
-                            checked={settings.push_enabled}
-                            onChange={(e) => handleSettingChange('push_enabled', e.target.checked)}
-                            color="primary"
-                          />
-                        }
-                        label={
-                          <Box display="flex" alignItems="center">
-                            <NotificationsIcon sx={{ mr: 1, fontSize: 20 }} />
-                            In-App Notifications
-                          </Box>
-                        }
-                      />
-                    </FormGroup>
-
-                    <Alert severity="info" sx={{ mt: 2 }}>
-                      <InfoIcon sx={{ mr: 1 }} />
-                      SMS notifications require a valid phone number in your profile
+                    <Divider sx={{ mb:2, borderColor:C.light }} />
+                    <ToggleRow icon={<EmailIcon />} iconColor="#3b82f6" label="Email"
+                      sub="Delivered to your registered email" settingKey="email_enabled" />
+                    <ToggleRow icon={<SmsIcon />} iconColor="#8b5cf6" label="SMS"
+                      sub="Requires a valid phone number in profile" settingKey="sms_enabled" />
+                    <ToggleRow icon={<NotifIcon />} iconColor={C.secondary} label="In-App"
+                      sub="Shown inside the library dashboard" settingKey="push_enabled" />
+                    <Alert severity="info" sx={{ mt:2, borderRadius:2, fontSize:'0.8rem' }}>
+                      SMS requires a valid phone number in your profile.
                     </Alert>
                   </CardContent>
                 </Card>
-              </Grid>
+              </Grow>
+            </Grid>
 
-              {/* Notification Types */}
-              <Grid item xs={12} md={6}>
-                <Card sx={{ height: '100%' }}>
-                  <CardContent>
-                    <Typography variant="h6" fontWeight="bold" mb={2}>
-                      📋 Notification Types
-                    </Typography>
-                    
-                    <FormGroup>
-                      <FormControlLabel
-                        control={
-                          <Switch
-                            checked={settings.reservation_notifications}
-                            onChange={(e) => handleSettingChange('reservation_notifications', e.target.checked)}
-                            color="primary"
-                          />
-                        }
-                        label={
-                          <Box display="flex" alignItems="center">
-                            <ReservationIcon sx={{ mr: 1, fontSize: 20 }} />
-                            Reservation Updates
-                          </Box>
-                        }
-                      />
-                      
-                      <FormControlLabel
-                        control={
-                          <Switch
-                            checked={settings.fine_notifications}
-                            onChange={(e) => handleSettingChange('fine_notifications', e.target.checked)}
-                            color="primary"
-                          />
-                        }
-                        label={
-                          <Box display="flex" alignItems="center">
-                            <MoneyIcon sx={{ mr: 1, fontSize: 20 }} />
-                            Fine Reminders
-                          </Box>
-                        }
-                      />
-                      
-                      <FormControlLabel
-                        control={
-                          <Switch
-                            checked={settings.general_notifications}
-                            onChange={(e) => handleSettingChange('general_notifications', e.target.checked)}
-                            color="primary"
-                          />
-                        }
-                        label={
-                          <Box display="flex" alignItems="center">
-                            <InfoIcon sx={{ mr: 1, fontSize: 20 }} />
-                            General Announcements
-                          </Box>
-                        }
-                      />
-                    </FormGroup>
+            {/* ── Notification Types ── */}
+            <Grid item xs={12} md={6}>
+              <Grow in timeout={500}>
+                <Card elevation={0} sx={{ border:`2px solid ${C.light}`, borderRadius:3, height:'100%',
+                  transition:'box-shadow 0.3s', '&:hover':{ boxShadow:`0 8px 24px ${C.light}` } }}>
+                  <CardContent sx={{ p:3 }}>
+                    <Box sx={{ display:'flex', alignItems:'center', gap:1.5, mb:2.5 }}>
+                      <Avatar sx={{ bgcolor:C.lighter, width:42, height:42 }}>
+                        <Settings sx={{ color:C.primary }} />
+                      </Avatar>
+                      <Box>
+                        <Typography variant="h6" fontWeight={700} sx={{ color:C.dark }}>Notification Types</Typography>
+                        <Typography variant="caption" color="text.secondary">Choose what to be notified about</Typography>
+                      </Box>
+                    </Box>
+                    <Divider sx={{ mb:2, borderColor:C.light }} />
+                    <ToggleRow icon={<ReservationIcon />} iconColor={C.primary} label="Reservation Updates"
+                      sub="When your reserved book becomes available" settingKey="reservation_notifications" />
+                    <ToggleRow icon={<MoneyIcon />} iconColor="#f59e0b" label="Fine Reminders"
+                      sub="Alerts about outstanding fines" settingKey="fine_notifications" />
+                    <ToggleRow icon={<InfoIcon />} iconColor="#3b82f6" label="General Announcements"
+                      sub="Library news and updates" settingKey="general_notifications" />
                   </CardContent>
                 </Card>
-              </Grid>
+              </Grow>
+            </Grid>
 
-              {/* Due Date Reminders */}
-              <Grid item xs={12} md={6}>
-                <Card>
-                  <CardContent>
-                    <Box display="flex" alignItems="center" mb={2}>
-                      <ScheduleIcon sx={{ mr: 1, color: '#4a9b8e' }} />
-                      <Typography variant="h6" fontWeight="bold">
-                        Due Date Reminders
-                      </Typography>
+            {/* ── Due Date Reminders ── */}
+            <Grid item xs={12} md={6}>
+              <Grow in timeout={600}>
+                <Card elevation={0} sx={{ border:`2px solid ${C.light}`, borderRadius:3,
+                  transition:'box-shadow 0.3s', '&:hover':{ boxShadow:`0 8px 24px ${C.light}` } }}>
+                  <CardContent sx={{ p:3 }}>
+                    <Box sx={{ display:'flex', alignItems:'center', gap:1.5, mb:2.5 }}>
+                      <Avatar sx={{ bgcolor:C.lighter, width:42, height:42 }}>
+                        <ScheduleIcon sx={{ color:C.primary }} />
+                      </Avatar>
+                      <Box>
+                        <Typography variant="h6" fontWeight={700} sx={{ color:C.dark }}>Due Date Reminders</Typography>
+                        <Typography variant="caption" color="text.secondary">Remind me before books are due</Typography>
+                      </Box>
                     </Box>
-                    
-                    <Typography variant="body2" color="text.secondary" mb={2}>
-                      Choose when to receive reminders before books are due:
-                    </Typography>
-                    
-                    <Box display="flex" flexWrap="wrap" gap={1} mb={2}>
-                      {[7, 3, 1].map(day => (
-                        <Chip
-                          key={day}
-                          label={`${day} day${day > 1 ? 's' : ''} before`}
-                          color={settings.due_reminder_days?.includes(day) ? 'primary' : 'default'}
-                          onClick={() => handleReminderDaysChange('due_reminder_days', day, !settings.due_reminder_days?.includes(day))}
-                          sx={{ cursor: 'pointer' }}
-                        />
-                      ))}
+                    <Divider sx={{ mb:2.5, borderColor:C.light }} />
+                    <Box sx={{ display:'flex', flexWrap:'wrap', gap:1.2, mb:2 }}>
+                      {[7, 3, 1].map(d => {
+                        const active = settings.due_reminder_days?.includes(d);
+                        return (
+                          <Chip key={d} label={`${d} day${d > 1 ? 's' : ''} before`}
+                            onClick={() => toggleDay('due_reminder_days', d)}
+                            sx={{
+                              cursor:'pointer', fontWeight:700, px:1,
+                              bgcolor: active ? C.primary : C.lighter,
+                              color:   active ? 'white'   : C.primary,
+                              border:  `2px solid ${active ? C.primary : C.light}`,
+                              transition:'all 0.2s ease',
+                              '&:hover':{ bgcolor: active ? C.dark : C.light, borderColor: active ? C.dark : C.secondary }
+                            }} />
+                        );
+                      })}
                     </Box>
-                    
                     <Typography variant="caption" color="text.secondary">
-                      Selected: {settings.due_reminder_days?.length || 0} reminder{settings.due_reminder_days?.length !== 1 ? 's' : ''}
+                      {settings.due_reminder_days?.length || 0} reminder{settings.due_reminder_days?.length !== 1 ? 's' : ''} selected
                     </Typography>
                   </CardContent>
                 </Card>
-              </Grid>
+              </Grow>
+            </Grid>
 
-              {/* Overdue Alerts */}
-              <Grid item xs={12} md={6}>
-                <Card>
-                  <CardContent>
-                    <Box display="flex" alignItems="center" mb={2}>
-                      <ScheduleIcon sx={{ mr: 1, color: '#f44336' }} />
-                      <Typography variant="h6" fontWeight="bold">
-                        Overdue Alerts
-                      </Typography>
+            {/* ── Overdue Alerts ── */}
+            <Grid item xs={12} md={6}>
+              <Grow in timeout={700}>
+                <Card elevation={0} sx={{ border:`2px solid ${C.light}`, borderRadius:3,
+                  transition:'box-shadow 0.3s', '&:hover':{ boxShadow:`0 8px 24px ${C.light}` } }}>
+                  <CardContent sx={{ p:3 }}>
+                    <Box sx={{ display:'flex', alignItems:'center', gap:1.5, mb:2.5 }}>
+                      <Avatar sx={{ bgcolor:'#fef2f2', width:42, height:42 }}>
+                        <ScheduleIcon sx={{ color:'#ef4444' }} />
+                      </Avatar>
+                      <Box>
+                        <Typography variant="h6" fontWeight={700} sx={{ color:C.dark }}>Overdue Alerts</Typography>
+                        <Typography variant="caption" color="text.secondary">Alert me after books become overdue</Typography>
+                      </Box>
                     </Box>
-                    
-                    <Typography variant="body2" color="text.secondary" mb={2}>
-                      Choose when to receive alerts after books become overdue:
-                    </Typography>
-                    
-                    <Box display="flex" flexWrap="wrap" gap={1} mb={2}>
-                      {[1, 3, 7, 14].map(day => (
-                        <Chip
-                          key={day}
-                          label={`${day} day${day > 1 ? 's' : ''} after`}
-                          color={settings.overdue_reminder_days?.includes(day) ? 'error' : 'default'}
-                          onClick={() => handleReminderDaysChange('overdue_reminder_days', day, !settings.overdue_reminder_days?.includes(day))}
-                          sx={{ cursor: 'pointer' }}
-                        />
-                      ))}
+                    <Divider sx={{ mb:2.5, borderColor:C.light }} />
+                    <Box sx={{ display:'flex', flexWrap:'wrap', gap:1.2, mb:2 }}>
+                      {[1, 3, 7, 14].map(d => {
+                        const active = settings.overdue_reminder_days?.includes(d);
+                        return (
+                          <Chip key={d} label={`${d} day${d > 1 ? 's' : ''} after`}
+                            onClick={() => toggleDay('overdue_reminder_days', d)}
+                            sx={{
+                              cursor:'pointer', fontWeight:700, px:1,
+                              bgcolor: active ? '#ef4444' : '#fef2f2',
+                              color:   active ? 'white'  : '#ef4444',
+                              border:  `2px solid ${active ? '#ef4444' : '#fecaca'}`,
+                              transition:'all 0.2s ease',
+                              '&:hover':{ bgcolor: active ? '#dc2626' : '#fee2e2', borderColor:'#ef4444' }
+                            }} />
+                        );
+                      })}
                     </Box>
-                    
                     <Typography variant="caption" color="text.secondary">
-                      Selected: {settings.overdue_reminder_days?.length || 0} alert{settings.overdue_reminder_days?.length !== 1 ? 's' : ''}
+                      {settings.overdue_reminder_days?.length || 0} alert{settings.overdue_reminder_days?.length !== 1 ? 's' : ''} selected
                     </Typography>
                   </CardContent>
                 </Card>
-              </Grid>
+              </Grow>
+            </Grid>
 
-              {/* Save Button */}
-              <Grid item xs={12}>
-                <Paper sx={{ p: 3, textAlign: 'center' }}>
-                  <Button
-                    variant="contained"
-                    size="large"
-                    onClick={saveSettings}
-                    disabled={saving}
-                    sx={{ 
-                      bgcolor: '#4a9b8e',
-                      '&:hover': { bgcolor: '#3d8276' },
-                      minWidth: 200
-                    }}
-                  >
-                    {saving ? <CircularProgress size={24} /> : 'Save Settings'}
+            {/* ── Save ── */}
+            <Grid item xs={12}>
+              <Grow in timeout={800}>
+                <Paper elevation={0} sx={{
+                  p:3, borderRadius:3, textAlign:'center',
+                  background:`linear-gradient(135deg,${C.lighter},white)`,
+                  border:`2px solid ${C.light}`
+                }}>
+                  <Button variant="contained" size="large" onClick={saveSettings} disabled={saving}
+                    startIcon={saving ? <CircularProgress size={20} sx={{ color:'white' }} /> : <Save />}
+                    sx={{
+                      background:`linear-gradient(135deg,${C.primary},${C.secondary})`,
+                      color:'white', fontWeight:700, px:6, py:1.5, borderRadius:2,
+                      boxShadow:`0 4px 16px rgba(45,106,79,.35)`,
+                      '&:hover':{ background:`linear-gradient(135deg,${C.dark},${C.primary})`,
+                        transform:'translateY(-2px)', boxShadow:`0 8px 24px rgba(45,106,79,.45)` },
+                      '&.Mui-disabled':{ opacity:0.5 }, transition:'all 0.3s ease', minWidth:200
+                    }}>
+                    {saving ? 'Saving…' : 'Save Settings'}
                   </Button>
-                  
-                  <Typography variant="body2" color="text.secondary" mt={2}>
-                    Changes will take effect immediately for future notifications
+                  <Typography variant="body2" color="text.secondary" sx={{ mt:1.5 }}>
+                    Changes apply immediately for future notifications
                   </Typography>
                 </Paper>
-              </Grid>
+              </Grow>
             </Grid>
-          </Box>
-        </Fade>
-      </Box>
-    </Layout>
+          </Grid>
+        </Box>
+      </Fade>
+    </DashboardLayout>
   );
-};
-
-export default UserNotificationSettings;
+}

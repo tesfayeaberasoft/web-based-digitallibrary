@@ -1,26 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  Typography,
-  Tabs,
-  Tab,
-  Card,
-  CardContent,
-  Grid,
-  Chip,
-  Button,
-  LinearProgress,
-  Alert,
-  CircularProgress,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  DialogContentText,
-  Fade,
-  Grow,
-  Avatar,
-  Paper
+  Box, Typography, Card, CardContent, Grid, Chip, Button,
+  LinearProgress, Alert, CircularProgress, Dialog, DialogTitle,
+  DialogContent, DialogActions, Fade, Grow, Avatar, Paper, Tabs, Tab, Divider
 } from '@mui/material';
 import {
   MenuBook as BookIcon,
@@ -29,817 +11,449 @@ import {
   Warning as WarningIcon,
   AssignmentReturn as ReturnIcon,
   AutoStories as ReadingIcon,
-  CalendarToday as CalendarIcon
+  CalendarToday as CalendarIcon,
+  Bookmark as BookmarkIcon,
+  ArrowForward,
+  Refresh,
+  LibraryBooks
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import axios from 'axios';
 
-const UserBooks = () => {
-  const [tabValue, setTabValue] = useState(0);
-  const [loans, setLoans] = useState([]);
-  const [reservations, setReservations] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [returnDialogOpen, setReturnDialogOpen] = useState(false);
-  const [renewDialogOpen, setRenewDialogOpen] = useState(false);
-  const [selectedLoan, setSelectedLoan] = useState(null);
-  const [returning, setReturning] = useState(false);
-  const [renewing, setRenewing] = useState(false);
+const C = {
+  primary: '#2d6a4f', secondary: '#52b788',
+  light: '#d8f3dc', lighter: '#f0fdf4',
+  dark: '#1b4332', accent: '#95d5b2'
+};
 
-  useEffect(() => {
-    fetchUserBooks();
-  }, []);
+const gradBtn = (outline = false) => outline ? {
+  borderColor: C.secondary, color: C.primary, fontWeight: 700, borderRadius: 2,
+  '&:hover': { borderColor: C.primary, bgcolor: C.lighter, transform: 'translateY(-1px)' },
+  transition: 'all 0.2s ease'
+} : {
+  background: `linear-gradient(135deg, ${C.primary}, ${C.secondary})`,
+  color: 'white', fontWeight: 700, borderRadius: 2,
+  boxShadow: `0 4px 12px rgba(45,106,79,.3)`,
+  '&:hover': { background: `linear-gradient(135deg, ${C.dark}, ${C.primary})`, transform: 'translateY(-2px)', boxShadow: `0 8px 20px rgba(45,106,79,.4)` },
+  '&.Mui-disabled': { opacity: 0.5 },
+  transition: 'all 0.3s ease'
+};
 
-  const fetchUserBooks = async () => {
-    setLoading(true);
-    setError('');
-    
+export default function UserBooks() {
+  const [tab, setTab]                       = useState(0);
+  const [loans, setLoans]                   = useState([]);
+  const [reservations, setReservations]     = useState([]);
+  const [loading, setLoading]               = useState(true);
+  const [error, setError]                   = useState('');
+  const [success, setSuccess]               = useState('');
+  const [returnOpen, setReturnOpen]         = useState(false);
+  const [renewOpen, setRenewOpen]           = useState(false);
+  const [selectedLoan, setSelectedLoan]     = useState(null);
+  const [returning, setReturning]           = useState(false);
+  const [renewing, setRenewing]             = useState(false);
+
+  useEffect(() => { fetchBooks(); }, []);
+
+  const fetchBooks = async () => {
+    setLoading(true); setError('');
     try {
       const token = localStorage.getItem('token');
-      const config = {
-        headers: { Authorization: `Bearer ${token}` }
-      };
-      
-      // Fetch active loans
-      const loansResponse = await axios.get('http://localhost:8000/api/loans?status=active', config);
-      if (loansResponse.data.success) {
-        setLoans(loansResponse.data.loans || []);
-      } else {
-        setLoans([]);
-      }
-      
-      // Fetch reservations
-      const reservationsResponse = await axios.get('http://localhost:8000/api/reservations', config);
-      if (reservationsResponse.data.success) {
-        const allReservations = reservationsResponse.data.reservations || [];
-        setReservations(allReservations.filter(r => 
-          r.status === 'pending' || r.status === 'available'
-        ));
-      } else {
-        setReservations([]);
-      }
-    } catch (err) {
-      setLoans([]);
-      setReservations([]);
-      console.error('Error fetching user books:', err);
-      console.error('Error response:', err.response?.data);
-      console.error('Error status:', err.response?.status);
-      
-      // Show actual error message from backend
-      const errorMessage = err.response?.data?.message || err.message || 'Failed to load your books. Please try again.';
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
+      const cfg = { headers: { Authorization: `Bearer ${token}` } };
+      const [lRes, rRes] = await Promise.all([
+        axios.get('http://localhost:8000/api/loans?status=active', cfg),
+        axios.get('http://localhost:8000/api/reservations', cfg)
+      ]);
+      setLoans(lRes.data.success ? lRes.data.loans || [] : []);
+      setReservations(rRes.data.success
+        ? (rRes.data.reservations || []).filter(r => r.status === 'pending' || r.status === 'available')
+        : []);
+    } catch (e) {
+      setError(e.response?.data?.message || 'Failed to load books.');
+    } finally { setLoading(false); }
   };
 
-  const handleTabChange = (event, newValue) => {
-    setTabValue(newValue);
-  };
+  const daysUntilDue = (d) => Math.ceil((new Date(d) - new Date()) / 86400000);
 
-  const handleOpenReturnDialog = (loan) => {
-    setSelectedLoan(loan);
-    setReturnDialogOpen(true);
-  };
-
-  const handleCloseReturnDialog = () => {
-    setReturnDialogOpen(false);
-    setSelectedLoan(null);
-  };
-
-  const handleOpenRenewDialog = (loan) => {
-    setSelectedLoan(loan);
-    setRenewDialogOpen(true);
-  };
-
-  const handleCloseRenewDialog = () => {
-    setRenewDialogOpen(false);
-    setSelectedLoan(null);
-  };
-
-  const handleReturnBook = async () => {
+  const handleReturn = async () => {
     if (!selectedLoan) return;
-    
-    setReturning(true);
-    setError('');
-    setSuccess('');
-    
+    setReturning(true); setError(''); setSuccess('');
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.put(
-        `http://localhost:8000/api/loans/${selectedLoan.id}/return`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-      
-      if (response.data.success) {
-        setSuccess(`Book "${selectedLoan.book_title}" returned successfully!`);
-        
-        // Show fine message if applicable
-        if (response.data.fine_amount > 0) {
-          setSuccess(
-            `Book returned successfully! You have a fine of $${response.data.fine_amount} for late return.`
-          );
-        }
-        
-        // Close dialog
-        handleCloseReturnDialog();
-        
-        // Refresh the loans list
-        fetchUserBooks();
+      const { data } = await axios.put(`http://localhost:8000/api/loans/${selectedLoan.id}/return`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      if (data.success) {
+        setSuccess(data.fine_amount > 0
+          ? `Returned! Fine of $${data.fine_amount} applied for late return.`
+          : `"${selectedLoan.book_title}" returned successfully!`);
+        setReturnOpen(false); setSelectedLoan(null); fetchBooks();
       }
-    } catch (err) {
-      console.error('Error returning book:', err);
-      const errorMessage = err.response?.data?.message || 'Failed to return book. Please try again.';
-      setError(errorMessage);
-    } finally {
-      setReturning(false);
-    }
+    } catch (e) { setError(e.response?.data?.message || 'Failed to return book.'); }
+    finally { setReturning(false); }
   };
 
-  const handleRenewBook = async () => {
+  const handleRenew = async () => {
     if (!selectedLoan) return;
-    
-    setRenewing(true);
-    setError('');
-    setSuccess('');
-    
+    setRenewing(true); setError(''); setSuccess('');
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.put(
-        `http://localhost:8000/api/loans/${selectedLoan.id}/renew`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-      
-      if (response.data.success) {
-        const newDueDate = new Date(response.data.new_due_date).toLocaleDateString();
-        const renewalsRemaining = response.data.renewals_remaining;
-        
-        setSuccess(
-          `Book "${selectedLoan.book_title}" renewed successfully! New due date: ${newDueDate}. ` +
-          `You have ${renewalsRemaining} renewal${renewalsRemaining !== 1 ? 's' : ''} remaining.`
-        );
-        
-        // Close dialog
-        handleCloseRenewDialog();
-        
-        // Refresh the loans list
-        fetchUserBooks();
+      const { data } = await axios.put(`http://localhost:8000/api/loans/${selectedLoan.id}/renew`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      if (data.success) {
+        setSuccess(`"${selectedLoan.book_title}" renewed! New due: ${new Date(data.new_due_date).toLocaleDateString()}. ${data.renewals_remaining} renewal(s) left.`);
+        setRenewOpen(false); setSelectedLoan(null); fetchBooks();
       }
-    } catch (err) {
-      console.error('Error renewing book:', err);
-      const errorMessage = err.response?.data?.message || 'Failed to renew book. Please try again.';
-      setError(errorMessage);
-    } finally {
-      setRenewing(false);
-    }
+    } catch (e) { setError(e.response?.data?.message || 'Failed to renew book.'); }
+    finally { setRenewing(false); }
   };
 
-  const getDaysUntilDue = (dueDate) => {
-    const today = new Date();
-    const due = new Date(dueDate);
-    const diffTime = due - today;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
+  const statusChip = (loan) => {
+    const d = daysUntilDue(loan.due_date);
+    if (d < 0)  return { label: 'Overdue',  color: '#ef4444', bg: '#fef2f2', icon: <WarningIcon sx={{ fontSize: 14 }} /> };
+    if (d <= 3) return { label: 'Due Soon', color: '#f59e0b', bg: '#fffbeb', icon: <ScheduleIcon sx={{ fontSize: 14 }} /> };
+    return { label: 'Active', color: C.secondary, bg: C.lighter, icon: <CheckIcon sx={{ fontSize: 14 }} /> };
   };
 
-  const getStatusChip = (loan) => {
-    const daysUntilDue = getDaysUntilDue(loan.due_date);
-    
-    if (daysUntilDue < 0) {
-      return <Chip label="Overdue" color="error" size="small" icon={<WarningIcon />} />;
-    } else if (daysUntilDue <= 3) {
-      return <Chip label="Due Soon" color="warning" size="small" icon={<ScheduleIcon />} />;
-    } else {
-      return <Chip label="Active" color="success" size="small" icon={<CheckIcon />} />;
-    }
-  };
+  /* ── empty state ── */
+  const EmptyState = ({ icon, title, sub, btnLabel, btnHref, color }) => (
+    <Fade in timeout={600}>
+      <Box sx={{ textAlign: 'center', py: { xs: 6, md: 10 } }}>
+        <Avatar sx={{ width: 100, height: 100, mx: 'auto', mb: 3, background: `linear-gradient(135deg, ${color}99, ${color})` }}>
+          {icon}
+        </Avatar>
+        <Typography variant="h5" fontWeight={700} sx={{ color: C.dark, mb: 1 }}>{title}</Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>{sub}</Typography>
+        <Button variant="contained" href={btnHref} endIcon={<ArrowForward />} sx={{ ...gradBtn(), px: 4, py: 1.3 }}>
+          {btnLabel}
+        </Button>
+      </Box>
+    </Fade>
+  );
 
-  const renderLoans = () => {
-    if (loans.length === 0) {
-      return (
-        <Fade in={true} timeout={800}>
-          <Paper 
-            elevation={0}
-            sx={{ 
-              textAlign: 'center', 
-              py: 8,
-              background: 'linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%)',
-              borderRadius: 2
-            }}
-          >
-            <Avatar sx={{ 
-              width: 100, 
-              height: 100, 
-              bgcolor: '#4a9b8e', 
-              margin: '0 auto',
-              mb: 3
-            }}>
-              <BookIcon sx={{ fontSize: 60 }} />
-            </Avatar>
-            <Typography variant="h5" fontWeight={600} gutterBottom>
-              No borrowed books
-            </Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-              Visit our library to borrow your first book and start your reading journey! 📚
-            </Typography>
-            <Button 
-              variant="contained" 
-              size="large"
-              startIcon={<ReadingIcon />}
-              href="/browse"
-              sx={{ 
-                bgcolor: '#4a9b8e', 
-                '&:hover': { bgcolor: '#3d8276' },
-                px: 4,
-                py: 1.5,
-                fontSize: '1.1rem'
-              }}
-            >
-              Browse Books
-            </Button>
-          </Paper>
-        </Fade>
-      );
-    }
-
+  /* ── loan card ── */
+  const LoanCard = ({ loan, idx }) => {
+    const { label, color, bg, icon } = statusChip(loan);
+    const days  = daysUntilDue(loan.due_date);
+    const prog  = Math.max(0, Math.min(100, ((14 - days) / 14) * 100));
     return (
-      <Grid container spacing={3}>
-        {loans.map((loan, index) => {
-          const daysUntilDue = getDaysUntilDue(loan.due_date);
-          const progress = Math.max(0, Math.min(100, ((14 - daysUntilDue) / 14) * 100));
-          
-          // Determine card gradient based on status
-          let cardGradient = 'linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%)';
-          let borderColor = '#4a9b8e';
-          
-          if (daysUntilDue < 0) {
-            cardGradient = 'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)';
-            borderColor = '#f44336';
-          } else if (daysUntilDue <= 3) {
-            cardGradient = 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)';
-            borderColor = '#ff9800';
-          }
-          
-          return (
-            <Grid item xs={12} md={6} lg={4} key={loan.id}>
-              <Grow in={true} timeout={600 + (index * 200)}>
-                <Card 
-                  sx={{ 
-                    height: '100%',
-                    background: cardGradient,
-                    border: `2px solid ${borderColor}`,
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-8px)',
-                      boxShadow: `0 12px 24px ${borderColor}40`
-                    }
-                  }}
-                >
-                  <CardContent>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                      <Avatar sx={{ 
-                        bgcolor: borderColor,
-                        width: 48,
-                        height: 48
-                      }}>
-                        <ReadingIcon />
-                      </Avatar>
-                      {getStatusChip(loan)}
-                    </Box>
-                    
-                    <Typography variant="h6" fontWeight={700} gutterBottom sx={{ 
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical'
-                    }}>
-                      {loan.book_title}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" gutterBottom sx={{ mb: 2 }}>
-                      by {loan.book_author}
-                    </Typography>
-                    
-                    <Box sx={{ mb: 2 }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                        <Typography variant="body2" fontWeight={600} color={borderColor}>
-                          Reading Progress
-                        </Typography>
-                        <Typography variant="body2" fontWeight={700} color={borderColor}>
-                          {Math.round(progress)}%
-                        </Typography>
-                      </Box>
-                      <LinearProgress 
-                        variant="determinate" 
-                        value={progress} 
-                        sx={{
-                          height: 10,
-                          borderRadius: 5,
-                          bgcolor: 'rgba(0,0,0,0.1)',
-                          '& .MuiLinearProgress-bar': {
-                            bgcolor: borderColor,
-                            borderRadius: 5
-                          }
-                        }}
-                      />
-                    </Box>
-                    
-                    <Paper elevation={0} sx={{ p: 2, bgcolor: 'rgba(255,255,255,0.7)', borderRadius: 2, mb: 2 }}>
-                      <Grid container spacing={2}>
-                        <Grid item xs={6}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-                            <CalendarIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
-                            <Typography variant="caption" color="text.secondary">
-                              Issued
-                            </Typography>
-                          </Box>
-                          <Typography variant="body2" fontWeight={600}>
-                            {new Date(loan.loan_date).toLocaleDateString()}
-                          </Typography>
-                        </Grid>
-                        <Grid item xs={6}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-                            <ScheduleIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
-                            <Typography variant="caption" color="text.secondary">
-                              Due Date
-                            </Typography>
-                          </Box>
-                          <Typography variant="body2" fontWeight={600}>
-                            {new Date(loan.due_date).toLocaleDateString()}
-                          </Typography>
-                        </Grid>
-                      </Grid>
-                    </Paper>
-                    
-                    {daysUntilDue >= 0 ? (
-                      <Alert 
-                        severity={daysUntilDue <= 3 ? 'warning' : 'info'} 
-                        sx={{ 
-                          mb: 2,
-                          fontWeight: 600,
-                          '& .MuiAlert-icon': {
-                            fontSize: 24
-                          }
-                        }}
-                      >
-                        {daysUntilDue === 0 ? '⏰ Due today!' : `📅 ${daysUntilDue} day${daysUntilDue !== 1 ? 's' : ''} remaining`}
-                      </Alert>
-                    ) : (
-                      <Alert 
-                        severity="error" 
-                        sx={{ 
-                          mb: 2,
-                          fontWeight: 600,
-                          '& .MuiAlert-icon': {
-                            fontSize: 24
-                          }
-                        }}
-                      >
-                        ⚠️ Overdue by {Math.abs(daysUntilDue)} day{Math.abs(daysUntilDue) !== 1 ? 's' : ''}
-                      </Alert>
-                    )}
-                    
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      <Button 
-                        fullWidth 
-                        variant="contained"
-                        startIcon={<ReturnIcon />}
-                        onClick={() => handleOpenReturnDialog(loan)}
-                        sx={{ 
-                          bgcolor: '#4a9b8e', 
-                          '&:hover': { bgcolor: '#3d8276' },
-                          fontWeight: 600
-                        }}
-                      >
-                        Return
-                      </Button>
-                      <Button 
-                        fullWidth 
-                        variant="outlined"
-                        startIcon={<ScheduleIcon />}
-                        onClick={() => handleOpenRenewDialog(loan)}
-                        sx={{ 
-                          borderColor: '#4a9b8e', 
-                          color: '#4a9b8e',
-                          fontWeight: 600,
-                          '&:hover': {
-                            borderColor: '#3d8276',
-                            bgcolor: 'rgba(74, 155, 142, 0.08)'
-                          }
-                        }}
-                      >
-                        Renew
-                      </Button>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grow>
-            </Grid>
-          );
-        })}
-      </Grid>
+      <Grow in timeout={500 + idx * 150}>
+        <Card elevation={0} sx={{
+          height: '100%', border: `2px solid ${color}40`, borderRadius: 3,
+          bgcolor: bg, transition: 'all 0.3s ease',
+          '&:hover': { transform: 'translateY(-6px)', boxShadow: `0 16px 32px ${color}25`, borderColor: color }
+        }}>
+          <CardContent sx={{ p: 3 }}>
+            {/* header */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+              <Avatar sx={{ width: 52, height: 52, background: `linear-gradient(135deg, ${color}, ${color}cc)` }}>
+                <ReadingIcon sx={{ fontSize: 28, color: 'white' }} />
+              </Avatar>
+              <Chip label={label} size="small" icon={icon}
+                sx={{ bgcolor: `${color}20`, color, fontWeight: 700, border: `1px solid ${color}50`,
+                  '& .MuiChip-icon': { color } }} />
+            </Box>
+
+            <Typography variant="h6" fontWeight={800} sx={{ color: C.dark, mb: 0.5,
+              overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box',
+              WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.35 }}>
+              {loan.book_title}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
+              by {loan.book_author}
+            </Typography>
+
+            {/* progress */}
+            <Box sx={{ mb: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.8 }}>
+                <Typography variant="caption" fontWeight={600} color="text.secondary">Time Used</Typography>
+                <Typography variant="caption" fontWeight={700} sx={{ color }}>{Math.round(prog)}%</Typography>
+              </Box>
+              <LinearProgress variant="determinate" value={prog} sx={{
+                height: 8, borderRadius: 4, bgcolor: `${color}20`,
+                '& .MuiLinearProgress-bar': { bgcolor: color, borderRadius: 4 }
+              }} />
+            </Box>
+
+            {/* dates */}
+            <Paper elevation={0} sx={{ p: 1.5, bgcolor: 'rgba(255,255,255,0.7)', borderRadius: 2, mb: 2, border: `1px solid ${color}20` }}>
+              <Grid container spacing={1}>
+                <Grid item xs={6}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <CalendarIcon sx={{ fontSize: 13, color: 'text.secondary' }} />
+                    <Typography variant="caption" color="text.secondary">Issued</Typography>
+                  </Box>
+                  <Typography variant="body2" fontWeight={700} sx={{ color: C.dark }}>
+                    {new Date(loan.loan_date).toLocaleDateString()}
+                  </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <ScheduleIcon sx={{ fontSize: 13, color: 'text.secondary' }} />
+                    <Typography variant="caption" color="text.secondary">Due Date</Typography>
+                  </Box>
+                  <Typography variant="body2" fontWeight={700} sx={{ color }}>
+                    {new Date(loan.due_date).toLocaleDateString()}
+                  </Typography>
+                </Grid>
+              </Grid>
+            </Paper>
+
+            {/* due alert */}
+            <Box sx={{ mb: 2, px: 2, py: 1.2, borderRadius: 2,
+              bgcolor: `${color}15`, border: `1px solid ${color}30` }}>
+              <Typography variant="body2" fontWeight={700} sx={{ color }}>
+                {days < 0 ? `⚠️ Overdue by ${Math.abs(days)} day${Math.abs(days) !== 1 ? 's' : ''}`
+                  : days === 0 ? '⏰ Due today!'
+                  : `📅 ${days} day${days !== 1 ? 's' : ''} remaining`}
+              </Typography>
+            </Box>
+
+            {/* actions */}
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button fullWidth variant="contained" size="small" startIcon={<ReturnIcon />}
+                onClick={() => { setSelectedLoan(loan); setReturnOpen(true); }}
+                sx={{ ...gradBtn(), py: 1 }}>Return</Button>
+              <Button fullWidth variant="outlined" size="small" startIcon={<ScheduleIcon />}
+                onClick={() => { setSelectedLoan(loan); setRenewOpen(true); }}
+                sx={{ ...gradBtn(true), py: 1 }}>Renew</Button>
+            </Box>
+          </CardContent>
+        </Card>
+      </Grow>
     );
   };
 
-  const renderReservations = () => {
-    if (reservations.length === 0) {
-      return (
-        <Fade in={true} timeout={800}>
-          <Paper 
-            elevation={0}
-            sx={{ 
-              textAlign: 'center', 
-              py: 8,
-              background: 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)',
-              borderRadius: 2
-            }}
-          >
-            <Avatar sx={{ 
-              width: 100, 
-              height: 100, 
-              bgcolor: '#ff9800', 
-              margin: '0 auto',
-              mb: 3
-            }}>
-              <ScheduleIcon sx={{ fontSize: 60 }} />
-            </Avatar>
-            <Typography variant="h5" fontWeight={600} gutterBottom>
-              No reservations
-            </Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-              Reserve books that are currently unavailable to get notified when they're ready! 🔔
-            </Typography>
-            <Button 
-              variant="contained" 
-              size="large"
-              startIcon={<BookIcon />}
-              href="/browse"
-              sx={{ 
-                bgcolor: '#ff9800', 
-                '&:hover': { bgcolor: '#f57c00' },
-                px: 4,
-                py: 1.5,
-                fontSize: '1.1rem'
-              }}
-            >
-              Browse Books
-            </Button>
-          </Paper>
-        </Fade>
-      );
-    }
-
+  /* ── reservation card ── */
+  const ReservationCard = ({ res, idx }) => {
+    const ready = res.status === 'available';
+    const color = ready ? C.secondary : '#f59e0b';
     return (
-      <Grid container spacing={3}>
-        {reservations.map((reservation, index) => {
-          const isReady = reservation.status === 'available';
-          const cardGradient = isReady 
-            ? 'linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)'
-            : 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)';
-          const borderColor = isReady ? '#4caf50' : '#ff9800';
-          
-          return (
-            <Grid item xs={12} md={6} lg={4} key={reservation.id}>
-              <Grow in={true} timeout={600 + (index * 200)}>
-                <Card 
-                  sx={{ 
-                    height: '100%',
-                    background: cardGradient,
-                    border: `2px solid ${borderColor}`,
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-8px)',
-                      boxShadow: `0 12px 24px ${borderColor}40`
-                    }
-                  }}
-                >
-                  <CardContent>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                      <Avatar sx={{ 
-                        bgcolor: borderColor,
-                        width: 48,
-                        height: 48
-                      }}>
-                        {isReady ? <CheckIcon /> : <ScheduleIcon />}
-                      </Avatar>
-                      <Chip 
-                        label={isReady ? '✅ Ready' : '⏳ Pending'}
-                        sx={{
-                          bgcolor: borderColor,
-                          color: 'white',
-                          fontWeight: 700,
-                          fontSize: '0.875rem'
-                        }}
-                        size="medium"
-                      />
-                    </Box>
-                    
-                    <Typography variant="h6" fontWeight={700} gutterBottom sx={{ 
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical'
-                    }}>
-                      {reservation.book_title}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" gutterBottom sx={{ mb: 2 }}>
-                      by {reservation.book_author}
-                    </Typography>
-                    
-                    <Paper elevation={0} sx={{ p: 2, bgcolor: 'rgba(255,255,255,0.7)', borderRadius: 2, mb: 2 }}>
-                      <Grid container spacing={2}>
-                        <Grid item xs={6}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-                            <CalendarIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
-                            <Typography variant="caption" color="text.secondary">
-                              Reserved On
-                            </Typography>
-                          </Box>
-                          <Typography variant="body2" fontWeight={600}>
-                            {new Date(reservation.created_at).toLocaleDateString()}
-                          </Typography>
-                        </Grid>
-                        <Grid item xs={6}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-                            <ScheduleIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
-                            <Typography variant="caption" color="text.secondary">
-                              Queue Position
-                            </Typography>
-                          </Box>
-                          <Typography variant="h6" fontWeight={700} color={borderColor}>
-                            #{reservation.queue_position}
-                          </Typography>
-                        </Grid>
-                      </Grid>
-                    </Paper>
-                    
-                    {isReady ? (
-                      <Alert 
-                        severity="success" 
-                        sx={{ 
-                          mb: 2,
-                          fontWeight: 600,
-                          '& .MuiAlert-icon': {
-                            fontSize: 24
-                          }
-                        }}
-                      >
-                        🎉 Your book is ready for pickup!
-                      </Alert>
-                    ) : (
-                      <Alert 
-                        severity="info" 
-                        sx={{ 
-                          mb: 2,
-                          fontWeight: 600,
-                          '& .MuiAlert-icon': {
-                            fontSize: 24
-                          }
-                        }}
-                      >
-                        📋 You're #{reservation.queue_position} in the queue
-                      </Alert>
-                    )}
-                    
-                    <Button 
-                      fullWidth 
-                      variant="outlined"
-                      color="error"
-                      sx={{
-                        fontWeight: 600,
-                        '&:hover': {
-                          bgcolor: 'rgba(244, 67, 54, 0.08)'
-                        }
-                      }}
-                    >
-                      Cancel Reservation
-                    </Button>
-                  </CardContent>
-                </Card>
-              </Grow>
-            </Grid>
-          );
-        })}
-      </Grid>
+      <Grow in timeout={500 + idx * 150}>
+        <Card elevation={0} sx={{
+          height: '100%', border: `2px solid ${color}40`, borderRadius: 3,
+          bgcolor: ready ? C.lighter : '#fffbeb', transition: 'all 0.3s ease',
+          '&:hover': { transform: 'translateY(-6px)', boxShadow: `0 16px 32px ${color}25`, borderColor: color }
+        }}>
+          <CardContent sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+              <Avatar sx={{ width: 52, height: 52, background: `linear-gradient(135deg, ${color}, ${color}cc)` }}>
+                {ready ? <CheckIcon sx={{ fontSize: 28, color: 'white' }} /> : <BookmarkIcon sx={{ fontSize: 28, color: 'white' }} />}
+              </Avatar>
+              <Chip label={ready ? '✅ Ready' : '⏳ Pending'} size="small"
+                sx={{ bgcolor: `${color}20`, color, fontWeight: 700, border: `1px solid ${color}50` }} />
+            </Box>
+
+            <Typography variant="h6" fontWeight={800} sx={{ color: C.dark, mb: 0.5,
+              overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box',
+              WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+              {res.book_title}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>by {res.book_author}</Typography>
+
+            <Paper elevation={0} sx={{ p: 1.5, bgcolor: 'rgba(255,255,255,0.7)', borderRadius: 2, mb: 2, border: `1px solid ${color}20` }}>
+              <Grid container spacing={1}>
+                <Grid item xs={6}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <CalendarIcon sx={{ fontSize: 13, color: 'text.secondary' }} />
+                    <Typography variant="caption" color="text.secondary">Reserved On</Typography>
+                  </Box>
+                  <Typography variant="body2" fontWeight={700} sx={{ color: C.dark }}>
+                    {new Date(res.created_at).toLocaleDateString()}
+                  </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <ScheduleIcon sx={{ fontSize: 13, color: 'text.secondary' }} />
+                    <Typography variant="caption" color="text.secondary">Queue</Typography>
+                  </Box>
+                  <Typography variant="h6" fontWeight={800} sx={{ color }}>#{res.queue_position}</Typography>
+                </Grid>
+              </Grid>
+            </Paper>
+
+            <Box sx={{ mb: 2, px: 2, py: 1.2, borderRadius: 2, bgcolor: `${color}15`, border: `1px solid ${color}30` }}>
+              <Typography variant="body2" fontWeight={700} sx={{ color }}>
+                {ready ? '🎉 Ready for pickup at the library!' : `📋 You're #${res.queue_position} in the queue`}
+              </Typography>
+            </Box>
+
+            <Button fullWidth variant="outlined" color="error" size="small"
+              sx={{ borderRadius: 2, fontWeight: 700 }}>
+              Cancel Reservation
+            </Button>
+          </CardContent>
+        </Card>
+      </Grow>
     );
   };
 
   return (
-    <DashboardLayout title="Digital Library">
-      <Fade in={true} timeout={600}>
+    <DashboardLayout title="My Books">
+      <Fade in timeout={500}>
         <Box>
-          {/* Header */}
-          <Box sx={{ mb: 4 }}>
-            <Typography variant="h4" fontWeight={700} gutterBottom>
-              📚 My Books
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Manage your borrowed and reserved books
-            </Typography>
+          {/* header */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, flexWrap: 'wrap', gap: 2 }}>
+            <Box>
+              <Typography variant="h4" fontWeight={800} sx={{
+                background: `linear-gradient(135deg, ${C.primary}, ${C.secondary})`,
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', mb: 0.5
+              }}>My Books</Typography>
+              <Typography variant="body1" color="text.secondary">Manage your borrowed books and reservations</Typography>
+            </Box>
+            <Button variant="outlined" startIcon={<Refresh />} onClick={fetchBooks}
+              sx={{ ...gradBtn(true), px: 3 }}>Refresh</Button>
           </Box>
 
-          {error && (
-            <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>
-              {error}
-            </Alert>
-          )}
+          {/* alerts */}
+          {error   && <Alert severity="error"   onClose={() => setError('')}   sx={{ mb: 3, borderRadius: 2 }}>{error}</Alert>}
+          {success && <Alert severity="success" onClose={() => setSuccess('')} sx={{ mb: 3, borderRadius: 2, border:`1px solid ${C.secondary}`, bgcolor: C.lighter }}>{success}</Alert>}
 
-          {success && (
-            <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess('')}>
-              {success}
-            </Alert>
-          )}
+          {/* summary pills */}
+          <Grid container spacing={2} sx={{ mb: 4 }}>
+            {[
+              { label: 'Borrowed',     value: loans.length,        color: C.primary,  icon: <BookIcon/> },
+              { label: 'Reservations', value: reservations.length, color: '#f59e0b',  icon: <BookmarkIcon/> },
+              { label: 'Overdue',      value: loans.filter(l => daysUntilDue(l.due_date) < 0).length, color: '#ef4444', icon: <WarningIcon/> },
+              { label: 'Due Soon',     value: loans.filter(l => { const d = daysUntilDue(l.due_date); return d >= 0 && d <= 3; }).length, color: '#f59e0b', icon: <ScheduleIcon/> },
+            ].map((s, i) => (
+              <Grid item xs={6} sm={3} key={i}>
+                <Grow in timeout={400 + i * 100}>
+                  <Paper elevation={0} sx={{
+                    p: 2, borderRadius: 3, textAlign: 'center',
+                    border: `2px solid ${s.color}30`, bgcolor: `${s.color}08`,
+                    transition: 'all 0.3s ease',
+                    '&:hover': { transform: 'translateY(-4px)', boxShadow: `0 8px 20px ${s.color}20`, borderColor: s.color }
+                  }}>
+                    <Avatar sx={{ width: 44, height: 44, mx: 'auto', mb: 1, bgcolor: `${s.color}20`, color: s.color }}>{s.icon}</Avatar>
+                    <Typography variant="h4" fontWeight={900} sx={{ color: s.color }}>{s.value}</Typography>
+                    <Typography variant="caption" color="text.secondary" fontWeight={600}>{s.label}</Typography>
+                  </Paper>
+                </Grow>
+              </Grid>
+            ))}
+          </Grid>
 
-          {/* Enhanced Tabs */}
-          <Paper 
-            elevation={0}
-            sx={{ 
-              mb: 4,
-              borderRadius: 2,
-              overflow: 'hidden',
-              border: '2px solid #e0e0e0'
-            }}
-          >
-            <Tabs 
-              value={tabValue} 
-              onChange={handleTabChange}
-              sx={{
-                '& .MuiTab-root': {
-                  fontSize: '1rem',
-                  fontWeight: 600,
-                  py: 2,
-                  minHeight: 64
-                },
-                '& .Mui-selected': {
-                  color: '#4a9b8e !important'
-                },
-                '& .MuiTabs-indicator': {
-                  backgroundColor: '#4a9b8e',
-                  height: 3
-                }
-              }}
-            >
-              <Tab 
-                label={
+          {/* tabs */}
+          <Paper elevation={0} sx={{ mb: 4, borderRadius: 3, overflow: 'hidden', border: `2px solid ${C.light}` }}>
+            <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{
+              '& .MuiTab-root': { fontWeight: 700, py: 2, minHeight: 60, fontSize: '0.95rem' },
+              '& .Mui-selected': { color: `${C.primary} !important` },
+              '& .MuiTabs-indicator': { bgcolor: C.primary, height: 3 }
+            }}>
+              {[
+                { label: 'Borrowed Books', icon: <LibraryBooks sx={{ fontSize: 20 }} />, count: loans.length },
+                { label: 'Reservations',   icon: <BookmarkIcon sx={{ fontSize: 20 }} />, count: reservations.length }
+              ].map((t, i) => (
+                <Tab key={i} label={
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <BookIcon />
-                    <span>Borrowed</span>
-                    <Chip 
-                      label={loans.length} 
-                      size="small" 
-                      sx={{ 
-                        bgcolor: tabValue === 0 ? '#4a9b8e' : 'grey.300',
-                        color: tabValue === 0 ? 'white' : 'text.secondary',
-                        fontWeight: 700,
-                        minWidth: 32
-                      }} 
-                    />
+                    {t.icon} {t.label}
+                    <Chip label={t.count} size="small" sx={{
+                      bgcolor: tab === i ? C.primary : C.light,
+                      color: tab === i ? 'white' : C.primary,
+                      fontWeight: 700, height: 22, fontSize: '0.75rem'
+                    }} />
                   </Box>
-                }
-              />
-              <Tab 
-                label={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <ScheduleIcon />
-                    <span>Reservations</span>
-                    <Chip 
-                      label={reservations.length} 
-                      size="small" 
-                      sx={{ 
-                        bgcolor: tabValue === 1 ? '#4a9b8e' : 'grey.300',
-                        color: tabValue === 1 ? 'white' : 'text.secondary',
-                        fontWeight: 700,
-                        minWidth: 32
-                      }} 
-                    />
-                  </Box>
-                }
-              />
+                } />
+              ))}
             </Tabs>
           </Paper>
 
           {loading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-              <CircularProgress sx={{ color: '#4a9b8e' }} size={60} />
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
+              <CircularProgress size={56} sx={{ color: C.primary }} />
             </Box>
           ) : (
             <>
-              {tabValue === 0 && renderLoans()}
-              {tabValue === 1 && renderReservations()}
+              {tab === 0 && (
+                loans.length === 0
+                  ? <EmptyState icon={<BookIcon sx={{ fontSize: 52, color: 'white' }} />}
+                      title="No borrowed books" sub="Visit the library to borrow your first book! 📚"
+                      btnLabel="Browse Books" btnHref="/user/browse" color={C.primary} />
+                  : <Grid container spacing={3}>
+                      {loans.map((l, i) => (
+                        <Grid item xs={12} sm={6} lg={4} key={l.id}>
+                          <LoanCard loan={l} idx={i} />
+                        </Grid>
+                      ))}
+                    </Grid>
+              )}
+              {tab === 1 && (
+                reservations.length === 0
+                  ? <EmptyState icon={<BookmarkIcon sx={{ fontSize: 52, color: 'white' }} />}
+                      title="No reservations" sub="Reserve books that are currently unavailable! 🔔"
+                      btnLabel="Browse Books" btnHref="/user/browse" color="#f59e0b" />
+                  : <Grid container spacing={3}>
+                      {reservations.map((r, i) => (
+                        <Grid item xs={12} sm={6} lg={4} key={r.id}>
+                          <ReservationCard res={r} idx={i} />
+                        </Grid>
+                      ))}
+                    </Grid>
+              )}
             </>
           )}
 
-        {/* Return Book Confirmation Dialog */}
-        <Dialog
-          open={returnDialogOpen}
-          onClose={handleCloseReturnDialog}
-          maxWidth="sm"
-          fullWidth
-        >
-          <DialogTitle>
-            Return Book
-          </DialogTitle>
-          <DialogContent>
-            <DialogContentText>
-              Are you sure you want to return <strong>"{selectedLoan?.book_title}"</strong>?
-              {selectedLoan && getDaysUntilDue(selectedLoan.due_date) < 0 && (
-                <Alert severity="warning" sx={{ mt: 2 }}>
-                  This book is overdue by {Math.abs(getDaysUntilDue(selectedLoan.due_date))} day(s). 
-                  A fine of ${Math.abs(getDaysUntilDue(selectedLoan.due_date)) * 5} will be applied.
+          {/* Return Dialog */}
+          <Dialog open={returnOpen} onClose={() => setReturnOpen(false)} maxWidth="sm" fullWidth
+            PaperProps={{ sx: { borderRadius: 3 } }}>
+            <DialogTitle sx={{ background: `linear-gradient(135deg, ${C.primary}, ${C.secondary})`, color: 'white', fontWeight: 700 }}>
+              Return Book
+            </DialogTitle>
+            <DialogContent sx={{ pt: 3 }}>
+              <Typography variant="body1" sx={{ mb: 2 }}>
+                Are you sure you want to return <strong>"{selectedLoan?.book_title}"</strong>?
+              </Typography>
+              {selectedLoan && daysUntilDue(selectedLoan.due_date) < 0 && (
+                <Alert severity="warning" sx={{ borderRadius: 2 }}>
+                  This book is overdue by {Math.abs(daysUntilDue(selectedLoan.due_date))} day(s). A fine will be applied.
                 </Alert>
               )}
-            </DialogContentText>
-          </DialogContent>
-          <DialogActions sx={{ p: 2, gap: 1 }}>
-            <Button 
-              onClick={handleCloseReturnDialog}
-              variant="outlined"
-              disabled={returning}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleReturnBook}
-              variant="contained"
-              startIcon={returning ? <CircularProgress size={20} /> : <ReturnIcon />}
-              disabled={returning}
-              sx={{ 
-                bgcolor: '#4a9b8e', 
-                '&:hover': { bgcolor: '#3d8276' }
-              }}
-            >
-              {returning ? 'Returning...' : 'Confirm Return'}
-            </Button>
-          </DialogActions>
-        </Dialog>
+            </DialogContent>
+            <DialogActions sx={{ p: 2.5, gap: 1 }}>
+              <Button onClick={() => setReturnOpen(false)} variant="outlined"
+                sx={{ borderColor: '#e5e7eb', color: 'text.secondary', borderRadius: 2 }}>Cancel</Button>
+              <Button onClick={handleReturn} variant="contained" disabled={returning}
+                startIcon={returning ? <CircularProgress size={18} sx={{ color: 'white' }} /> : <ReturnIcon />}
+                sx={{ ...gradBtn() }}>
+                {returning ? 'Returning…' : 'Confirm Return'}
+              </Button>
+            </DialogActions>
+          </Dialog>
 
-        {/* Renew Book Confirmation Dialog */}
-        <Dialog
-          open={renewDialogOpen}
-          onClose={handleCloseRenewDialog}
-          maxWidth="sm"
-          fullWidth
-        >
-          <DialogTitle>
-            Renew Book
-          </DialogTitle>
-          <DialogContent>
-            <DialogContentText>
-              Are you sure you want to renew <strong>"{selectedLoan?.book_title}"</strong>?
-            </DialogContentText>
-            {selectedLoan && (
-              <Box sx={{ mt: 2 }}>
-                <Alert severity="info" sx={{ mb: 2 }}>
-                  The due date will be extended by 14 days.
-                </Alert>
-                <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    <strong>Current Due Date:</strong> {new Date(selectedLoan.due_date).toLocaleDateString()}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    <strong>New Due Date:</strong> {new Date(new Date(selectedLoan.due_date).getTime() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString()}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    <strong>Renewals Used:</strong> {selectedLoan.renewal_count || 0} / 2
-                  </Typography>
-                </Box>
-              </Box>
-            )}
-          </DialogContent>
-          <DialogActions sx={{ p: 2, gap: 1 }}>
-            <Button 
-              onClick={handleCloseRenewDialog}
-              variant="outlined"
-              disabled={renewing}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleRenewBook}
-              variant="contained"
-              startIcon={renewing ? <CircularProgress size={20} /> : <ScheduleIcon />}
-              disabled={renewing}
-              sx={{ 
-                bgcolor: '#4a9b8e', 
-                '&:hover': { bgcolor: '#3d8276' }
-              }}
-            >
-              {renewing ? 'Renewing...' : 'Confirm Renew'}
-            </Button>
-          </DialogActions>
-        </Dialog>
+          {/* Renew Dialog */}
+          <Dialog open={renewOpen} onClose={() => setRenewOpen(false)} maxWidth="sm" fullWidth
+            PaperProps={{ sx: { borderRadius: 3 } }}>
+            <DialogTitle sx={{ background: `linear-gradient(135deg, ${C.primary}, ${C.secondary})`, color: 'white', fontWeight: 700 }}>
+              Renew Book
+            </DialogTitle>
+            <DialogContent sx={{ pt: 3 }}>
+              <Typography variant="body1" sx={{ mb: 2 }}>
+                Renew <strong>"{selectedLoan?.book_title}"</strong>?
+              </Typography>
+              {selectedLoan && (
+                <Paper elevation={0} sx={{ p: 2, bgcolor: C.lighter, borderRadius: 2, border: `1px solid ${C.light}` }}>
+                  {[
+                    ['Current Due Date', new Date(selectedLoan.due_date).toLocaleDateString()],
+                    ['New Due Date', new Date(new Date(selectedLoan.due_date).getTime() + 14 * 86400000).toLocaleDateString()],
+                    ['Renewals Used', `${selectedLoan.renewal_count || 0} / 2`]
+                  ].map(([k, v]) => (
+                    <Box key={k} sx={{ display: 'flex', justifyContent: 'space-between', py: 0.8 }}>
+                      <Typography variant="body2" color="text.secondary">{k}</Typography>
+                      <Typography variant="body2" fontWeight={700} sx={{ color: C.primary }}>{v}</Typography>
+                    </Box>
+                  ))}
+                </Paper>
+              )}
+            </DialogContent>
+            <DialogActions sx={{ p: 2.5, gap: 1 }}>
+              <Button onClick={() => setRenewOpen(false)} variant="outlined"
+                sx={{ borderColor: '#e5e7eb', color: 'text.secondary', borderRadius: 2 }}>Cancel</Button>
+              <Button onClick={handleRenew} variant="contained" disabled={renewing}
+                startIcon={renewing ? <CircularProgress size={18} sx={{ color: 'white' }} /> : <ScheduleIcon />}
+                sx={{ ...gradBtn() }}>
+                {renewing ? 'Renewing…' : 'Confirm Renew'}
+              </Button>
+            </DialogActions>
+          </Dialog>
         </Box>
       </Fade>
     </DashboardLayout>
   );
-};
-
-export default UserBooks;
+}

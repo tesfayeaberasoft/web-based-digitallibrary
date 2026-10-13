@@ -1,19 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Typography, 
-  Grid, 
-  Card, 
-  CardContent, 
-  Avatar,
-  Chip,
-  LinearProgress,
-  CircularProgress,
-  Alert,
-  Paper,
-  Fade,
-  Grow,
-  Zoom
+import {
+  Box, Typography, Grid, Card, CardContent, Avatar, Chip,
+  LinearProgress, CircularProgress, Alert, Paper, Fade, Grow
 } from '@mui/material';
 import {
   EmojiEvents as TrophyIcon,
@@ -21,506 +9,270 @@ import {
   CheckCircle as CheckIcon,
   MenuBook as BookIcon,
   LocalFireDepartment as FireIcon,
-  RateReview as ReviewIcon,
   AccessTime as TimeIcon,
   Stars as StarsIcon,
-  Whatshot as HotIcon
+  WorkspacePremium
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import axios from 'axios';
 
-const UserAchievements = () => {
-  const [achievements, setAchievements] = useState([]);
-  const [userAchievements, setUserAchievements] = useState([]);
-  const [stats, setStats] = useState(null);
+const C = {
+  primary: '#2d6a4f', secondary: '#52b788',
+  light: '#d8f3dc', lighter: '#f0fdf4',
+  dark: '#1b4332', accent: '#95d5b2'
+};
+
+const ACHIEVEMENTS = (s) => [
+  { id:1, name:'First Book',        desc:'Read your first book',            icon:'book', type:'books_read',    target:1,   pts:10,  earned: s?.books_read >= 1 },
+  { id:2, name:'Bookworm',          desc:'Read 5 books',                    icon:'book', type:'books_read',    target:5,   pts:25,  earned: s?.books_read >= 5 },
+  { id:3, name:'Book Master',       desc:'Read 10 books',                   icon:'book', type:'books_read',    target:10,  pts:50,  earned: s?.books_read >= 10 },
+  { id:4, name:'Book Legend',       desc:'Read 25 books',                   icon:'book', type:'books_read',    target:25,  pts:100, earned: s?.books_read >= 25 },
+  { id:5, name:'Reading Streak',    desc:'Maintain a 7-day reading streak', icon:'fire', type:'reading_streak',target:7,   pts:30,  earned: s?.reading_streak >= 7 },
+  { id:6, name:'Dedicated Reader',  desc:'30-day reading streak',           icon:'fire', type:'reading_streak',target:30,  pts:100, earned: s?.reading_streak >= 30 },
+  { id:7, name:'Time Traveler',     desc:'Spend 100 hours reading',         icon:'time', type:'total_hours',   target:100, pts:75,  earned: s?.total_hours >= 100 },
+  { id:8, name:'Reading Marathon',  desc:'Spend 500 hours reading',         icon:'time', type:'total_hours',   target:500, pts:200, earned: s?.total_hours >= 500 },
+];
+
+const ICON_MAP = {
+  book: <BookIcon />,
+  fire: <FireIcon />,
+  time: <TimeIcon />,
+};
+
+const CARD_THEME = {
+  book: { earned: { grad:`linear-gradient(135deg,${C.lighter},${C.light})`, border:C.secondary, icon:C.primary },
+          locked: { grad:`linear-gradient(135deg,#f0fdf4,#dcfce7)`,         border:`${C.secondary}60`, icon:C.secondary } },
+  fire: { earned: { grad:'linear-gradient(135deg,#fff7ed,#ffedd5)', border:'#f97316', icon:'#ea580c' },
+          locked: { grad:'linear-gradient(135deg,#fff7ed,#fef3c7)', border:'#f9731660', icon:'#f97316' } },
+  time: { earned: { grad:'linear-gradient(135deg,#f5f3ff,#ede9fe)', border:'#8b5cf6', icon:'#7c3aed' },
+          locked: { grad:'linear-gradient(135deg,#f5f3ff,#f0fdf4)', border:'#8b5cf660', icon:'#8b5cf6' } },
+};
+
+export default function UserAchievements() {
+  const [stats,   setStats]   = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error,   setError]   = useState('');
 
-  useEffect(() => {
-    fetchAchievements();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
-  const fetchAchievements = async () => {
-    setLoading(true);
-    setError('');
-    
+  const fetchData = async () => {
+    setLoading(true); setError('');
     try {
-      const token = localStorage.getItem('token');
+      const token   = localStorage.getItem('token');
       const userStr = localStorage.getItem('user');
-      
-      if (!token || !userStr) {
-        setError('Please login to view achievements');
-        setLoading(false);
-        return;
-      }
-
-      const userData = JSON.parse(userStr);
-      const userId = userData.id;
-
-      // Fetch user stats for progress calculation
-      const statsResponse = await axios.get(
-        `http://localhost:8000/api/users/${userId}/stats`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      if (statsResponse.data.success) {
-        setStats(statsResponse.data.stats);
-      }
-
-      // For now, create sample achievements since the API might not have them
-      // In production, you would fetch from: /api/achievements
-      const sampleAchievements = [
-        {
-          id: 1,
-          name: 'First Book',
-          description: 'Read your first book',
-          icon: 'book',
-          criteria_type: 'books_read',
-          criteria_value: 1,
-          points: 10,
-          earned: statsResponse.data.stats.books_read >= 1
-        },
-        {
-          id: 2,
-          name: 'Bookworm',
-          description: 'Read 5 books',
-          icon: 'book',
-          criteria_type: 'books_read',
-          criteria_value: 5,
-          points: 25,
-          earned: statsResponse.data.stats.books_read >= 5
-        },
-        {
-          id: 3,
-          name: 'Book Master',
-          description: 'Read 10 books',
-          icon: 'book',
-          criteria_type: 'books_read',
-          criteria_value: 10,
-          points: 50,
-          earned: statsResponse.data.stats.books_read >= 10
-        },
-        {
-          id: 4,
-          name: 'Reading Streak',
-          description: 'Maintain a 7-day reading streak',
-          icon: 'fire',
-          criteria_type: 'reading_streak',
-          criteria_value: 7,
-          points: 30,
-          earned: statsResponse.data.stats.reading_streak >= 7
-        },
-        {
-          id: 5,
-          name: 'Dedicated Reader',
-          description: 'Maintain a 30-day reading streak',
-          icon: 'fire',
-          criteria_type: 'reading_streak',
-          criteria_value: 30,
-          points: 100,
-          earned: statsResponse.data.stats.reading_streak >= 30
-        },
-        {
-          id: 6,
-          name: 'Time Traveler',
-          description: 'Spend 100 hours reading',
-          icon: 'time',
-          criteria_type: 'time_spent',
-          criteria_value: 100,
-          points: 75,
-          earned: statsResponse.data.stats.total_hours >= 100
-        }
-      ];
-
-      setAchievements(sampleAchievements);
-      setUserAchievements(sampleAchievements.filter(a => a.earned));
-
-    } catch (err) {
-      console.error('Error fetching achievements:', err);
-      const errorMessage = err.response?.data?.message || err.message || 'Failed to load achievements';
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
+      if (!token || !userStr) { setError('Please login.'); return; }
+      const { id } = JSON.parse(userStr);
+      const { data } = await axios.get(`http://localhost:8000/api/users/${id}/stats`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (data.success) setStats(data.stats);
+    } catch (e) {
+      setError(e.response?.data?.message || 'Failed to load achievements');
+    } finally { setLoading(false); }
   };
 
-  const getIcon = (iconType) => {
-    switch (iconType) {
-      case 'book':
-        return <BookIcon />;
-      case 'fire':
-        return <FireIcon />;
-      case 'review':
-        return <ReviewIcon />;
-      case 'time':
-        return <TimeIcon />;
-      default:
-        return <TrophyIcon />;
-    }
-  };
+  if (loading) return (
+    <DashboardLayout title="Achievements">
+      <Box sx={{ display:'flex', justifyContent:'center', alignItems:'center', minHeight:'60vh', flexDirection:'column', gap:2 }}>
+        <CircularProgress size={60} sx={{ color: C.primary }} />
+        <Typography color="text.secondary">Loading achievements…</Typography>
+      </Box>
+    </DashboardLayout>
+  );
 
-  const getProgress = (achievement) => {
+  const list     = ACHIEVEMENTS(stats);
+  const earned   = list.filter(a => a.earned);
+  const locked   = list.filter(a => !a.earned);
+  const totalPts = earned.reduce((s, a) => s + a.pts, 0);
+  const pct      = Math.round((earned.length / list.length) * 100);
+
+  const getProgress = (a) => {
     if (!stats) return 0;
-    
-    let current = 0;
-    switch (achievement.criteria_type) {
-      case 'books_read':
-        current = stats.books_read;
-        break;
-      case 'reading_streak':
-        current = stats.reading_streak;
-        break;
-      case 'time_spent':
-        current = stats.total_hours;
-        break;
-      default:
-        current = 0;
-    }
-    
-    return Math.min(100, (current / achievement.criteria_value) * 100);
+    const cur = stats[a.type === 'books_read' ? 'books_read' : a.type === 'reading_streak' ? 'reading_streak' : 'total_hours'] || 0;
+    return { pct: Math.min(100, (cur / a.target) * 100), cur };
   };
-
-  const getProgressText = (achievement) => {
-    if (!stats) return '0/0';
-    
-    let current = 0;
-    switch (achievement.criteria_type) {
-      case 'books_read':
-        current = stats.books_read;
-        break;
-      case 'reading_streak':
-        current = stats.reading_streak;
-        break;
-      case 'time_spent':
-        current = stats.total_hours;
-        break;
-      default:
-        current = 0;
-    }
-    
-    return `${current}/${achievement.criteria_value}`;
-  };
-
-  if (loading) {
-    return (
-      <DashboardLayout title="Digital Library">
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
-          <CircularProgress sx={{ color: '#4a9b8e' }} size={60} />
-        </Box>
-      </DashboardLayout>
-    );
-  }
-
-  const totalPoints = userAchievements.reduce((sum, a) => sum + a.points, 0);
-  const earnedCount = userAchievements.length;
-  const totalCount = achievements.length;
 
   return (
-    <DashboardLayout title="Digital Library">
-      <Fade in={true} timeout={600}>
+    <DashboardLayout title="Achievements">
+      <Fade in timeout={500}>
         <Box>
-          {/* Header */}
+          {/* ── header ── */}
           <Box sx={{ mb: 4 }}>
-            <Typography variant="h4" fontWeight={700} gutterBottom>
-              🏆 Achievements
+            <Typography variant="h4" fontWeight={800} sx={{
+              background: `linear-gradient(135deg, ${C.primary}, ${C.secondary})`,
+              WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', mb:0.5
+            }}>
+              Achievements
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              Track your reading milestones and earn badges
+              Track your reading milestones and unlock badges
             </Typography>
           </Box>
 
-          {error && (
-            <Alert severity="error" sx={{ mb: 3 }}>
-              {error}
-            </Alert>
+          {error && <Alert severity="error" sx={{ mb:3, borderRadius:2 }}>{error}</Alert>}
+
+          {/* ── summary strip ── */}
+          <Grid container spacing={2.5} sx={{ mb: 4 }}>
+            {[
+              { icon:<TrophyIcon/>,        label:'Earned',       value:`${earned.length}/${list.length}`, color:C.primary,  grad:`linear-gradient(135deg,${C.primary},${C.secondary})` },
+              { icon:<StarsIcon/>,         label:'Total Points', value:totalPts,                          color:'#f59e0b',  grad:'linear-gradient(135deg,#f59e0b,#fbbf24)' },
+              { icon:<LockIcon/>,          label:'Locked',       value:locked.length,                     color:'#8b5cf6',  grad:'linear-gradient(135deg,#8b5cf6,#a78bfa)' },
+              { icon:<WorkspacePremium/>,  label:'Completion',   value:`${pct}%`,                         color:C.secondary,grad:`linear-gradient(135deg,${C.secondary},${C.accent})` },
+            ].map((s, i) => (
+              <Grid item xs={6} sm={3} key={i}>
+                <Grow in timeout={400 + i * 120}>
+                  <Card elevation={0} sx={{
+                    border:`2px solid ${s.color}30`, borderRadius:3,
+                    transition:'all 0.3s ease',
+                    '&:hover':{ transform:'translateY(-6px)', boxShadow:`0 16px 32px ${s.color}25`, borderColor:s.color }
+                  }}>
+                    <CardContent sx={{ p:2.5, textAlign:'center' }}>
+                      <Avatar sx={{ width:52, height:52, mx:'auto', mb:1.5, background:s.grad }}>
+                        {React.cloneElement(s.icon, { sx:{ color:'white', fontSize:26 } })}
+                      </Avatar>
+                      <Typography variant="h4" fontWeight={900} sx={{ color:s.color, letterSpacing:-1 }}>{s.value}</Typography>
+                      <Typography variant="caption" color="text.secondary" fontWeight={600}>{s.label}</Typography>
+                    </CardContent>
+                  </Card>
+                </Grow>
+              </Grid>
+            ))}
+          </Grid>
+
+          {/* ── overall progress bar ── */}
+          <Paper elevation={0} sx={{ p:3, mb:4, borderRadius:3, border:`2px solid ${C.light}`,
+            background:`linear-gradient(135deg,${C.lighter},white)` }}>
+            <Box sx={{ display:'flex', justifyContent:'space-between', mb:1.5 }}>
+              <Typography variant="subtitle1" fontWeight={700} sx={{ color:C.dark }}>Overall Progress</Typography>
+              <Typography variant="subtitle1" fontWeight={800} sx={{ color:C.primary }}>{earned.length} / {list.length}</Typography>
+            </Box>
+            <LinearProgress variant="determinate" value={pct} sx={{
+              height:14, borderRadius:7, bgcolor:C.light,
+              '& .MuiLinearProgress-bar':{ background:`linear-gradient(90deg,${C.primary},${C.secondary})`, borderRadius:7 }
+            }} />
+            <Typography variant="caption" color="text.secondary" sx={{ mt:1, display:'block' }}>
+              {pct}% of achievements unlocked · {totalPts} points earned
+            </Typography>
+          </Paper>
+
+          {/* ── earned section ── */}
+          {earned.length > 0 && (
+            <>
+              <Box sx={{ display:'flex', alignItems:'center', gap:1, mb:2.5 }}>
+                <CheckIcon sx={{ color:C.secondary }} />
+                <Typography variant="h6" fontWeight={700} sx={{ color:C.dark }}>Unlocked ({earned.length})</Typography>
+              </Box>
+              <Grid container spacing={3} sx={{ mb: 4 }}>
+                {earned.map((a, i) => {
+                  const theme = CARD_THEME[a.icon]?.earned || CARD_THEME.book.earned;
+                  return (
+                    <Grid item xs={12} sm={6} md={4} key={a.id}>
+                      <Grow in timeout={400 + i * 100}>
+                        <Card elevation={0} sx={{
+                          height:'100%', background:theme.grad,
+                          border:`2px solid ${theme.border}`,
+                          borderRadius:3, position:'relative', overflow:'visible',
+                          transition:'all 0.3s ease',
+                          '&:hover':{ transform:'translateY(-8px) scale(1.02)', boxShadow:`0 20px 40px ${theme.border}30` }
+                        }}>
+                          {/* checkmark badge */}
+                          <Box sx={{
+                            position:'absolute', top:-12, right:-12,
+                            width:40, height:40, borderRadius:'50%',
+                            background:`linear-gradient(135deg,${C.secondary},${C.primary})`,
+                            display:'flex', alignItems:'center', justifyContent:'center',
+                            boxShadow:`0 4px 12px ${C.primary}50`
+                          }}>
+                            <CheckIcon sx={{ color:'white', fontSize:22 }} />
+                          </Box>
+                          <CardContent sx={{ p:3 }}>
+                            <Box sx={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', mb:2 }}>
+                              <Avatar sx={{ width:60, height:60, bgcolor:theme.icon, boxShadow:`0 4px 12px ${theme.icon}40` }}>
+                                {React.cloneElement(ICON_MAP[a.icon] || <TrophyIcon/>, { sx:{ color:'white', fontSize:30 } })}
+                              </Avatar>
+                              <Chip label={`${a.pts} pts`} size="small"
+                                sx={{ bgcolor:`${theme.icon}20`, color:theme.icon, fontWeight:700, border:`1px solid ${theme.icon}40` }} />
+                            </Box>
+                            <Typography variant="h6" fontWeight={800} sx={{ color:C.dark, mb:0.5 }}>{a.name}</Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb:2 }}>{a.desc}</Typography>
+                            <Box sx={{ px:2, py:1.5, borderRadius:2, bgcolor:`${theme.icon}10`,
+                              border:`1px solid ${theme.icon}30`, display:'flex', alignItems:'center', gap:1 }}>
+                              <CheckIcon sx={{ color:theme.icon, fontSize:18 }} />
+                              <Typography variant="body2" fontWeight={700} sx={{ color:theme.icon }}>🎉 Unlocked!</Typography>
+                            </Box>
+                          </CardContent>
+                        </Card>
+                      </Grow>
+                    </Grid>
+                  );
+                })}
+              </Grid>
+            </>
           )}
 
-          {/* Summary Cards */}
-          <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid item xs={12} sm={4}>
-              <Zoom in={true} timeout={600}>
-                <Card 
-                  sx={{ 
-                    background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
-                    color: 'white',
-                    transition: 'transform 0.3s ease',
-                    '&:hover': {
-                      transform: 'scale(1.05)',
-                      boxShadow: '0 12px 24px rgba(251, 191, 36, 0.3)'
-                    }
-                  }}
-                >
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Avatar sx={{ bgcolor: 'rgba(255, 255, 255, 0.2)', width: 64, height: 64 }}>
-                        <TrophyIcon sx={{ fontSize: 36 }} />
-                      </Avatar>
-                      <Box>
-                        <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                          Achievements Earned
-                        </Typography>
-                        <Typography variant="h3" fontWeight={700}>
-                          {earnedCount}/{totalCount}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Zoom>
-            </Grid>
-
-            <Grid item xs={12} sm={4}>
-              <Zoom in={true} timeout={800}>
-                <Card 
-                  sx={{ 
-                    background: 'linear-gradient(135deg, #4a9b8e 0%, #3d8276 100%)',
-                    color: 'white',
-                    transition: 'transform 0.3s ease',
-                    '&:hover': {
-                      transform: 'scale(1.05)',
-                      boxShadow: '0 12px 24px rgba(74, 155, 142, 0.3)'
-                    }
-                  }}
-                >
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Avatar sx={{ bgcolor: 'rgba(255, 255, 255, 0.2)', width: 64, height: 64 }}>
-                        <StarsIcon sx={{ fontSize: 36 }} />
-                      </Avatar>
-                      <Box>
-                        <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                          Total Points
-                        </Typography>
-                        <Typography variant="h3" fontWeight={700}>
-                          {totalPoints}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Zoom>
-            </Grid>
-
-            <Grid item xs={12} sm={4}>
-              <Zoom in={true} timeout={1000}>
-                <Card 
-                  sx={{ 
-                    background: 'linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)',
-                    color: 'white',
-                    transition: 'transform 0.3s ease',
-                    '&:hover': {
-                      transform: 'scale(1.05)',
-                      boxShadow: '0 12px 24px rgba(167, 139, 250, 0.3)'
-                    }
-                  }}
-                >
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Avatar sx={{ bgcolor: 'rgba(255, 255, 255, 0.2)', width: 64, height: 64 }}>
-                        <LockIcon sx={{ fontSize: 36 }} />
-                      </Avatar>
-                      <Box>
-                        <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                          Locked
-                        </Typography>
-                        <Typography variant="h3" fontWeight={700}>
-                          {totalCount - earnedCount}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Zoom>
-            </Grid>
-          </Grid>
-
-          {/* Achievements Grid */}
-          <Grid container spacing={3}>
-            {achievements.map((achievement, index) => {
-              const progress = getProgress(achievement);
-              const isEarned = achievement.earned;
-              
-              // Determine colors based on achievement type and status
-              let cardGradient, borderColor, iconBg;
-              
-              if (isEarned) {
-                cardGradient = 'linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)';
-                borderColor = '#4caf50';
-                iconBg = '#4caf50';
-              } else {
-                // Different colors for different achievement types
-                if (achievement.icon === 'book') {
-                  cardGradient = 'linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%)';
-                  borderColor = '#4a9b8e';
-                  iconBg = '#4a9b8e';
-                } else if (achievement.icon === 'fire') {
-                  cardGradient = 'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)';
-                  borderColor = '#ff6b6b';
-                  iconBg = '#ff6b6b';
-                } else if (achievement.icon === 'time') {
-                  cardGradient = 'linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%)';
-                  borderColor = '#a78bfa';
-                  iconBg = '#a78bfa';
-                } else {
-                  cardGradient = 'linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%)';
-                  borderColor = '#9e9e9e';
-                  iconBg = '#9e9e9e';
-                }
-              }
-              
-              return (
-                <Grid item xs={12} sm={6} md={4} key={achievement.id}>
-                  <Grow in={true} timeout={600 + (index * 100)}>
-                    <Card 
-                      sx={{ 
-                        height: '100%',
-                        background: cardGradient,
-                        border: `3px solid ${borderColor}`,
-                        opacity: isEarned ? 1 : 0.85,
-                        transition: 'all 0.3s ease',
-                        position: 'relative',
-                        overflow: 'visible',
-                        '&:hover': {
-                          transform: 'translateY(-8px) scale(1.02)',
-                          boxShadow: `0 12px 24px ${borderColor}60`,
-                          opacity: 1
-                        }
-                      }}
-                    >
-                      {isEarned && (
-                        <Box 
-                          sx={{ 
-                            position: 'absolute',
-                            top: -10,
-                            right: -10,
-                            bgcolor: '#4caf50',
-                            borderRadius: '50%',
-                            width: 48,
-                            height: 48,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            boxShadow: '0 4px 12px rgba(76, 175, 80, 0.4)',
-                            animation: 'pulse 2s infinite'
-                          }}
-                        >
-                          <CheckIcon sx={{ color: 'white', fontSize: 28 }} />
-                        </Box>
-                      )}
-                      
-                      <CardContent>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                          <Avatar 
-                            sx={{ 
-                              bgcolor: iconBg,
-                              width: 64,
-                              height: 64,
-                              boxShadow: `0 4px 12px ${iconBg}40`
-                            }}
-                          >
-                            {getIcon(achievement.icon)}
-                          </Avatar>
-                          <Chip 
-                            label={`${achievement.points} pts`}
-                            size="medium"
-                            sx={{
-                              bgcolor: iconBg,
-                              color: 'white',
-                              fontWeight: 700,
-                              fontSize: '0.875rem'
-                            }}
-                          />
-                        </Box>
-
-                        <Typography variant="h6" fontWeight={700} gutterBottom>
-                          {achievement.name}
-                        </Typography>
-                        
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2, minHeight: 40 }}>
-                          {achievement.description}
-                        </Typography>
-
-                        {isEarned ? (
-                          <Paper 
-                            elevation={0}
-                            sx={{ 
-                              p: 2,
-                              bgcolor: 'rgba(76, 175, 80, 0.1)',
-                              borderRadius: 2,
-                              border: '2px solid #4caf50'
-                            }}
-                          >
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <CheckIcon sx={{ color: '#4caf50', fontSize: 24 }} />
-                              <Typography variant="body2" fontWeight={700} sx={{ color: '#2e7d32' }}>
-                                🎉 Unlocked!
-                              </Typography>
+          {/* ── locked section ── */}
+          {locked.length > 0 && (
+            <>
+              <Box sx={{ display:'flex', alignItems:'center', gap:1, mb:2.5 }}>
+                <LockIcon sx={{ color:'#9ca3af' }} />
+                <Typography variant="h6" fontWeight={700} sx={{ color:C.dark }}>Locked ({locked.length})</Typography>
+              </Box>
+              <Grid container spacing={3}>
+                {locked.map((a, i) => {
+                  const theme = CARD_THEME[a.icon]?.locked || CARD_THEME.book.locked;
+                  const { pct: p, cur } = getProgress(a);
+                  return (
+                    <Grid item xs={12} sm={6} md={4} key={a.id}>
+                      <Grow in timeout={400 + i * 100}>
+                        <Card elevation={0} sx={{
+                          height:'100%', background:theme.grad,
+                          border:`2px solid ${theme.border}`,
+                          borderRadius:3, opacity:0.88,
+                          transition:'all 0.3s ease',
+                          '&:hover':{ transform:'translateY(-6px)', opacity:1, boxShadow:`0 16px 32px ${theme.border}20` }
+                        }}>
+                          <CardContent sx={{ p:3 }}>
+                            <Box sx={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', mb:2 }}>
+                              <Avatar sx={{ width:60, height:60, bgcolor:`${theme.icon}25`, border:`2px dashed ${theme.icon}60` }}>
+                                {React.cloneElement(ICON_MAP[a.icon] || <TrophyIcon/>, { sx:{ color:theme.icon, fontSize:30 } })}
+                              </Avatar>
+                              <Chip label={`${a.pts} pts`} size="small"
+                                sx={{ bgcolor:`${theme.icon}15`, color:theme.icon, fontWeight:700, border:`1px solid ${theme.icon}40` }} />
                             </Box>
-                          </Paper>
-                        ) : (
-                          <Box>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                              <Typography variant="caption" fontWeight={600} color={borderColor}>
-                                Progress
-                              </Typography>
-                              <Typography variant="caption" fontWeight={700} color={borderColor}>
-                                {getProgressText(achievement)}
-                              </Typography>
+                            <Typography variant="h6" fontWeight={800} sx={{ color:C.dark, mb:0.5 }}>{a.name}</Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb:2.5 }}>{a.desc}</Typography>
+                            <Box sx={{ mb:0.8, display:'flex', justifyContent:'space-between' }}>
+                              <Typography variant="caption" fontWeight={600} sx={{ color:theme.icon }}>Progress</Typography>
+                              <Typography variant="caption" fontWeight={700} sx={{ color:theme.icon }}>{cur} / {a.target}</Typography>
                             </Box>
-                            <LinearProgress 
-                              variant="determinate" 
-                              value={progress}
-                              sx={{
-                                height: 10,
-                                borderRadius: 5,
-                                bgcolor: 'rgba(0,0,0,0.1)',
-                                '& .MuiLinearProgress-bar': {
-                                  bgcolor: borderColor,
-                                  borderRadius: 5
-                                }
-                              }}
-                            />
-                            <Typography variant="caption" sx={{ mt: 0.5, display: 'block', color: 'text.secondary' }}>
-                              {Math.round(progress)}% complete
+                            <LinearProgress variant="determinate" value={p} sx={{
+                              height:10, borderRadius:5, bgcolor:`${theme.icon}15`,
+                              '& .MuiLinearProgress-bar':{ bgcolor:theme.icon, borderRadius:5 }
+                            }} />
+                            <Typography variant="caption" color="text.secondary" sx={{ mt:0.8, display:'block' }}>
+                              {Math.round(p)}% complete
                             </Typography>
-                          </Box>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </Grow>
-                </Grid>
-              );
-            })}
-          </Grid>
+                          </CardContent>
+                        </Card>
+                      </Grow>
+                    </Grid>
+                  );
+                })}
+              </Grid>
+            </>
+          )}
 
-          {earnedCount === 0 && (
-            <Fade in={true} timeout={1200}>
-              <Paper 
-                elevation={0}
-                sx={{ 
-                  textAlign: 'center', 
-                  py: 8,
-                  mt: 4,
-                  background: 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)',
-                  borderRadius: 2,
-                  border: '2px solid #ff9800'
-                }}
-              >
-                <Avatar sx={{ 
-                  width: 100, 
-                  height: 100, 
-                  bgcolor: '#ff9800', 
-                  margin: '0 auto',
-                  mb: 3
-                }}>
-                  <TrophyIcon sx={{ fontSize: 60 }} />
+          {/* ── zero state ── */}
+          {earned.length === 0 && !error && (
+            <Fade in timeout={600}>
+              <Paper elevation={0} sx={{ textAlign:'center', py:10, mt:2, borderRadius:3,
+                background:`linear-gradient(135deg,${C.lighter},white)`, border:`2px dashed ${C.secondary}` }}>
+                <Avatar sx={{ width:100, height:100, mx:'auto', mb:3,
+                  background:`linear-gradient(135deg,${C.primary},${C.secondary})` }}>
+                  <TrophyIcon sx={{ fontSize:56, color:'white' }} />
                 </Avatar>
-                <Typography variant="h5" fontWeight={600} gutterBottom>
-                  No achievements yet
-                </Typography>
-                <Typography variant="body1" color="text.secondary">
-                  Start reading books to unlock achievements! 📚
-                </Typography>
+                <Typography variant="h5" fontWeight={700} sx={{ color:C.dark, mb:1 }}>No achievements yet</Typography>
+                <Typography variant="body1" color="text.secondary">Start reading books to unlock your first badge! 📚</Typography>
               </Paper>
             </Fade>
           )}
@@ -528,6 +280,4 @@ const UserAchievements = () => {
       </Fade>
     </DashboardLayout>
   );
-};
-
-export default UserAchievements;
+}

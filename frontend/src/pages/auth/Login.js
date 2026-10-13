@@ -16,17 +16,34 @@ import {
   Alert,
   Grid,
   Chip,
-  CircularProgress
+  CircularProgress,
+  Container,
+  Fade,
+  Grow
 } from '@mui/material';
 import {
   Visibility,
   VisibilityOff,
-  MenuBook
+  MenuBook,
+  Lock,
+  Email,
+  TrendingUp,
+  Security,
+  Schedule,
+  ArrowForward,
+  Home
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-toastify';
 import { GoogleLogin } from '@react-oauth/google';
+
+const C = {
+  primary: '#2d6a4f',
+  secondary: '#52b788',
+  light: '#f0fdf4',
+  dark: '#1a1a2e'
+};
 
 const Login = () => {
   const navigate = useNavigate();
@@ -43,8 +60,10 @@ const Login = () => {
   const [error, setError] = useState('');
   const [userMaxAttempts, setUserMaxAttempts] = useState(5);
   const [lockoutInfo, setLockoutInfo] = useState(null);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    setVisible(true);
     axios
       .get('http://localhost:8000/api/auth/login-policy')
       .then((res) => {
@@ -82,7 +101,6 @@ const Login = () => {
       setLockoutInfo(null);
       toast.success('Login successful!');
       
-      // Redirect based on user role
       switch (result.user.role) {
         case 'super-admin':
           navigate('/super-admin');
@@ -154,267 +172,348 @@ const Login = () => {
     <Box
       sx={{
         minHeight: '100vh',
+        background: `linear-gradient(135deg, ${C.primary} 0%, ${C.secondary} 100%)`,
         display: 'flex',
-        backgroundColor: '#f5f7fa'
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
+        overflow: 'hidden',
+        py: 4
       }}
     >
-      {/* Left Side - Welcome Section */}
-      <Box
-        sx={{
-          flex: 1,
-          background: 'linear-gradient(135deg, #4a9b8e 0%, #2d6b61 100%)',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          color: 'white',
-          p: 4,
-          position: 'relative'
-        }}
-      >
-        <MenuBook sx={{ fontSize: 80, mb: 3, opacity: 0.9 }} />
-        <Typography variant="h3" fontWeight={700} gutterBottom align="center">
-          Welcome Back!
-        </Typography>
-        <Typography variant="h6" align="center" sx={{ mb: 4, opacity: 0.9 }}>
-          Access your digital library and continue your reading journey.
-        </Typography>
+      {/* Animated Background Elements */}
+      {[
+        { size: 400, top: -100, right: -100, opacity: 0.1 },
+        { size: 300, bottom: -80, left: -80, opacity: 0.08 },
+        { size: 200, top: '40%', left: '10%', opacity: 0.06 },
+      ].map((orb, i) => (
+        <Box
+          key={i}
+          sx={{
+            position: 'absolute',
+            width: orb.size,
+            height: orb.size,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(255,255,255,0.2), transparent)',
+            top: orb.top,
+            bottom: orb.bottom,
+            left: orb.left,
+            right: orb.right,
+            opacity: orb.opacity,
+            animation: `float ${6 + i * 2}s ease-in-out infinite`,
+            '@keyframes float': {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-20px)' }
+            }
+          }}
+        />
+      ))}
 
-        {/* Features List */}
-        <Box sx={{ maxWidth: 400 }}>
-          {[
-            { number: '1', title: '10,000+ Books', desc: 'Vast collection across all genres' },
-            { number: '2', title: 'Instant Access', desc: 'Borrow and read immediately' },
-            { number: '3', title: '24/7 Support', desc: 'Always here to help you' }
-          ].map((feature, index) => (
-            <Box key={index} sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: '50%',
-                  backgroundColor: 'rgba(255,255,255,0.2)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  mr: 3,
-                  fontWeight: 700
-                }}
-              >
-                {feature.number}
-              </Box>
-              <Box>
-                <Typography variant="h6" fontWeight={600}>
-                  {feature.title}
-                </Typography>
-                <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                  {feature.desc}
-                </Typography>
-              </Box>
-            </Box>
-          ))}
+      <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1 }}>
+        {/* Go to Home Button */}
+        <Box sx={{ position: 'absolute', top: 20, left: 20, zIndex: 10 }}>
+          <Button
+            variant="contained"
+            startIcon={<Home />}
+            onClick={() => navigate('/')}
+            sx={{
+              background: 'linear-gradient(135deg, #ffd700, #ffed4e)',
+              color: '#1a1a2e',
+              fontWeight: 700,
+              boxShadow: '0 4px 15px rgba(255, 215, 0, 0.4)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #ffed4e, #ffd700)',
+                transform: 'translateY(-2px)',
+                boxShadow: '0 6px 20px rgba(255, 215, 0, 0.5)'
+              },
+              transition: 'all 0.3s ease'
+            }}
+          >
+            Home
+          </Button>
         </Box>
-      </Box>
 
-      {/* Right Side - Login Form */}
-      <Box
-        sx={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          p: 4
-        }}
-      >
-        <Card sx={{ maxWidth: 500, width: '100%', boxShadow: 3 }}>
-          <CardContent sx={{ p: 4 }}>
-            <Box sx={{ textAlign: 'center', mb: 3 }}>
-              <MenuBook sx={{ fontSize: 48, color: '#4a9b8e', mb: 2 }} />
-              <Typography variant="h4" fontWeight={700} gutterBottom>
-                Sign In
-              </Typography>
-              <Typography variant="body1" color="text.secondary">
-                Enter your credentials to access your account
-              </Typography>
-            </Box>
+        <Fade in={visible} timeout={800}>
+          <Card
+            elevation={0}
+            sx={{
+              borderRadius: '20px',
+              overflow: 'hidden',
+              background: 'white'
+            }}
+          >
+            <Grid container spacing={0} alignItems="stretch">
+              {/* Left Side - Welcome Section */}
+              <Grid item xs={12} sm={6}>
+                <Box
+                  sx={{
+                    background: `linear-gradient(135deg, ${C.primary} 0%, ${C.secondary} 100%)`,
+                    p: { xs: 4, md: 6 },
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    minHeight: { xs: 400, md: 650 },
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}
+                >
+                  {/* Decorative circles */}
+                  {[
+                    { size: 150, top: -30, right: -30, opacity: 0.1 },
+                    { size: 100, bottom: 50, left: -20, opacity: 0.08 },
+                  ].map((circle, i) => (
+                    <Box
+                      key={i}
+                      sx={{
+                        position: 'absolute',
+                        width: circle.size,
+                        height: circle.size,
+                        borderRadius: '50%',
+                        background: 'rgba(255,255,255,0.15)',
+                        top: circle.top,
+                        bottom: circle.bottom,
+                        left: circle.left,
+                        right: circle.right,
+                        opacity: circle.opacity
+                      }}
+                    />
+                  ))}
 
-            {/* Google Sign-In Button */}
-            <Box sx={{ mb: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-              {loading ? (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <CircularProgress size={20} />
-                  <Typography variant="body2" color="text.secondary">Signing in with Google...</Typography>
-                </Box>
-              ) : (
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={handleGoogleError}
-                  useOneTap
-                  theme="outline"
-                  size="large"
-                  width="100%"
-                  text="signin_with"
-                  shape="rectangular"
-                />
-              )}
-            </Box>
+                  <Box sx={{ position: 'relative', zIndex: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                      <Box
+                        sx={{
+                          width: 60,
+                          height: 60,
+                          borderRadius: 3,
+                          background: 'rgba(255,255,255,0.2)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          mr: 2
+                        }}
+                      >
+                        <MenuBook sx={{ fontSize: 36, color: 'white' }} />
+                      </Box>
+                      <Typography variant="h4" fontWeight={900} sx={{ color: 'white' }}>
+                        DigiLib
+                      </Typography>
+                    </Box>
 
-            <Divider sx={{ mb: 3 }}>
-              <Typography variant="body2" color="text.secondary">
-                Or continue with email
-              </Typography>
-            </Divider>
+                    <Typography variant="h3" fontWeight={900} sx={{ color: 'white', mb: 2, lineHeight: 1.2 }}>
+                      Welcome Back!
+                    </Typography>
+                    <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.9)', mb: 4, lineHeight: 1.7 }}>
+                      Access your digital library and continue your reading journey.
+                    </Typography>
 
-            {lockoutInfo?.suspended && (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                <Typography variant="body2" fontWeight={600}>
-                  Account suspended
-                </Typography>
-                <Typography variant="caption">
-                  Contact your library administrator to restore access.
-                </Typography>
-              </Alert>
-            )}
-
-            {error && (
-              <Alert severity="error" sx={{ mb: 3 }}>
-                {error}
-              </Alert>
-            )}
-
-            <form onSubmit={handleSubmit}>
-              <TextField
-                fullWidth
-                label="Email Address"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                sx={{ mb: 3 }}
-                placeholder="you@example.com"
-              />
-
-              <TextField
-                fullWidth
-                label="Password"
-                name="password"
-                type={showPassword ? 'text' : 'password'}
-                value={formData.password}
-                onChange={handleChange}
-                required
-                sx={{ mb: 3 }}
-                placeholder="••••••••"
-                slotProps={{
-                  input: {
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          onClick={() => setShowPassword(prev => !prev)}
-                          edge="end"
-                          aria-label="toggle password visibility"
-                          tabIndex={-1}
+                    {/* Features */}
+                    {[
+                      { icon: <MenuBook />, title: '10,000+ Books', desc: 'Vast collection across all genres' },
+                      { icon: <TrendingUp />, title: 'Track Progress', desc: 'Monitor your reading goals' },
+                      { icon: <Security />, title: 'Secure Access', desc: '256-bit encryption protected' }
+                    ].map((feature, index) => (
+                      <Box key={index} sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                        <Box
                           sx={{
-                            color: showPassword ? '#4a9b8e' : '#555555',
-                            '&:hover': {
-                              color: '#4a9b8e',
-                              backgroundColor: 'rgba(74, 155, 142, 0.08)'
-                            },
-                            transition: 'color 0.2s ease',
+                            width: 48,
+                            height: 48,
+                            borderRadius: '50%',
+                            background: 'rgba(255,255,255,0.2)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            mr: 2,
+                            flexShrink: 0
                           }}
                         >
-                          {showPassword
-                            ? <VisibilityOff sx={{ fontSize: 22 }} />
-                            : <Visibility sx={{ fontSize: 22 }} />
-                          }
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }
-                }}
-              />
+                          {React.cloneElement(feature.icon, { sx: { color: 'white', fontSize: 24 } })}
+                        </Box>
+                        <Box>
+                          <Typography variant="subtitle1" fontWeight={700} sx={{ color: 'white' }}>
+                            {feature.title}
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)' }}>
+                            {feature.desc}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+              </Grid>
 
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      name="rememberMe"
-                      checked={formData.rememberMe}
+              {/* Right Side - Login Form */}
+              <Grid item xs={12} sm={6}>
+                <Box
+                  sx={{
+                    p: { xs: 4, md: 6 },
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    minHeight: { xs: 'auto', md: 650 }
+                  }}
+                >
+                  <Typography variant="h4" fontWeight={800} sx={{ color: C.dark, mb: 1 }}>
+                    Sign In
+                  </Typography>
+                  <Typography variant="body1" sx={{ color: 'text.secondary', mb: 4 }}>
+                    Enter your credentials to access your account
+                  </Typography>
+
+                  {error && (
+                    <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+                      {error}
+                    </Alert>
+                  )}
+
+                  {lockoutInfo && !lockoutInfo.suspended && (
+                    <Alert severity="warning" sx={{ mb: 3, borderRadius: 2 }}>
+                      <strong>Warning:</strong> {lockoutInfo.remaining} of {lockoutInfo.max} attempts remaining
+                    </Alert>
+                  )}
+
+                  <Box component="form" onSubmit={handleSubmit}>
+                    <TextField
+                      fullWidth
+                      label="Email Address"
+                      name="email"
+                      type="email"
+                      value={formData.email}
                       onChange={handleChange}
+                      required
+                      sx={{ mb: 3 }}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <Email sx={{ color: C.secondary }} />
+                          </InputAdornment>
+                        ),
+                      }}
                     />
-                  }
-                  label="Remember me"
-                />
-                <Link href="#" variant="body2" color="primary">
-                  Forgot Password?
-                </Link>
-              </Box>
 
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                size="large"
-                loading={loading}
-                sx={{ mb: 3, py: 1.5 }}
-              >
-                Sign In
-              </Button>
-            </form>
+                    <TextField
+                      fullWidth
+                      label="Password"
+                      name="password"
+                      type={showPassword ? 'text' : 'password'}
+                      value={formData.password}
+                      onChange={handleChange}
+                      required
+                      sx={{ mb: 2 }}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <Lock sx={{ color: C.secondary }} />
+                          </InputAdornment>
+                        ),
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                              {showPassword ? <VisibilityOff /> : <Visibility />}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
 
-            <Typography variant="body2" align="center" sx={{ mb: 3 }}>
-              Don't have an account?{' '}
-              <Link
-                component="button"
-                variant="body2"
-                onClick={() => navigate('/register')}
-                sx={{ textDecoration: 'none' }}
-              >
-                Create Account
-              </Link>
-            </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            name="rememberMe"
+                            checked={formData.rememberMe}
+                            onChange={handleChange}
+                            sx={{ color: C.secondary, '&.Mui-checked': { color: C.primary } }}
+                          />
+                        }
+                        label="Remember me"
+                      />
+                      <Link href="#" underline="hover" sx={{ color: C.primary, fontWeight: 600 }}>
+                        Forgot Password?
+                      </Link>
+                    </Box>
 
-            {/* Quick Access for Demo */}
-            <Divider sx={{ mb: 2 }}>
-              <Typography variant="body2" color="text.secondary">
-                Quick access for demo
-              </Typography>
-            </Divider>
+                    <Button
+                      type="submit"
+                      fullWidth
+                      variant="contained"
+                      size="large"
+                      disabled={loading}
+                      endIcon={!loading && <ArrowForward />}
+                      sx={{
+                        background: `linear-gradient(135deg, ${C.primary}, ${C.secondary})`,
+                        color: 'white',
+                        fontWeight: 700,
+                        py: 1.5,
+                        borderRadius: 2,
+                        fontSize: 16,
+                        mb: 3,
+                        boxShadow: `0 4px 15px ${C.secondary}40`,
+                        '&:hover': {
+                          background: `linear-gradient(135deg, ${C.secondary}, ${C.primary})`,
+                          transform: 'translateY(-2px)',
+                          boxShadow: `0 6px 20px ${C.secondary}50`
+                        },
+                        transition: 'all 0.3s ease'
+                      }}
+                    >
+                      {loading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : 'Sign In'}
+                    </Button>
 
-            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Chip
-                label="User"
-                onClick={() => handleQuickAccess('user')}
-                clickable
-                variant="outlined"
-                size="small"
-              />
-              <Chip
-                label="Librarian"
-                onClick={() => handleQuickAccess('librarian')}
-                clickable
-                variant="outlined"
-                size="small"
-              />
-              <Chip
-                label="Admin"
-                onClick={() => handleQuickAccess('admin')}
-                clickable
-                variant="outlined"
-                size="small"
-              />
-              <Chip
-                label="Super Admin"
-                onClick={() => handleQuickAccess('super-admin')}
-                clickable
-                variant="outlined"
-                size="small"
-                color="error"
-              />
-            </Box>
-          </CardContent>
-        </Card>
-      </Box>
+                    <Divider sx={{ mb: 3 }}>
+                      <Chip label="OR" size="small" />
+                    </Divider>
+
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+                      <GoogleLogin
+                        onSuccess={handleGoogleSuccess}
+                        onError={handleGoogleError}
+                        useOneTap
+                        size="large"
+                        width="100%"
+                      />
+                    </Box>
+
+                    <Typography variant="body2" align="center" sx={{ color: 'text.secondary' }}>
+                      Don't have an account?{' '}
+                      <Link
+                        onClick={() => navigate('/register')}
+                        sx={{ color: C.primary, fontWeight: 700, cursor: 'pointer', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
+                      >
+                        Sign Up
+                      </Link>
+                    </Typography>
+                  </Box>
+
+                  {/* Quick Access (for development) */}
+                  {process.env.NODE_ENV === 'development' && (
+                    <Box sx={{ mt: 4, pt: 3, borderTop: '1px solid #e0e0e0' }}>
+                      <Typography variant="caption" sx={{ color: 'text.secondary', mb: 1, display: 'block' }}>
+                        Quick Access (Dev Only):
+                      </Typography>
+                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                        {['user', 'librarian', 'admin', 'super-admin'].map((role) => (
+                          <Chip
+                            key={role}
+                            label={role}
+                            size="small"
+                            onClick={() => handleQuickAccess(role)}
+                            sx={{
+                              cursor: 'pointer',
+                              '&:hover': { background: C.light }
+                            }}
+                          />
+                        ))}
+                      </Box>
+                    </Box>
+                  )}
+                </Box>
+              </Grid>
+            </Grid>
+          </Card>
+        </Fade>
+      </Container>
     </Box>
   );
 };

@@ -40,6 +40,11 @@ error_log("Request: $request_method $path");
 
 // Route handling
 switch (true) {
+    // Public stats for homepage (no auth required)
+    case preg_match('#^/public/stats$#', $path) && $request_method === 'GET':
+        require __DIR__ . '/api/public/stats.php';
+        break;
+
     // Auth routes
     case preg_match('#^/auth/login$#', $path) && $request_method === 'POST':
         error_log("Matched: POST /auth/login");
