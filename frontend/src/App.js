@@ -47,6 +47,7 @@ import UserBooks from './pages/user/UserBooks';
 import UserHistory from './pages/user/UserHistory';
 import UserAchievements from './pages/user/UserAchievements';
 import UserReadingGoals from './pages/user/UserReadingGoals';
+import UserNotificationSettings from './pages/user/UserNotificationSettings';
 
 import './App.css';
 
@@ -254,6 +255,11 @@ function App() {
               <Route path="/achievements" element={
                 <ProtectedRoute allowedRoles={['user', 'librarian', 'admin']}>
                   <UserAchievements />
+                </ProtectedRoute>
+              } />
+              <Route path="/notification-settings" element={
+                <ProtectedRoute allowedRoles={['user']}>
+                  <UserNotificationSettings />
                 </ProtectedRoute>
               } />
 

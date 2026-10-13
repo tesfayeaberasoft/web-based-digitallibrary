@@ -101,6 +101,7 @@ export default function DashboardLayout({ children, title }) {
           { text: 'History', icon: <History />, path: '/history', color: C.primary },
           { text: 'Reading Goals', icon: <TrendingUp />, path: '/reading-goals', color: C.primary },
           { text: 'Achievements', icon: <EmojiEvents />, path: '/achievements', color: C.primary },
+          { text: 'Notification Settings', icon: <Settings />, path: '/notification-settings', color: C.primary },
         ];
     }
   };
