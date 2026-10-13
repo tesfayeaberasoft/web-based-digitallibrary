@@ -599,7 +599,7 @@ const LibrarianReports = () => {
   return (
     <DashboardLayout title="Librarian Panel">
       <Fade in={true} timeout={600}>
-        <Box>
+        <Box className="librarian-page">
           {/* Header */}
           <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box>

@@ -225,7 +225,7 @@ const LibrarianMembers = () => {
   return (
     <DashboardLayout title="Librarian Panel">
       <Fade in={true} timeout={600}>
-        <Box>
+        <Box className="librarian-page">
           {/* Header */}
           <Box sx={{ mb: 3 }}>
             <Typography variant="h4" fontWeight={700} gutterBottom>

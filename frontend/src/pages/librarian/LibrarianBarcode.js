@@ -256,7 +256,7 @@ const LibrarianBarcode = () => {
 
   return (
     <DashboardLayout>
-      <Box sx={{ p: 3 }}>
+      <Box className="librarian-page" sx={{ p: 3 }}>
         <Typography variant="h4" gutterBottom sx={{ color: '#4a9b8e', fontWeight: 600 }}>
           Barcode Scanner
         </Typography>

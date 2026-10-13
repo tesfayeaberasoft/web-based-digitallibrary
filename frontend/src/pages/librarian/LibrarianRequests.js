@@ -370,7 +370,7 @@ const LibrarianRequests = () => {
 
   return (
     <DashboardLayout title="Librarian Panel">
-      <Box>
+      <Box className="librarian-page">
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Box>
             <Typography variant="h4" fontWeight={700} gutterBottom>

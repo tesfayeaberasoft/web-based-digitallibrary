@@ -39,6 +39,7 @@ import LibrarianReservations from './pages/librarian/LibrarianReservations';
 import LibrarianNotifications from './pages/librarian/LibrarianNotifications';
 import LibrarianMembers from './pages/librarian/LibrarianMembers';
 import LibrarianReports from './pages/librarian/LibrarianReports';
+import './pages/librarian/librarian-pages.css';
 
 // User Pages
 import UserDashboard from './pages/user/UserDashboard';
