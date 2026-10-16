@@ -52,7 +52,7 @@ try {
     $stmt->execute($params);
     $total = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     
-    // Get fines
+    // Get fines with payment information
     $stmt = $db->prepare("
         SELECT 
             f.*,
@@ -63,11 +63,19 @@ try {
             b.author as book_author,
             bl.loan_date,
             bl.due_date,
-            bl.return_date
+            bl.return_date,
+            p.id as payment_id,
+            p.tx_ref,
+            p.status as payment_status,
+            p.chapa_reference,
+            p.payment_method,
+            p.verified_at as payment_verified_at,
+            (f.amount - COALESCE(f.paid_amount, 0)) as balance
         FROM fines f
         JOIN users u ON f.user_id = u.id
         LEFT JOIN book_loans bl ON f.loan_id = bl.id
         LEFT JOIN books b ON bl.book_id = b.id
+        LEFT JOIN payments p ON f.payment_id = p.id
         $where_clause
         ORDER BY f.created_at DESC
         LIMIT ? OFFSET ?
@@ -85,16 +93,19 @@ try {
     $stmt->execute();
     $fines = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Calculate totals
+    // Calculate totals with payment information
     $stmt = $db->prepare("
         SELECT 
             COALESCE(SUM(amount), 0) as total_amount,
-            COALESCE(SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END), 0) as pending_amount,
-            COALESCE(SUM(CASE WHEN status = 'paid' THEN amount ELSE 0 END), 0) as paid_amount
+            COALESCE(SUM(CASE WHEN payment_status = 'unpaid' THEN amount ELSE 0 END), 0) as unpaid_amount,
+            COALESCE(SUM(CASE WHEN payment_status = 'paid' THEN amount ELSE 0 END), 0) as paid_amount,
+            COALESCE(SUM(CASE WHEN payment_status = 'partial' THEN amount ELSE 0 END), 0) as partial_amount,
+            COALESCE(SUM(paid_amount), 0) as total_paid,
+            COALESCE(SUM(amount - paid_amount), 0) as total_balance
         FROM fines f
         $where_clause
     ");
-    $stmt->execute(array_slice($params, 0, count($params) - 2)); // Remove limit and offset
+    $stmt->execute(array_slice($params, 0, count($params))); // Use all params except limit/offset
     $totals = $stmt->fetch(PDO::FETCH_ASSOC);
     
     echo json_encode([
