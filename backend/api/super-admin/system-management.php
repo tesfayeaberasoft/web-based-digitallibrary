@@ -98,6 +98,18 @@ function handleSystemAction($db) {
                 $result = restoreBackup($data);
                 break;
                 
+            case 'export_data':
+                $result = exportLibraryData($db);
+                break;
+                
+            case 'create_backup':
+                $result = performBackup($db);
+                break;
+                
+            case 'optimize_database':
+                $result = optimizeDatabase($db);
+                break;
+                
             default:
                 http_response_code(400);
                 echo json_encode(['success' => false, 'message' => 'Unknown action: ' . $action]);
@@ -1002,3 +1014,167 @@ function setMaintenanceMode($enabled) {
     }
 }
 ?>
+
+function exportLibraryData($db) {
+    try {
+        $exportDir = __DIR__ . '/../../exports';
+        if (!is_dir($exportDir) && !mkdir($exportDir, 0755, true)) {
+            throw new Exception('Could not create exports directory');
+        }
+        
+        $timestamp = date('Y-m-d_His');
+        $filename = "library_data_export_{$timestamp}.csv";
+        $filepath = $exportDir . '/' . $filename;
+        
+        // Collect data from all tables
+        $data = [];
+        
+        // Books
+        $stmt = $db->query("
+            SELECT 
+                b.id, b.title, b.author, b.isbn, b.publisher, b.publication_year,
+                b.total_copies, b.available_copies, b.status,
+                c.name as category,
+                b.created_at
+            FROM books b
+            LEFT JOIN categories c ON c.id = b.category_id
+            ORDER BY b.id DESC
+        ");
+        $books = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Users
+        $stmt = $db->query("
+            SELECT 
+                id, full_name, email, phone, role, status, 
+                created_at, last_login
+            FROM users
+            ORDER BY id DESC
+        ");
+        $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Loans
+        $stmt = $db->query("
+            SELECT 
+                bl.id, u.full_name as member, b.title as book, b.isbn,
+                bl.loan_date, bl.due_date, bl.return_date, bl.status
+            FROM book_loans bl
+            INNER JOIN users u ON u.id = bl.user_id
+            INNER JOIN books b ON b.id = bl.book_id
+            ORDER BY bl.id DESC
+            LIMIT 5000
+        ");
+        $loans = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Fines
+        $stmt = $db->query("
+            SELECT 
+                f.id, u.full_name as member, b.title as book,
+                f.amount, f.paid_amount, f.balance, f.status,
+                f.created_at, f.paid_at
+            FROM fines f
+            INNER JOIN users u ON u.id = f.user_id
+            INNER JOIN book_loans bl ON bl.id = f.loan_id
+            INNER JOIN books b ON b.id = bl.book_id
+            ORDER BY f.id DESC
+            LIMIT 5000
+        ");
+        $fines = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Create CSV content
+        $csv = fopen($filepath, 'w');
+        
+        // Books section
+        fputcsv($csv, ['=== BOOKS ===']);
+        if (!empty($books)) {
+            fputcsv($csv, array_keys($books[0]));
+            foreach ($books as $row) {
+                fputcsv($csv, $row);
+            }
+        }
+        fputcsv($csv, []);
+        
+        // Users section
+        fputcsv($csv, ['=== USERS ===']);
+        if (!empty($users)) {
+            fputcsv($csv, array_keys($users[0]));
+            foreach ($users as $row) {
+                fputcsv($csv, $row);
+            }
+        }
+        fputcsv($csv, []);
+        
+        // Loans section
+        fputcsv($csv, ['=== BOOK LOANS ===']);
+        if (!empty($loans)) {
+            fputcsv($csv, array_keys($loans[0]));
+            foreach ($loans as $row) {
+                fputcsv($csv, $row);
+            }
+        }
+        fputcsv($csv, []);
+        
+        // Fines section
+        fputcsv($csv, ['=== FINES ===']);
+        if (!empty($fines)) {
+            fputcsv($csv, array_keys($fines[0]));
+            foreach ($fines as $row) {
+                fputcsv($csv, $row);
+            }
+        }
+        
+        fclose($csv);
+        
+        return [
+            'success' => true,
+            'message' => 'Library data exported successfully',
+            'export_file' => $filename,
+            'download_url' => buildSuperAdminDownloadUrl('export', $filename),
+            'stats' => [
+                'books' => count($books),
+                'users' => count($users),
+                'loans' => count($loans),
+                'fines' => count($fines)
+            ]
+        ];
+        
+    } catch (Exception $e) {
+        return [
+            'success' => false,
+            'message' => 'Export failed: ' . $e->getMessage()
+        ];
+    }
+}
+
+function optimizeDatabase($db) {
+    try {
+        $tables = ['books', 'users', 'book_loans', 'fines', 'categories', 'notifications', 'payments'];
+        $optimized = [];
+        
+        foreach ($tables as $table) {
+            try {
+                $db->exec("OPTIMIZE TABLE `$table`");
+                $optimized[] = $table;
+            } catch (Exception $e) {
+                // Continue with other tables
+            }
+        }
+        
+        // Clear expired sessions
+        $db->exec("DELETE FROM sessions WHERE expires_at < NOW()");
+        
+        // Clear old notifications (older than 90 days)
+        $db->exec("DELETE FROM notifications WHERE created_at < DATE_SUB(NOW(), INTERVAL 90 DAY) AND is_read = 1");
+        
+        return [
+            'success' => true,
+            'message' => 'Database optimized successfully',
+            'optimized_tables' => $optimized
+        ];
+        
+    } catch (Exception $e) {
+        return [
+            'success' => false,
+            'message' => 'Optimization failed: ' . $e->getMessage()
+        ];
+    }
+}

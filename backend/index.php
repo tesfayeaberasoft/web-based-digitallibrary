@@ -165,7 +165,14 @@ switch (true) {
     
     // Librarian reports route
     case preg_match('#^/librarian/reports$#', $path) && $request_method === 'GET':
+        error_log("Matched: GET /librarian/reports");
         require __DIR__ . '/api/librarian/reports.php';
+        break;
+    
+    // Librarian reports export route
+    case preg_match('#^/librarian/reports-export$#', $path) && $request_method === 'GET':
+        error_log("Matched: GET /librarian/reports-export");
+        require __DIR__ . '/api/librarian/reports-export.php';
         break;
     
     // Librarian student search route
@@ -386,7 +393,18 @@ switch (true) {
         break;
     
     case preg_match('#^/super-admin/system-management$#', $path) && in_array($request_method, ['GET', 'POST', 'PUT'], true):
+        error_log("Matched: $request_method /super-admin/system-management");
         require __DIR__ . '/api/super-admin/system-management.php';
+        break;
+    
+    case preg_match('#^/super-admin/download$#', $path) && $request_method === 'GET':
+        error_log("Matched: GET /super-admin/download");
+        require __DIR__ . '/api/super-admin/download.php';
+        break;
+    
+    case preg_match('#^/admin/reports-export$#', $path) && $request_method === 'GET':
+        error_log("Matched: GET /admin/reports-export");
+        require __DIR__ . '/api/admin/reports-export.php';
         break;
 
     case preg_match('#^/super-admin/download$#', $path) && $request_method === 'GET':

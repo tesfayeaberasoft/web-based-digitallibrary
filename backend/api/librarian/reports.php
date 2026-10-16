@@ -43,9 +43,16 @@ try {
             throw new Exception('Invalid report type');
     }
     
+    // Always return success with data
+    http_response_code(200);
     echo json_encode([
         'success' => true,
-        'data' => $data
+        'data' => $data,
+        'type' => $type,
+        'date_range' => [
+            'start' => $start_date,
+            'end' => $end_date
+        ]
     ]);
     
 } catch (Exception $e) {
@@ -53,7 +60,8 @@ try {
     echo json_encode([
         'success' => false,
         'message' => 'Failed to generate report',
-        'error' => $e->getMessage()
+        'error' => $e->getMessage(),
+        'trace' => $e->getTraceAsString()
     ]);
 }
 

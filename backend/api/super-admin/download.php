@@ -1,68 +1,82 @@
 <?php
 /**
- * Super Admin file download (backups & log exports)
- * GET /api/super-admin/download?type=backup|export&file=filename
+ * Super Admin Download API
+ * Handles file downloads for exports and backups
  */
 
 try {
     require_once __DIR__ . '/../../config/config.php';
     require_once __DIR__ . '/../../utils/jwt.php';
     $decoded = requireAuth();
-
-    if ($decoded['role'] !== 'super-admin') {
+    
+    // Only super-admins and librarians can download
+    if (!in_array($decoded['role'], ['super-admin', 'admin', 'librarian'])) {
         http_response_code(403);
-        header('Content-Type: application/json');
-        echo json_encode(['success' => false, 'message' => 'Super admin access required']);
+        echo json_encode(['success' => false, 'message' => 'Access denied']);
         exit;
     }
-
+    
     $type = $_GET['type'] ?? '';
-    $file = basename($_GET['file'] ?? '');
-
-    if ($file === '' || !in_array($type, ['backup', 'export'], true)) {
+    $file = $_GET['file'] ?? '';
+    
+    if (empty($type) || empty($file)) {
         http_response_code(400);
-        header('Content-Type: application/json');
-        echo json_encode(['success' => false, 'message' => 'Invalid download request']);
+        echo json_encode(['success' => false, 'message' => 'Missing parameters']);
         exit;
     }
-
-    $allowedExt = $type === 'backup' ? ['sql'] : ['zip'];
-    $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-    if (!in_array($ext, $allowedExt, true)) {
-        http_response_code(400);
-        header('Content-Type: application/json');
-        echo json_encode(['success' => false, 'message' => 'Invalid file type']);
-        exit;
+    
+    // Sanitize filename
+    $file = basename($file);
+    
+    // Determine directory based on type
+    switch ($type) {
+        case 'export':
+            $dir = __DIR__ . '/../../exports/';
+            break;
+        case 'backup':
+            $dir = __DIR__ . '/../../backups/';
+            break;
+        default:
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Invalid download type']);
+            exit;
     }
-
-    $baseDir = $type === 'backup'
-        ? realpath(__DIR__ . '/../../backups')
-        : realpath(__DIR__ . '/../../exports');
-
-    if ($baseDir === false) {
+    
+    // Ensure directory exists
+    if (!is_dir($dir)) {
         http_response_code(404);
-        header('Content-Type: application/json');
-        echo json_encode(['success' => false, 'message' => 'Directory not found']);
+        echo json_encode(['success' => false, 'message' => 'Export directory not found']);
         exit;
     }
-
-    $fullPath = realpath($baseDir . DIRECTORY_SEPARATOR . $file);
-    if ($fullPath === false || strpos($fullPath, $baseDir) !== 0 || !is_file($fullPath)) {
+    
+    $filepath = $dir . $file;
+    
+    if (!file_exists($filepath)) {
         http_response_code(404);
-        header('Content-Type: application/json');
         echo json_encode(['success' => false, 'message' => 'File not found']);
         exit;
     }
-
-    $mime = $ext === 'zip' ? 'application/zip' : 'application/sql';
-    header('Content-Type: ' . $mime);
-    header('Content-Disposition: attachment; filename="' . $file . '"');
-    header('Content-Length: ' . filesize($fullPath));
-    header('Cache-Control: no-store');
-    readfile($fullPath);
+    
+    // Set headers for download
+    header('Content-Description: File Transfer');
+    header('Content-Type: application/octet-stream');
+    header('Content-Disposition: attachment; filename="' . basename($filepath) . '"');
+    header('Content-Transfer-Encoding: binary');
+    header('Expires: 0');
+    header('Cache-Control: must-revalidate');
+    header('Pragma: public');
+    header('Content-Length: ' . filesize($filepath));
+    
+    // Clear output buffer
+    ob_clean();
+    flush();
+    
+    // Read file and send to output
+    readfile($filepath);
     exit;
+    
 } catch (Exception $e) {
     http_response_code(500);
-    header('Content-Type: application/json');
     echo json_encode(['success' => false, 'message' => 'Download failed: ' . $e->getMessage()]);
 }
+?>
