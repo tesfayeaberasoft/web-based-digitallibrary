@@ -295,6 +295,10 @@ switch (true) {
         break;
     
     // Fines routes
+    case preg_match('#^/fines/unpaid$#', $path) && $request_method === 'GET':
+        require __DIR__ . '/api/fines/unpaid.php';
+        break;
+    
     case preg_match('#^/fines$#', $path) && $request_method === 'GET':
         require __DIR__ . '/api/fines/list.php';
         break;
@@ -311,6 +315,23 @@ switch (true) {
     
     case preg_match('#^/fines/calculate-overdue$#', $path) && $request_method === 'POST':
         require __DIR__ . '/api/fines/calculate-overdue.php';
+        break;
+    
+    // Payment routes (Chapa integration)
+    case preg_match('#^/payments/initialize$#', $path) && $request_method === 'POST':
+        require __DIR__ . '/api/payments/initialize.php';
+        break;
+    
+    case preg_match('#^/payments/verify$#', $path) && $request_method === 'POST':
+        require __DIR__ . '/api/payments/verify.php';
+        break;
+    
+    case preg_match('#^/payments/callback$#', $path) && $request_method === 'POST':
+        require __DIR__ . '/api/payments/callback.php';
+        break;
+    
+    case preg_match('#^/payments/history$#', $path) && $request_method === 'GET':
+        require __DIR__ . '/api/payments/history.php';
         break;
     
     // Notifications routes
