@@ -27,8 +27,8 @@ try {
         SELECT 
             f.id, f.loan_id, f.amount, f.payment_status, f.paid_amount,
             (f.amount - COALESCE(f.paid_amount, 0)) as balance,
-            f.reason, f.due_date, f.created_at, f.paid_at,
-            l.book_id, l.loan_date, l.due_date as loan_due_date,
+            f.description as reason, f.created_at, f.paid_at,
+            l.book_id, l.loan_date, l.due_date, l.due_date as loan_due_date,
             l.return_date,
             DATEDIFF(COALESCE(l.return_date, NOW()), l.due_date) as days_overdue,
             b.title as book_title, b.author as book_author, b.isbn, b.cover_image,
@@ -83,7 +83,7 @@ try {
             'paid_amount'      => floatval($f['paid_amount']),
             'balance'          => floatval($f['balance']),
             'reason'           => $f['reason'],
-            'due_date'         => $f['due_date'],
+            'due_date'         => $f['due_date'],   // loan due date (fines have no due_date column)
             'created_at'       => $f['created_at'],
             'paid_at'          => $f['paid_at'],
             'book'             => [

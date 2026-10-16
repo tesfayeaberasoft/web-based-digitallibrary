@@ -322,7 +322,7 @@ switch (true) {
         require __DIR__ . '/api/payments/initialize.php';
         break;
     
-    case preg_match('#^/payments/verify$#', $path) && $request_method === 'POST':
+    case preg_match('#^/payments/verify$#', $path) && $request_method === 'GET':
         require __DIR__ . '/api/payments/verify.php';
         break;
     

@@ -72,9 +72,24 @@ try {
     }
 
     // Use the DB user data to fill gaps (e.g. if JWT omits phone)
-    if (!$userEmail) $userEmail = $fine['u_email'];
+    if (!$userEmail || !filter_var($userEmail, FILTER_VALIDATE_EMAIL)) {
+        $userEmail = $fine['u_email'];
+    }
     if (!$userName)  $userName  = $fine['u_name'];
     if (!$userPhone) $userPhone = $fine['u_phone'] ?? '';
+
+    // Validate email (Chapa is very strict about email format)
+    $userEmail = strtolower(trim($userEmail));  // Normalize email
+    if (!filter_var($userEmail, FILTER_VALIDATE_EMAIL)) {
+        throw new Exception('Invalid email address. Please update your profile with a valid email.');
+    }
+    
+    // For Chapa TEST mode, use a test email format if real email fails
+    $chapaMode = getenv('CHAPA_MODE') ?: 'test';
+    if ($chapaMode === 'test' && strpos(CHAPA_SECRET_KEY, 'TEST') !== false) {
+        // Use a simpler test email format that Chapa accepts
+        $userEmail = 'test' . $userId . '@gmail.com';  // Use gmail.com instead of example.com
+    }
 
     $paidAmount = floatval($fine['paid_amount'] ?? 0);
     $balance    = floatval($fine['amount']) - $paidAmount;
@@ -125,7 +140,7 @@ try {
     $payload = [
         'amount'       => number_format($amount, 2, '.', ''),
         'currency'     => $currency,
-        'email'        => $userEmail,
+        'email'        => trim($userEmail),  // Ensure no whitespace
         'first_name'   => $nameParts[0],
         'last_name'    => $nameParts[1] ?? 'User',
         'phone_number' => $userPhone ?: '0900000000',
@@ -133,11 +148,18 @@ try {
         'callback_url' => $callbackUrl,
         'return_url'   => $returnUrl . '?tx_ref=' . urlencode($txRef),
         'customization' => [
-            'title'       => 'Library Fine Payment',
-            'description' => "Fine #$fineId – " . ($fine['reason'] ?? 'Overdue fine'),
+            'title'       => 'Fine Payment',  // Max 16 chars
+            'description' => 'Fine ' . $fineId . ' - ' . substr(preg_replace('/[^a-zA-Z0-9\s\-_.]/', '', $fine['description'] ?? 'Overdue'), 0, 50),
         ],
         'meta' => ['fine_id' => $fineId, 'user_id' => $userId],
     ];
+
+    // Log payload for debugging
+    Logger::log('payment', 'Initializing payment', [
+        'payload' => $payload,
+        'user_id' => $userId,
+        'fine_id' => $fineId,
+    ]);
 
     // ── Call Chapa ────────────────────────────────────────────────────────────
     $ch = curl_init('https://api.chapa.co/v1/transaction/initialize');
@@ -170,7 +192,23 @@ try {
             'user_id'   => $userId,
             'fine_id'   => $fineId,
         ]);
-        throw new Exception('Payment gateway error: ' . ($chapaResp['message'] ?? 'Unknown error'));
+        
+        // Format error message
+        $errorMsg = 'Payment gateway error';
+        if (isset($chapaResp['message'])) {
+            if (is_array($chapaResp['message'])) {
+                // Flatten validation errors
+                $errors = [];
+                foreach ($chapaResp['message'] as $field => $messages) {
+                    $errors[] = is_array($messages) ? implode(', ', $messages) : $messages;
+                }
+                $errorMsg .= ': ' . implode('; ', $errors);
+            } else {
+                $errorMsg .= ': ' . $chapaResp['message'];
+            }
+        }
+        
+        throw new Exception($errorMsg);
     }
 
     $checkoutUrl = $chapaResp['data']['checkout_url'] ?? null;

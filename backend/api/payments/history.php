@@ -68,7 +68,7 @@ try {
             p.created_at, p.updated_at,
             f.amount as fine_amount,
             f.payment_status as fine_payment_status,
-            f.reason as fine_reason,
+            f.description as fine_reason,
             u.full_name as user_name, u.email as user_email,
             b.title as book_title, b.author as book_author, b.isbn
         FROM   payments p
@@ -81,11 +81,17 @@ try {
         LIMIT  ? OFFSET  ?
     ";
 
-    $params[] = $limit;
-    $params[] = $offset;
-
     $stmt = $db->prepare($query);
-    $stmt->execute($params);
+
+    // Bind WHERE params, then LIMIT/OFFSET explicitly as integers
+    $paramIndex = 1;
+    foreach ($params as $param) {
+        $stmt->bindValue($paramIndex++, $param);
+    }
+    $stmt->bindValue($paramIndex++, $limit, PDO::PARAM_INT);
+    $stmt->bindValue($paramIndex++, $offset, PDO::PARAM_INT);
+
+    $stmt->execute();
     $payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Format payments
@@ -134,7 +140,7 @@ try {
         FROM   payments p
         $whereSQL
     ");
-    $sum->execute(array_slice($params, 0, count($params) - 2));  // Exclude limit/offset
+    $sum->execute($params);  // $params no longer contains limit/offset
     $summary = $sum->fetch(PDO::FETCH_ASSOC);
 
     echo json_encode([
