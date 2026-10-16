@@ -36,6 +36,7 @@ import {
   LibraryBooks
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
+import FinesWidget from '../../components/payments/FinesWidget';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -787,6 +788,13 @@ const UserDashboard = () => {
               </Fade>
             </Grid>
           </Grid>
+
+          {/* Fines Widget */}
+          <Fade in={true} timeout={2000}>
+            <Box sx={{ mt: 4 }}>
+              <FinesWidget />
+            </Box>
+          </Fade>
         </Box>
       </Fade>
     </DashboardLayout>

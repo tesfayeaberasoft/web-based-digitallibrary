@@ -49,6 +49,8 @@ import UserHistory from './pages/user/UserHistory';
 import UserAchievements from './pages/user/UserAchievements';
 import UserReadingGoals from './pages/user/UserReadingGoals';
 import UserNotificationSettings from './pages/user/UserNotificationSettings';
+import UserFines from './pages/user/UserFines';
+import PaymentReturn from './pages/user/PaymentReturn';
 
 import './App.css';
 
@@ -261,6 +263,16 @@ function App() {
               <Route path="/notification-settings" element={
                 <ProtectedRoute allowedRoles={['user']}>
                   <UserNotificationSettings />
+                </ProtectedRoute>
+              } />
+              <Route path="/fines" element={
+                <ProtectedRoute allowedRoles={['user', 'librarian', 'admin']}>
+                  <UserFines />
+                </ProtectedRoute>
+              } />
+              <Route path="/payment/return" element={
+                <ProtectedRoute allowedRoles={['user', 'librarian', 'admin']}>
+                  <PaymentReturn />
                 </ProtectedRoute>
               } />
 
