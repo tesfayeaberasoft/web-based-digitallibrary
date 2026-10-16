@@ -21,9 +21,9 @@ try {
         throw new Exception('Access denied. Librarians and Admins only.');
     }
 
-    $query = trim($_GET['q'] ?? '');
-    if (strlen($query) < 2) {
-        throw new Exception('Search query must be at least 2 characters');
+    $query = trim($_GET['query'] ?? $_GET['q'] ?? '');
+    if (strlen($query) < 1) {
+        throw new Exception('Search query cannot be empty');
     }
 
     $db = Database::getInstance()->getConnection();
@@ -82,7 +82,7 @@ try {
         echo json_encode([
             'success' => true,
             'message' => 'No students found',
-            'results' => [],
+            'students' => [],
         ]);
         exit();
     }
@@ -205,7 +205,7 @@ try {
     echo json_encode([
         'success' => true,
         'count'   => count($formatted),
-        'results' => $formatted,
+        'students' => $formatted,
     ]);
 
 } catch (Exception $e) {
