@@ -63,7 +63,7 @@ function handleCheckBorrowLimit($db, $data) {
         // Count current active loans for user
         $stmt = $db->prepare("
             SELECT COUNT(*) as current_loans 
-            FROM loans 
+            FROM book_loans 
             WHERE user_id = ? AND status = 'active'
         ");
         $stmt->execute([$userId]);
@@ -111,7 +111,7 @@ function handleCalculateFines($db, $data) {
             // Calculate fine for specific loan
             $stmt = $db->prepare("
                 SELECT l.*, b.title 
-                FROM loans l 
+                FROM book_loans l 
                 JOIN books b ON l.book_id = b.id 
                 WHERE l.id = ? AND l.status IN ('active', 'overdue')
             ");
@@ -121,7 +121,7 @@ function handleCalculateFines($db, $data) {
             // Calculate fines for all user's overdue loans
             $stmt = $db->prepare("
                 SELECT l.*, b.title 
-                FROM loans l 
+                FROM book_loans l 
                 JOIN books b ON l.book_id = b.id 
                 WHERE l.user_id = ? AND l.status IN ('active', 'overdue')
             ");

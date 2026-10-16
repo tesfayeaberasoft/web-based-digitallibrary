@@ -494,7 +494,7 @@ function getLoanStats($db) {
                 SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_loans,
                 SUM(CASE WHEN status = 'returned' THEN 1 ELSE 0 END) as returned_loans,
                 SUM(CASE WHEN status = 'overdue' THEN 1 ELSE 0 END) as overdue_loans
-            FROM loans
+            FROM book_loans
         ");
         return $stmt->fetch(PDO::FETCH_ASSOC);
     } catch (Exception $e) {

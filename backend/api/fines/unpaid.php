@@ -35,7 +35,7 @@ try {
             p.id as last_payment_id, p.tx_ref as last_payment_ref,
             p.status as last_payment_status, p.created_at as last_payment_date
         FROM   fines f
-        LEFT   JOIN loans l ON l.id = f.loan_id
+        LEFT   JOIN book_loans l ON l.id = f.loan_id
         LEFT   JOIN books b ON b.id = l.book_id
         LEFT   JOIN payments p ON p.id = f.payment_id
         WHERE  f.user_id = ? AND f.payment_status IN ('unpaid', 'partial')

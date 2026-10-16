@@ -74,7 +74,7 @@ try {
         FROM   payments p
         JOIN   fines f ON f.id = p.fine_id
         JOIN   users u ON u.id = p.user_id
-        LEFT   JOIN loans l ON l.id = f.loan_id
+        LEFT   JOIN book_loans l ON l.id = f.loan_id
         LEFT   JOIN books b ON b.id = l.book_id
         $whereSQL
         ORDER  BY p.created_at DESC
