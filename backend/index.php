@@ -168,6 +168,16 @@ switch (true) {
         require __DIR__ . '/api/librarian/reports.php';
         break;
     
+    // Librarian student search route
+    case preg_match('#^/librarian/student-search$#', $path) && $request_method === 'GET':
+        require __DIR__ . '/api/librarian/student-search.php';
+        break;
+
+    // Admin financial reports route
+    case preg_match('#^/admin/financial-reports$#', $path) && $request_method === 'GET':
+        require __DIR__ . '/api/admin/financial-reports.php';
+        break;
+    
     case preg_match('#^/users/(\d+)/profile-image$#', $path, $matches) && $request_method === 'POST':
         $_GET['id'] = $matches[1];
         require __DIR__ . '/api/users/upload-profile-image.php';

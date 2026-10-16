@@ -18,7 +18,19 @@ import {
   Paper,
   Divider,
   Button,
-  Badge
+  Badge,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Tabs,
+  Tab,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow
 } from '@mui/material';
 import {
   People,
@@ -38,7 +50,9 @@ import {
   Assignment as AssignmentIcon,
   AccountBalance as AccountBalanceIcon,
   Notifications as NotificationsIcon,
-  Timeline as TimelineIcon
+  Timeline as TimelineIcon,
+  Receipt as ReceiptIcon,
+  Close as CloseIcon
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import axios from 'axios';
@@ -127,6 +141,17 @@ const AdminDashboard = () => {
   const [error, setError] = useState('');
   const [lastUpdate, setLastUpdate] = useState(new Date());
 
+  // Financial Reports State
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [reportTab, setReportTab] = useState(0);
+  const [reportLoading, setReportLoading] = useState(false);
+  const [reportError, setReportError] = useState('');
+  const [reportsData, setReportsData] = useState({
+    overview: null,
+    details: [],
+    revenue: []
+  });
+
   useEffect(() => {
     fetchStats();
   }, []);
@@ -169,6 +194,53 @@ const AdminDashboard = () => {
     const [year, month] = monthStr.split('-');
     const date = new Date(year, month - 1);
     return date.toLocaleDateString('en-US', { month: 'short' });
+  };
+
+  const fetchFinancialReports = async (type = 'overview') => {
+    setReportLoading(true);
+    setReportError('');
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(
+        `http://localhost:8000/api/admin/financial-reports?type=${type}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data.success) {
+        const data = response.data.data;
+        if (type === 'overview') {
+          setReportsData(prev => ({ ...prev, overview: data }));
+        } else if (type === 'details') {
+          // data is a flat array of transactions
+          setReportsData(prev => ({ ...prev, details: Array.isArray(data) ? data : [] }));
+        } else if (type === 'revenue') {
+          // data is a flat array of monthly revenue entries
+          setReportsData(prev => ({ ...prev, revenue: Array.isArray(data) ? data : [] }));
+        }
+      } else {
+        setReportError(response.data.message || 'Failed to load financial reports');
+      }
+    } catch (err) {
+      console.error('Error fetching financial reports:', err);
+      const msg = err.response?.data?.message || err.message || 'Failed to load financial reports';
+      setReportError(msg);
+    } finally {
+      setReportLoading(false);
+    }
+  };
+
+  const handleOpenReports = () => {
+    setReportDialogOpen(true);
+    setReportTab(0);
+    setReportError('');
+    fetchFinancialReports('overview');
+  };
+
+  const handleTabChange = (event, newValue) => {
+    setReportTab(newValue);
+    setReportError('');
+    const types = ['overview', 'details', 'revenue'];
+    fetchFinancialReports(types[newValue]);
   };
 
   if (loading) {
@@ -291,6 +363,7 @@ const AdminDashboard = () => {
               bgColor="#fff3e0"
               subtitle="Fines collected"
               delay={300}
+              onClick={handleOpenReports}
             />
           </Grid>
           <Grid item xs={12} sm={6} md={4} lg={2}>
@@ -614,6 +687,244 @@ const AdminDashboard = () => {
             </Grow>
           </Grid>
         </Grid>
+
+        {/* Financial Reports Dialog */}
+        <Dialog
+          open={reportDialogOpen}
+          onClose={() => setReportDialogOpen(false)}
+          maxWidth="lg"
+          fullWidth
+        >
+          <DialogTitle sx={{ 
+            background: 'linear-gradient(135deg, #4a9b8e 0%, #3d8276 100%)',
+            color: 'white',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <ReceiptIcon />
+              <Typography variant="h6" fontWeight={600}>Financial Reports</Typography>
+            </Box>
+            <IconButton onClick={() => setReportDialogOpen(false)} sx={{ color: 'white' }}>
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent sx={{ mt: 2 }}>
+            <Tabs value={reportTab} onChange={handleTabChange} sx={{ mb: 3 }}>
+              <Tab label="Overview" />
+              <Tab label="Transaction Details" />
+              <Tab label="Monthly Revenue" />
+            </Tabs>
+
+            {reportError && (
+              <Alert severity="error" sx={{ mb: 2 }} onClose={() => setReportError('')}>
+                {reportError}
+              </Alert>
+            )}
+
+            {reportLoading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+                <CircularProgress sx={{ color: '#4a9b8e' }} />
+              </Box>
+            ) : (
+              <>
+                {/* Overview Tab */}
+                {reportTab === 0 && (
+                  reportsData.overview ? (
+                    <Grid container spacing={3}>
+                      <Grid item xs={12} md={4}>
+                        <Card sx={{ background: 'linear-gradient(135deg, #4caf50 0%, #45a049 100%)', color: 'white' }}>
+                          <CardContent>
+                            <Typography variant="h6">Total Revenue</Typography>
+                            <Typography variant="h3" fontWeight={700}>
+                              {formatCurrency(reportsData.overview.total_revenue || 0)}
+                            </Typography>
+                            <Typography variant="caption">All time collected</Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <Card sx={{ background: 'linear-gradient(135deg, #2196f3 0%, #1976d2 100%)', color: 'white' }}>
+                          <CardContent>
+                            <Typography variant="h6">Total Transactions</Typography>
+                            <Typography variant="h3" fontWeight={700}>
+                              {reportsData.overview.total_transactions || 0}
+                            </Typography>
+                            <Typography variant="caption">
+                              {reportsData.overview.successful_payments || 0} successful
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <Card sx={{ background: 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)', color: 'white' }}>
+                          <CardContent>
+                            <Typography variant="h6">Average Payment</Typography>
+                            <Typography variant="h3" fontWeight={700}>
+                              {formatCurrency(reportsData.overview.average_payment || 0)}
+                            </Typography>
+                            <Typography variant="caption">Per transaction</Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <Card sx={{ background: 'linear-gradient(135deg, #e53935 0%, #c62828 100%)', color: 'white' }}>
+                          <CardContent>
+                            <Typography variant="h6">Outstanding Fines</Typography>
+                            <Typography variant="h3" fontWeight={700}>
+                              {formatCurrency(reportsData.overview.outstanding_balance || 0)}
+                            </Typography>
+                            <Typography variant="caption">Unpaid balance</Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <Card sx={{ background: 'linear-gradient(135deg, #7b1fa2 0%, #4a148c 100%)', color: 'white' }}>
+                          <CardContent>
+                            <Typography variant="h6">Total Fines Issued</Typography>
+                            <Typography variant="h3" fontWeight={700}>
+                              {reportsData.overview.total_fines || 0}
+                            </Typography>
+                            <Typography variant="caption">
+                              {reportsData.overview.paid_fines || 0} paid · {reportsData.overview.unpaid_fines || 0} unpaid
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <Card sx={{ background: 'linear-gradient(135deg, #00695c 0%, #004d40 100%)', color: 'white' }}>
+                          <CardContent>
+                            <Typography variant="h6">Collection Rate</Typography>
+                            <Typography variant="h3" fontWeight={700}>
+                              {reportsData.overview.collection_rate || 0}%
+                            </Typography>
+                            <Typography variant="caption">Fines collected vs issued</Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    </Grid>
+                  ) : (
+                    <Alert severity="info">No financial data available yet.</Alert>
+                  )
+                )}
+
+                {/* Transaction Details Tab */}
+                {reportTab === 1 && (
+                  <TableContainer>
+                    <Table>
+                      <TableHead>
+                        <TableRow sx={{ bgcolor: '#f5f5f5' }}>
+                          <TableCell><strong>Transaction Ref</strong></TableCell>
+                          <TableCell><strong>Student</strong></TableCell>
+                          <TableCell><strong>Amount</strong></TableCell>
+                          <TableCell><strong>Status</strong></TableCell>
+                          <TableCell><strong>Date</strong></TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {reportsData.details.length > 0 ? (
+                          reportsData.details.map((transaction, idx) => (
+                            <TableRow key={transaction.payment_id || idx} hover>
+                              <TableCell>
+                                <Typography variant="body2" fontFamily="monospace" fontSize="0.75rem">
+                                  {transaction.tx_ref || '—'}
+                                </Typography>
+                              </TableCell>
+                              <TableCell>{transaction.student_name || '—'}</TableCell>
+                              <TableCell>
+                                <Typography fontWeight={600} color="success.main">
+                                  {formatCurrency(transaction.amount || 0)}
+                                </Typography>
+                              </TableCell>
+                              <TableCell>
+                                <Chip
+                                  label={transaction.payment_status || 'unknown'}
+                                  color={
+                                    transaction.payment_status === 'success' ? 'success' :
+                                    transaction.payment_status === 'pending' ? 'warning' : 'error'
+                                  }
+                                  size="small"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                {transaction.payment_date
+                                  ? new Date(transaction.payment_date).toLocaleDateString()
+                                  : '—'}
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                              <Typography color="text.secondary">No transactions found</Typography>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
+
+                {/* Monthly Revenue Tab */}
+                {reportTab === 2 && (
+                  <Box>
+                    {reportsData.revenue.length > 0 ? (
+                      <Box sx={{ height: 400, display: 'flex', alignItems: 'flex-end', gap: 3, px: 2, overflowX: 'auto' }}>
+                        {reportsData.revenue.map((item) => {
+                          const maxValue = Math.max(...reportsData.revenue.map(i => parseFloat(i.revenue || 0)), 1);
+                          const height = Math.max((parseFloat(item.revenue || 0) / maxValue) * 320, 8);
+                          return (
+                            <Box key={item.month} sx={{ flex: '1 0 60px', textAlign: 'center' }}>
+                              <Tooltip title={`${formatCurrency(item.revenue)} · ${item.transaction_count} transaction(s)`}>
+                                <Box
+                                  sx={{
+                                    height,
+                                    background: 'linear-gradient(to top, #4a9b8e, #66bb6a)',
+                                    borderRadius: '8px 8px 0 0',
+                                    mb: 1,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'flex-end',
+                                    pb: 0.5,
+                                    color: 'white',
+                                    fontWeight: 600,
+                                    cursor: 'default',
+                                    transition: 'all 0.3s ease',
+                                    '&:hover': {
+                                      transform: 'scaleY(1.03)',
+                                      boxShadow: '0 4px 12px rgba(74,155,142,0.4)'
+                                    }
+                                  }}
+                                >
+                                  <Typography variant="caption" fontWeight={700} lineHeight={1.2}>
+                                    ${Math.round(item.revenue || 0)}
+                                  </Typography>
+                                  <Typography variant="caption" sx={{ fontSize: '0.6rem', opacity: 0.85 }}>
+                                    {item.transaction_count} tx
+                                  </Typography>
+                                </Box>
+                              </Tooltip>
+                              <Typography variant="caption" fontWeight={500}>
+                                {getMonthName(item.month)}
+                              </Typography>
+                            </Box>
+                          );
+                        })}
+                      </Box>
+                    ) : (
+                      <Alert severity="info">No revenue data yet. Revenue will appear here once payments are processed.</Alert>
+                    )}
+                  </Box>
+                )}
+              </>
+            )}
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setReportDialogOpen(false)} variant="outlined">Close</Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </DashboardLayout>
   );

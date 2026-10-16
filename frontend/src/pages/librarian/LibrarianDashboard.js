@@ -13,7 +13,21 @@ import {
   Paper,
   Fade,
   Grow,
-  Zoom
+  Zoom,
+  TextField,
+  InputAdornment,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
+  Divider,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow
 } from '@mui/material';
 import { 
   CheckCircle, 
@@ -26,7 +40,10 @@ import {
   LibraryBooks as LibraryIcon,
   PersonAdd as PersonAddIcon,
   AssignmentReturn as ReturnIcon,
-  ArrowForward as ArrowIcon
+  ArrowForward as ArrowIcon,
+  Search as SearchIcon,
+  Close as CloseIcon,
+  Person as PersonIcon
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { useNavigate } from 'react-router-dom';
@@ -37,6 +54,13 @@ const LibrarianDashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  
+  // Student Search State
+  const [searchDialogOpen, setSearchDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState(null);
 
   useEffect(() => {
     fetchStats();
@@ -65,6 +89,40 @@ const LibrarianDashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearchStudent = async () => {
+    if (!searchQuery.trim()) return;
+    
+    setSearchLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(
+        `http://localhost:8000/api/librarian/student-search?query=${encodeURIComponent(searchQuery)}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      if (response.data.success) {
+        setSearchResults(response.data.students || []);
+      } else {
+        setSearchResults([]);
+        setError(response.data.message || 'No students found');
+      }
+    } catch (err) {
+      console.error('Search error:', err);
+      setError(err.response?.data?.message || 'Search failed');
+      setSearchResults([]);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  const handleViewDetails = (student) => {
+    setSelectedStudent(student);
+  };
+
+  const handleCloseDetails = () => {
+    setSelectedStudent(null);
   };
 
   if (loading) {
@@ -378,7 +436,7 @@ const LibrarianDashboard = () => {
                   fullWidth 
                   variant="contained" 
                   size="large" 
-                  onClick={() => navigate('/librarian/inventory')}
+                  onClick={() => setSearchDialogOpen(true)}
                   sx={{ 
                     py: 3, 
                     background: 'linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)',
@@ -390,9 +448,9 @@ const LibrarianDashboard = () => {
                   }}
                 >
                   <Box sx={{ textAlign: 'center' }}>
-                    <Inventory2 sx={{ fontSize: 40, mb: 1 }} />
-                    <Typography variant="h6" fontWeight={600}>Manage Books</Typography>
-                    <Typography variant="caption">Inventory control</Typography>
+                    <SearchIcon sx={{ fontSize: 40, mb: 1 }} />
+                    <Typography variant="h6" fontWeight={600}>Search Student</Typography>
+                    <Typography variant="caption">Find student records</Typography>
                   </Box>
                 </Button>
               </Zoom>
@@ -424,6 +482,201 @@ const LibrarianDashboard = () => {
               </Zoom>
             </Grid>
           </Grid>
+
+          {/* Student Search Dialog */}
+          <Dialog
+            open={searchDialogOpen}
+            onClose={() => setSearchDialogOpen(false)}
+            maxWidth="md"
+            fullWidth
+          >
+            <DialogTitle sx={{ 
+              background: 'linear-gradient(135deg, #4a9b8e 0%, #3d8276 100%)',
+              color: 'white',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <SearchIcon />
+                <Typography variant="h6" fontWeight={600}>Search Student</Typography>
+              </Box>
+              <IconButton onClick={() => setSearchDialogOpen(false)} sx={{ color: 'white' }}>
+                <CloseIcon />
+              </IconButton>
+            </DialogTitle>
+            <DialogContent sx={{ mt: 2 }}>
+              <TextField
+                fullWidth
+                placeholder="Enter student name or ID..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearchStudent()}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon color="action" />
+                    </InputAdornment>
+                  ),
+                  endAdornment: searchLoading && (
+                    <InputAdornment position="end">
+                      <CircularProgress size={20} />
+                    </InputAdornment>
+                  )
+                }}
+                sx={{ mb: 2 }}
+              />
+              
+              <Button
+                fullWidth
+                variant="contained"
+                onClick={handleSearchStudent}
+                disabled={!searchQuery.trim() || searchLoading}
+                sx={{ 
+                  mb: 3,
+                  background: 'linear-gradient(135deg, #4a9b8e 0%, #3d8276 100%)'
+                }}
+              >
+                Search
+              </Button>
+
+              {searchResults.length > 0 && (
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell><strong>Name</strong></TableCell>
+                        <TableCell><strong>Email</strong></TableCell>
+                        <TableCell align="center"><strong>Status</strong></TableCell>
+                        <TableCell align="center"><strong>Actions</strong></TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {searchResults.map((student) => (
+                        <TableRow key={student.user_id}>
+                          <TableCell>{student.full_name}</TableCell>
+                          <TableCell>{student.email}</TableCell>
+                          <TableCell align="center">
+                            {student.account_blocked ? (
+                              <Chip label="Blocked" color="error" size="small" />
+                            ) : (
+                              <Chip label="Active" color="success" size="small" />
+                            )}
+                          </TableCell>
+                          <TableCell align="center">
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              onClick={() => handleViewDetails(student)}
+                            >
+                              View Details
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+
+              {searchResults.length === 0 && searchQuery && !searchLoading && (
+                <Alert severity="info">No students found</Alert>
+              )}
+            </DialogContent>
+          </Dialog>
+
+          {/* Student Details Dialog */}
+          <Dialog
+            open={!!selectedStudent}
+            onClose={handleCloseDetails}
+            maxWidth="sm"
+            fullWidth
+          >
+            {selectedStudent && (
+              <>
+                <DialogTitle sx={{ 
+                  background: 'linear-gradient(135deg, #4a9b8e 0%, #3d8276 100%)',
+                  color: 'white',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <PersonIcon />
+                    <Typography variant="h6" fontWeight={600}>Student Details</Typography>
+                  </Box>
+                  <IconButton onClick={handleCloseDetails} sx={{ color: 'white' }}>
+                    <CloseIcon />
+                  </IconButton>
+                </DialogTitle>
+                <DialogContent sx={{ mt: 2 }}>
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="subtitle2" color="text.secondary">Name</Typography>
+                    <Typography variant="h6">{selectedStudent.full_name}</Typography>
+                  </Box>
+                  
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="subtitle2" color="text.secondary">Email</Typography>
+                    <Typography>{selectedStudent.email}</Typography>
+                  </Box>
+                  
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="subtitle2" color="text.secondary">Account Status</Typography>
+                    {selectedStudent.account_blocked ? (
+                      <Chip label="Blocked" color="error" />
+                    ) : (
+                      <Chip label="Active" color="success" />
+                    )}
+                  </Box>
+
+                  <Divider sx={{ my: 2 }} />
+
+                  <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>Fine Information</Typography>
+                  
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="subtitle2" color="text.secondary">Total Fines</Typography>
+                    <Typography variant="h5" color="primary" fontWeight={700}>
+                      ${parseFloat(selectedStudent.total_fines || 0).toFixed(2)}
+                    </Typography>
+                  </Box>
+                  
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="subtitle2" color="text.secondary">Unpaid Fines</Typography>
+                    <Typography variant="h5" color="error" fontWeight={700}>
+                      ${parseFloat(selectedStudent.unpaid_fines || 0).toFixed(2)}
+                    </Typography>
+                  </Box>
+                  
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="subtitle2" color="text.secondary">Paid Fines</Typography>
+                    <Typography variant="h5" color="success.main" fontWeight={700}>
+                      ${parseFloat(selectedStudent.paid_fines || 0).toFixed(2)}
+                    </Typography>
+                  </Box>
+
+                  <Divider sx={{ my: 2 }} />
+
+                  <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>Loan Information</Typography>
+                  
+                  <Grid container spacing={2}>
+                    <Grid item xs={6}>
+                      <Typography variant="subtitle2" color="text.secondary">Active Loans</Typography>
+                      <Typography variant="h6">{selectedStudent.active_loans || 0}</Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="subtitle2" color="text.secondary">Overdue Books</Typography>
+                      <Typography variant="h6" color="error">
+                        {selectedStudent.overdue_books || 0}
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                </DialogContent>
+                <DialogActions sx={{ p: 2 }}>
+                  <Button onClick={handleCloseDetails} variant="outlined">Close</Button>
+                </DialogActions>
+              </>
+            )}
+          </Dialog>
 
           {/* Additional Stats */}
           {stats?.total_fines > 0 && (

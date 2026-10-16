@@ -11,7 +11,8 @@ import {
   Dashboard, MenuBook, History, TrendingUp, EmojiEvents, Logout, ExitToApp,
   ChevronLeft, ChevronRight, Settings, AdminPanelSettings, People,
   SupervisorAccount, Assignment, QrCodeScanner, LibraryBooks, Queue,
-  Inventory, GetApp, Shield, LocalFireDepartment, AccessTime, Close
+  Inventory, GetApp, Shield, LocalFireDepartment, AccessTime, Close,
+  ReceiptLong
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -78,6 +79,7 @@ export default function DashboardLayout({ children, title }) {
         return [
           { text: 'Overview', icon: <Dashboard />, path: '/admin', color: C.primary },
           { text: 'Analytics', icon: <TrendingUp />, path: '/admin/analytics', color: C.primary },
+          { text: 'Financial Reports', icon: <ReceiptLong />, path: '/admin/financial-reports', color: '#2e7d32' },
           { text: 'Users', icon: <People />, path: '/admin/users', color: C.primary },
           { text: 'Librarians', icon: <SupervisorAccount />, path: '/admin/librarians', color: C.primary },
           { text: 'Settings', icon: <Settings />, path: '/admin/settings', color: C.primary },
