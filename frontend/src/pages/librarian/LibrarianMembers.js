@@ -28,7 +28,10 @@ import {
   Tabs,
   Tab,
   Fade,
-  Grow
+  Grow,
+  Divider,
+  Tooltip,
+  Paper
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -39,7 +42,12 @@ import {
   Phone as PhoneIcon,
   CalendarToday as CalendarIcon,
   MenuBook as BooksIcon,
-  AttachMoney as MoneyIcon
+  AttachMoney as MoneyIcon,
+  Warning as WarningIcon,
+  Person as PersonIcon,
+  History as HistoryIcon,
+  Receipt as ReceiptIcon,
+  Close as CloseIcon
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import axios from 'axios';
@@ -55,8 +63,20 @@ const LibrarianMembers = () => {
   const [openStatusDialog, setOpenStatusDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [userStats, setUserStats] = useState(null);
-  const [statusAction, setStatusAction] = useState(null); // 'activate' or 'suspend'
-  const [suspensionReason, setSuspensionReason] = useState(''); // New state for suspension reason
+  const [statusAction, setStatusAction] = useState(null);
+  const [suspensionReason, setSuspensionReason] = useState('');
+
+  // Detail dialog tab
+  const [detailTab, setDetailTab] = useState(0);
+
+  // Loan history state
+  const [userLoans, setUserLoans] = useState([]);
+  const [loansLoading, setLoansLoading] = useState(false);
+
+  // Fine history state
+  const [userFines, setUserFines] = useState([]);
+  const [finesSummary, setFinesSummary] = useState(null);
+  const [finesLoading, setFinesLoading] = useState(false);
   
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -110,7 +130,6 @@ const LibrarianMembers = () => {
         `http://localhost:8000/api/users/${userId}/stats`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      
       if (response.data.success) {
         setUserStats(response.data.stats);
       }
@@ -119,17 +138,65 @@ const LibrarianMembers = () => {
     }
   };
 
+  const fetchUserLoans = async (userId) => {
+    setLoansLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(
+        `http://localhost:8000/api/loans?user_id=${userId}&limit=20`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (response.data.success) {
+        setUserLoans(response.data.loans || []);
+      }
+    } catch (err) {
+      console.error('Error fetching user loans:', err);
+    } finally {
+      setLoansLoading(false);
+    }
+  };
+
+  const fetchUserFines = async (userId) => {
+    setFinesLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(
+        `http://localhost:8000/api/fines?user_id=${userId}&limit=20`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (response.data.success) {
+        setUserFines(response.data.fines || []);
+        setFinesSummary(response.data.totals || null);
+      }
+    } catch (err) {
+      console.error('Error fetching user fines:', err);
+    } finally {
+      setFinesLoading(false);
+    }
+  };
+
   const handleViewUser = async (user) => {
     setSelectedUser(user);
     setUserStats(null);
+    setUserLoans([]);
+    setUserFines([]);
+    setFinesSummary(null);
+    setDetailTab(0);
     setOpenViewDialog(true);
-    await fetchUserStats(user.id);
+    // Fetch all data in parallel
+    fetchUserStats(user.id);
+    fetchUserLoans(user.id);
+    fetchUserFines(user.id);
   };
 
   const handleCloseViewDialog = () => {
     setOpenViewDialog(false);
     setSelectedUser(null);
     setUserStats(null);
+    setUserLoans([]);
+    setUserFines([]);
+    setFinesSummary(null);
+    setDetailTab(0);
   };
 
   const handleOpenStatusDialog = (user) => {
@@ -600,179 +667,315 @@ const LibrarianMembers = () => {
           </Dialog>
 
           {/* View User Dialog */}
-          <Dialog 
-            open={openViewDialog} 
+          <Dialog
+            open={openViewDialog}
             onClose={handleCloseViewDialog}
             maxWidth="md"
             fullWidth
           >
-            <DialogTitle sx={{ bgcolor: '#4a9b8e', color: 'white' }}>
-              Member Details
+            <DialogTitle sx={{
+              background: 'linear-gradient(135deg, #4a9b8e 0%, #3d8276 100%)',
+              color: 'white',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              py: 2
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <PersonIcon />
+                <Typography variant="h6" fontWeight={600}>Member Details</Typography>
+              </Box>
+              <IconButton onClick={handleCloseViewDialog} sx={{ color: 'white' }}>
+                <CloseIcon />
+              </IconButton>
             </DialogTitle>
-            <DialogContent sx={{ mt: 2 }}>
+
+            <DialogContent sx={{ p: 0 }}>
               {selectedUser && (
-                <Box>
-                  {/* User Info */}
-                  <Grid container spacing={3}>
-                    <Grid item xs={12} sx={{ textAlign: 'center', mb: 2 }}>
-                      <Avatar 
-                        sx={{ 
-                          width: 100, 
-                          height: 100, 
-                          bgcolor: '#4a9b8e',
-                          margin: '0 auto',
-                          mb: 2
-                        }}
-                        src={selectedUser.profile_image ? `http://localhost:8000/${selectedUser.profile_image}` : undefined}
-                      >
-                        <Typography variant="h3">
-                          {selectedUser.full_name?.charAt(0)}
-                        </Typography>
-                      </Avatar>
-                      <Typography variant="h5" fontWeight={600}>
-                        {selectedUser.full_name}
-                      </Typography>
-                      <Chip
-                        label={selectedUser.status}
-                        color={getStatusColor(selectedUser.status)}
-                        size="small"
-                        sx={{ mt: 1 }}
-                      />
-                    </Grid>
+                <>
+                  {/* Profile Header */}
+                  <Box sx={{
+                    display: 'flex', alignItems: 'center', gap: 2.5,
+                    px: 3, py: 2.5, bgcolor: '#f8fdfb',
+                    borderBottom: '1px solid #e0e0e0'
+                  }}>
+                    <Avatar
+                      src={selectedUser.profile_image ? `http://localhost:8000/${selectedUser.profile_image}` : undefined}
+                      sx={{ width: 72, height: 72, bgcolor: '#4a9b8e', fontSize: '2rem', fontWeight: 700 }}
+                    >
+                      {selectedUser.full_name?.charAt(0)}
+                    </Avatar>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="h5" fontWeight={700}>{selectedUser.full_name}</Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5, flexWrap: 'wrap' }}>
+                        <Chip label={`ID: ${selectedUser.user_id || selectedUser.id}`} size="small" variant="outlined" />
+                        <Chip label={selectedUser.status} color={getStatusColor(selectedUser.status)} size="small" />
+                        {userStats?.overdue_books > 0 && (
+                          <Chip icon={<WarningIcon />} label={`${userStats.overdue_books} Overdue`} color="error" size="small" />
+                        )}
+                        {userStats?.unpaid_fines > 0 && (
+                          <Chip icon={<MoneyIcon />} label={`ETB ${parseFloat(userStats.unpaid_fines).toFixed(2)} Unpaid`} color="warning" size="small" />
+                        )}
+                      </Box>
+                      <Box sx={{ display: 'flex', gap: 2, mt: 1, flexWrap: 'wrap' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <EmailIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+                          <Typography variant="caption" color="text.secondary">{selectedUser.email}</Typography>
+                        </Box>
+                        {selectedUser.phone && (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <PhoneIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+                            <Typography variant="caption" color="text.secondary">{selectedUser.phone}</Typography>
+                          </Box>
+                        )}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <CalendarIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+                          <Typography variant="caption" color="text.secondary">Joined {formatDate(selectedUser.created_at)}</Typography>
+                        </Box>
+                      </Box>
+                    </Box>
+                  </Box>
 
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="body2" color="text.secondary">
-                        User ID
-                      </Typography>
-                      <Typography variant="body1" fontWeight={600}>
-                        {selectedUser.user_id || selectedUser.id}
-                      </Typography>
-                    </Grid>
+                  {/* Detail Tabs */}
+                  <Tabs
+                    value={detailTab}
+                    onChange={(_, v) => setDetailTab(v)}
+                    sx={{
+                      px: 2, borderBottom: '1px solid #e0e0e0',
+                      '& .MuiTab-root': { fontWeight: 600, textTransform: 'none' },
+                      '& .Mui-selected': { color: '#4a9b8e' },
+                      '& .MuiTabs-indicator': { backgroundColor: '#4a9b8e' }
+                    }}
+                  >
+                    <Tab icon={<PersonIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Profile" />
+                    <Tab icon={<BooksIcon sx={{ fontSize: 18 }} />} iconPosition="start" label={`Loans (${userLoans.length})`} />
+                    <Tab icon={<ReceiptIcon sx={{ fontSize: 18 }} />} iconPosition="start" label={`Fines (${userFines.length})`} />
+                  </Tabs>
 
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="body2" color="text.secondary">
-                        Email
-                      </Typography>
-                      <Typography variant="body1" fontWeight={600}>
-                        {selectedUser.email}
-                      </Typography>
-                    </Grid>
+                  <Box sx={{ p: 3, minHeight: 320 }}>
 
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="body2" color="text.secondary">
-                        Phone
-                      </Typography>
-                      <Typography variant="body1" fontWeight={600}>
-                        {selectedUser.phone || 'Not provided'}
-                      </Typography>
-                    </Grid>
+                    {/* ── TAB 0: PROFILE ── */}
+                    {detailTab === 0 && (
+                      <Box>
+                        <Grid container spacing={2} sx={{ mb: 3 }}>
+                          {[
+                            { label: 'Full Name', value: selectedUser.full_name },
+                            { label: 'User ID', value: selectedUser.user_id || selectedUser.id },
+                            { label: 'Email', value: selectedUser.email },
+                            { label: 'Phone', value: selectedUser.phone || 'Not provided' },
+                            { label: 'Member Since', value: formatDate(selectedUser.created_at) },
+                            { label: 'Last Login', value: formatDate(selectedUser.last_login) },
+                          ].map((f) => (
+                            <Grid item xs={12} sm={6} key={f.label}>
+                              <Typography variant="caption" color="text.secondary">{f.label}</Typography>
+                              <Typography fontWeight={600}>{f.value}</Typography>
+                            </Grid>
+                          ))}
+                          {selectedUser.address && (
+                            <Grid item xs={12}>
+                              <Typography variant="caption" color="text.secondary">Address</Typography>
+                              <Typography fontWeight={600}>{selectedUser.address}</Typography>
+                            </Grid>
+                          )}
+                          {selectedUser.status === 'suspended' && selectedUser.suspension_reason && (
+                            <Grid item xs={12}>
+                              <Alert severity="warning">
+                                <strong>Suspension Reason:</strong> {selectedUser.suspension_reason}
+                              </Alert>
+                            </Grid>
+                          )}
+                        </Grid>
 
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="body2" color="text.secondary">
-                        Member Since
-                      </Typography>
-                      <Typography variant="body1" fontWeight={600}>
-                        {formatDate(selectedUser.created_at)}
-                      </Typography>
-                    </Grid>
+                        <Divider sx={{ my: 2 }} />
+                        <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 2 }}>Activity Statistics</Typography>
 
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="body2" color="text.secondary">
-                        Last Login
-                      </Typography>
-                      <Typography variant="body1" fontWeight={600}>
-                        {formatDate(selectedUser.last_login)}
-                      </Typography>
-                    </Grid>
-
-                    {selectedUser.address && (
-                      <Grid item xs={12}>
-                        <Typography variant="body2" color="text.secondary">
-                          Address
-                        </Typography>
-                        <Typography variant="body1" fontWeight={600}>
-                          {selectedUser.address}
-                        </Typography>
-                      </Grid>
+                        {userStats ? (
+                          <Grid container spacing={2}>
+                            {[
+                              { label: 'Books Read', value: userStats.books_read || 0, bg: '#e3f2fd', icon: <BooksIcon sx={{ color: '#2196f3', fontSize: 30 }} /> },
+                              { label: 'Currently Borrowed', value: userStats.currently_reading || 0, bg: '#fff3e0', icon: <BooksIcon sx={{ color: '#ff9800', fontSize: 30 }} /> },
+                              { label: 'Overdue Books', value: userStats.overdue_books || 0, bg: userStats.overdue_books > 0 ? '#ffebee' : '#e8f5e9', icon: <WarningIcon sx={{ color: userStats.overdue_books > 0 ? '#f44336' : '#4caf50', fontSize: 30 }} /> },
+                              { label: 'Active Reservations', value: userStats.reservations || 0, bg: '#f3e5f5', icon: <CalendarIcon sx={{ color: '#9c27b0', fontSize: 30 }} /> },
+                              { label: 'Total Fines', value: `ETB ${(userStats.total_fines || 0).toFixed(2)}`, bg: '#fce4ec', icon: <MoneyIcon sx={{ color: '#e91e63', fontSize: 30 }} /> },
+                              { label: 'Unpaid Fines', value: `ETB ${(userStats.unpaid_fines || 0).toFixed(2)}`, bg: '#ffebee', icon: <MoneyIcon sx={{ color: '#f44336', fontSize: 30 }} /> },
+                              { label: 'Paid Fines', value: `ETB ${(userStats.paid_fines || 0).toFixed(2)}`, bg: '#e8f5e9', icon: <MoneyIcon sx={{ color: '#4caf50', fontSize: 30 }} /> },
+                              { label: 'Reading Streak', value: `${userStats.reading_streak || 0} days`, bg: '#e8eaf6', icon: <CalendarIcon sx={{ color: '#3f51b5', fontSize: 30 }} /> },
+                            ].map((s) => (
+                              <Grid item xs={6} sm={3} key={s.label}>
+                                <Card sx={{ bgcolor: s.bg, textAlign: 'center', p: 1.5, borderRadius: 2 }}>
+                                  {s.icon}
+                                  <Typography variant="h6" fontWeight={700} sx={{ mt: 0.5 }}>{s.value}</Typography>
+                                  <Typography variant="caption" color="text.secondary">{s.label}</Typography>
+                                </Card>
+                              </Grid>
+                            ))}
+                          </Grid>
+                        ) : (
+                          <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+                            <CircularProgress size={30} sx={{ color: '#4a9b8e' }} />
+                          </Box>
+                        )}
+                      </Box>
                     )}
 
-                    {selectedUser.status === 'suspended' && selectedUser.suspension_reason && (
-                      <Grid item xs={12}>
-                        <Alert severity="warning" sx={{ mt: 2 }}>
-                          <Typography variant="body2" color="text.secondary" gutterBottom>
-                            <strong>Suspension Reason:</strong>
-                          </Typography>
-                          <Typography variant="body1">
-                            {selectedUser.suspension_reason}
-                          </Typography>
-                        </Alert>
-                      </Grid>
+                    {/* ── TAB 1: LOAN HISTORY ── */}
+                    {detailTab === 1 && (
+                      loansLoading ? (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+                          <CircularProgress sx={{ color: '#4a9b8e' }} />
+                        </Box>
+                      ) : userLoans.length === 0 ? (
+                        <Box sx={{ textAlign: 'center', py: 5 }}>
+                          <BooksIcon sx={{ fontSize: 56, color: '#ccc', mb: 1 }} />
+                          <Typography color="text.secondary">No loan history found</Typography>
+                        </Box>
+                      ) : (
+                        <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+                          <Table size="small">
+                            <TableHead>
+                              <TableRow sx={{ bgcolor: '#f5f5f5' }}>
+                                <TableCell><strong>Book</strong></TableCell>
+                                <TableCell><strong>Author</strong></TableCell>
+                                <TableCell><strong>Loan Date</strong></TableCell>
+                                <TableCell><strong>Due Date</strong></TableCell>
+                                <TableCell><strong>Returned</strong></TableCell>
+                                <TableCell><strong>Status</strong></TableCell>
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {userLoans.map((loan) => (
+                                <TableRow key={loan.id} hover>
+                                  <TableCell>
+                                    <Typography variant="body2" fontWeight={600}>{loan.book_title}</Typography>
+                                    <Typography variant="caption" color="text.secondary">ISBN: {loan.isbn || '—'}</Typography>
+                                  </TableCell>
+                                  <TableCell><Typography variant="body2">{loan.book_author}</Typography></TableCell>
+                                  <TableCell><Typography variant="body2">{formatDate(loan.loan_date)}</Typography></TableCell>
+                                  <TableCell>
+                                    <Typography variant="body2" color={loan.display_status === 'overdue' ? 'error' : 'inherit'}>
+                                      {formatDate(loan.due_date)}
+                                    </Typography>
+                                  </TableCell>
+                                  <TableCell><Typography variant="body2">{formatDate(loan.return_date)}</Typography></TableCell>
+                                  <TableCell>
+                                    <Chip
+                                      label={loan.display_status || loan.status}
+                                      size="small"
+                                      color={
+                                        loan.display_status === 'overdue' ? 'error' :
+                                        loan.status === 'returned' ? 'success' :
+                                        loan.status === 'active' ? 'primary' : 'default'
+                                      }
+                                      sx={{ fontWeight: 600, textTransform: 'capitalize' }}
+                                    />
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
+                      )
                     )}
-                  </Grid>
 
-                  {/* User Stats */}
-                  {userStats ? (
-                    <Box sx={{ mt: 4 }}>
-                      <Typography variant="h6" fontWeight={600} gutterBottom>
-                        Activity Statistics
-                      </Typography>
-                      <Grid container spacing={2}>
-                        <Grid item xs={6} md={3}>
-                          <Card sx={{ bgcolor: '#e3f2fd', textAlign: 'center', p: 2 }}>
-                            <BooksIcon sx={{ fontSize: 40, color: '#2196f3', mb: 1 }} />
-                            <Typography variant="h4" fontWeight={700}>
-                              {userStats.books_read || 0}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              Books Read
-                            </Typography>
-                          </Card>
-                        </Grid>
-                        <Grid item xs={6} md={3}>
-                          <Card sx={{ bgcolor: '#fff3e0', textAlign: 'center', p: 2 }}>
-                            <BooksIcon sx={{ fontSize: 40, color: '#ff9800', mb: 1 }} />
-                            <Typography variant="h4" fontWeight={700}>
-                              {userStats.currently_reading || 0}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              Currently Reading
-                            </Typography>
-                          </Card>
-                        </Grid>
-                        <Grid item xs={6} md={3}>
-                          <Card sx={{ bgcolor: '#f3e5f5', textAlign: 'center', p: 2 }}>
-                            <CalendarIcon sx={{ fontSize: 40, color: '#9c27b0', mb: 1 }} />
-                            <Typography variant="h4" fontWeight={700}>
-                              {userStats.reading_streak || 0}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              Day Streak
-                            </Typography>
-                          </Card>
-                        </Grid>
-                        <Grid item xs={6} md={3}>
-                          <Card sx={{ bgcolor: '#e8f5e9', textAlign: 'center', p: 2 }}>
-                            <MoneyIcon sx={{ fontSize: 40, color: '#4caf50', mb: 1 }} />
-                            <Typography variant="h4" fontWeight={700}>
-                              ${userStats.total_fines || 0}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              Total Fines
-                            </Typography>
-                          </Card>
-                        </Grid>
-                      </Grid>
-                    </Box>
-                  ) : (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                      <CircularProgress size={30} />
-                    </Box>
-                  )}
-                </Box>
+                    {/* ── TAB 2: FINES ── */}
+                    {detailTab === 2 && (
+                      finesLoading ? (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+                          <CircularProgress sx={{ color: '#4a9b8e' }} />
+                        </Box>
+                      ) : (
+                        <>
+                          {finesSummary && (
+                            <Grid container spacing={2} sx={{ mb: 2 }}>
+                              {[
+                                { label: 'Total Fines', value: `ETB ${parseFloat(finesSummary.total_amount || 0).toFixed(2)}`, bg: '#fff3e0', color: '#e65100' },
+                                { label: 'Paid', value: `ETB ${parseFloat(finesSummary.paid_amount || 0).toFixed(2)}`, bg: '#e8f5e9', color: '#2e7d32' },
+                                { label: 'Unpaid Balance', value: `ETB ${parseFloat(finesSummary.total_balance || 0).toFixed(2)}`, bg: '#ffebee', color: '#c62828' },
+                              ].map((s) => (
+                                <Grid item xs={4} key={s.label}>
+                                  <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center', bgcolor: s.bg, borderRadius: 2 }}>
+                                    <Typography variant="h6" fontWeight={700} color={s.color}>{s.value}</Typography>
+                                    <Typography variant="caption" color="text.secondary">{s.label}</Typography>
+                                  </Paper>
+                                </Grid>
+                              ))}
+                            </Grid>
+                          )}
+                          {userFines.length === 0 ? (
+                            <Box sx={{ textAlign: 'center', py: 5 }}>
+                              <ReceiptIcon sx={{ fontSize: 56, color: '#ccc', mb: 1 }} />
+                              <Typography color="text.secondary">No fines found</Typography>
+                            </Box>
+                          ) : (
+                            <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+                              <Table size="small">
+                                <TableHead>
+                                  <TableRow sx={{ bgcolor: '#f5f5f5' }}>
+                                    <TableCell><strong>Book</strong></TableCell>
+                                    <TableCell><strong>Type</strong></TableCell>
+                                    <TableCell><strong>Amount</strong></TableCell>
+                                    <TableCell><strong>Paid</strong></TableCell>
+                                    <TableCell><strong>Balance</strong></TableCell>
+                                    <TableCell><strong>Status</strong></TableCell>
+                                    <TableCell><strong>Date</strong></TableCell>
+                                  </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                  {userFines.map((fine) => (
+                                    <TableRow key={fine.id} hover>
+                                      <TableCell>
+                                        <Typography variant="body2" fontWeight={600}>{fine.book_title || 'N/A'}</Typography>
+                                        {fine.description && (
+                                          <Typography variant="caption" color="text.secondary">{fine.description}</Typography>
+                                        )}
+                                      </TableCell>
+                                      <TableCell>
+                                        <Chip label={fine.fine_type || 'overdue'} size="small" variant="outlined" sx={{ textTransform: 'capitalize' }} />
+                                      </TableCell>
+                                      <TableCell><Typography fontWeight={600}>ETB {parseFloat(fine.amount || 0).toFixed(2)}</Typography></TableCell>
+                                      <TableCell><Typography color="success.main">ETB {parseFloat(fine.paid_amount || 0).toFixed(2)}</Typography></TableCell>
+                                      <TableCell>
+                                        <Typography color={parseFloat(fine.balance) > 0 ? 'error' : 'success.main'} fontWeight={600}>
+                                          ETB {parseFloat(fine.balance || 0).toFixed(2)}
+                                        </Typography>
+                                      </TableCell>
+                                      <TableCell>
+                                        <Chip
+                                          label={fine.payment_status || fine.status}
+                                          size="small"
+                                          color={
+                                            (fine.payment_status === 'paid' || fine.status === 'paid') ? 'success' :
+                                            (fine.payment_status === 'partial' || fine.status === 'partial') ? 'warning' : 'error'
+                                          }
+                                          sx={{ fontWeight: 600, textTransform: 'capitalize' }}
+                                        />
+                                      </TableCell>
+                                      <TableCell><Typography variant="body2">{formatDate(fine.created_at)}</Typography></TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </TableContainer>
+                          )}
+                        </>
+                      )
+                    )}
+                  </Box>
+                </>
               )}
             </DialogContent>
-            <DialogActions>
-              <Button onClick={handleCloseViewDialog}>Close</Button>
+            <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid #e0e0e0' }}>
+              <Button
+                variant="outlined"
+                color={selectedUser?.status === 'active' ? 'error' : 'success'}
+                startIcon={selectedUser?.status === 'active' ? <BlockIcon /> : <ActivateIcon />}
+                onClick={() => { handleCloseViewDialog(); handleOpenStatusDialog(selectedUser); }}
+              >
+                {selectedUser?.status === 'active' ? 'Suspend Member' : 'Activate Member'}
+              </Button>
+              <Button onClick={handleCloseViewDialog} variant="contained" sx={{ bgcolor: '#4a9b8e', '&:hover': { bgcolor: '#3d8276' } }}>
+                Close
+              </Button>
             </DialogActions>
           </Dialog>
         </Box>

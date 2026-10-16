@@ -95,6 +95,37 @@ try {
     $stmt->execute();
     $total_achievements = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     
+    // Get fine information
+    $stmt = $db->prepare("
+        SELECT 
+            COUNT(*) as total_fines_count,
+            COALESCE(SUM(amount), 0) as total_fines_amount,
+            COALESCE(SUM(CASE WHEN payment_status = 'paid' THEN amount ELSE 0 END), 0) as paid_fines,
+            COALESCE(SUM(CASE WHEN payment_status IN ('unpaid', 'partial') THEN amount - COALESCE(paid_amount, 0) ELSE 0 END), 0) as unpaid_fines
+        FROM fines
+        WHERE user_id = ?
+    ");
+    $stmt->execute([$user_id]);
+    $fines = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    // Get overdue books count
+    $stmt = $db->prepare("
+        SELECT COUNT(*) as overdue_count
+        FROM book_loans
+        WHERE user_id = ? AND status = 'active' AND due_date < CURDATE()
+    ");
+    $stmt->execute([$user_id]);
+    $overdue_count = $stmt->fetch(PDO::FETCH_ASSOC)['overdue_count'];
+    
+    // Get reservations count
+    $stmt = $db->prepare("
+        SELECT COUNT(*) as reservations_count
+        FROM reservations
+        WHERE user_id = ? AND status = 'active'
+    ");
+    $stmt->execute([$user_id]);
+    $reservations = $stmt->fetch(PDO::FETCH_ASSOC)['reservations_count'];
+    
     echo json_encode([
         'success' => true,
         'stats' => [
@@ -103,7 +134,13 @@ try {
             'reading_streak' => (int)$reading_streak,
             'total_hours' => (int)$total_hours,
             'achievements' => (int)$achievements,
-            'total_achievements' => (int)$total_achievements
+            'total_achievements' => (int)$total_achievements,
+            'total_fines' => (float)$fines['total_fines_amount'],
+            'paid_fines' => (float)$fines['paid_fines'],
+            'unpaid_fines' => (float)$fines['unpaid_fines'],
+            'fines_count' => (int)$fines['total_fines_count'],
+            'overdue_books' => (int)$overdue_count,
+            'reservations' => (int)$reservations
         ]
     ]);
     
