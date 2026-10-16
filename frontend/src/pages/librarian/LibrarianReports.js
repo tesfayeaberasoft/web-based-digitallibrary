@@ -73,8 +73,22 @@ const LibrarianReports = () => {
 
   const fetchReportData = async () => {
     setLoading(true);
+    setReportData(null); // Clear previous data
     try {
       const token = localStorage.getItem('token');
+      
+      if (!token) {
+        toast.error('Authentication token missing. Please log in again.');
+        setLoading(false);
+        return;
+      }
+      
+      console.log('Fetching report:', {
+        type: reportType,
+        start_date: startDate,
+        end_date: endDate
+      });
+      
       const response = await axios.get('http://localhost:8000/api/librarian/reports', {
         headers: { Authorization: `Bearer ${token}` },
         params: {
@@ -84,12 +98,20 @@ const LibrarianReports = () => {
         }
       });
       
+      console.log('Report response:', response.data);
+      
       if (response.data.success) {
         setReportData(response.data.data);
+        toast.success(`${reportType.charAt(0).toUpperCase() + reportType.slice(1)} report loaded successfully`);
+      } else {
+        toast.error(response.data.message || 'Failed to load report');
+        console.error('Report error:', response.data);
       }
     } catch (err) {
-      toast.error('Failed to load report data');
+      const errorMsg = err.response?.data?.message || err.message || 'Failed to load report data';
+      toast.error(errorMsg);
       console.error('Error fetching report:', err);
+      console.error('Error response:', err.response?.data);
     } finally {
       setLoading(false);
     }
@@ -128,91 +150,59 @@ const LibrarianReports = () => {
     setEndDate(today.toISOString().split('T')[0]);
   };
 
-  const handleExport = (format) => {
+  const handleExport = async (format) => {
     if (!reportData) {
       toast.error('No data to export');
       return;
     }
     
-    // Convert report data to CSV or JSON
-    if (format === 'csv') {
-      exportToCSV();
-    } else if (format === 'json') {
-      exportToJSON();
-    } else if (format === 'pdf') {
-      toast.info('PDF export coming soon!');
+    try {
+      const token = localStorage.getItem('token');
+      const params = new URLSearchParams({
+        type: reportType,
+        format: format,
+        start_date: startDate,
+        end_date: endDate
+      });
+      
+      // Call the export API endpoint
+      const response = await fetch(`http://localhost:8000/api/librarian/reports-export?${params}`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Export failed');
+      }
+      
+      // Get filename from Content-Disposition header or use default
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let filename = `${reportType}_report.${format}`;
+      if (contentDisposition) {
+        const matches = /filename="([^"]+)"/.exec(contentDisposition);
+        if (matches && matches[1]) {
+          filename = matches[1];
+        }
+      }
+      
+      // Create blob and download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Report exported successfully!');
+    } catch (err) {
+      console.error('Export error:', err);
+      toast.error('Failed to export report');
     }
-  };
-
-  const exportToCSV = () => {
-    if (!reportData) return;
-    
-    let csv = '';
-    let filename = '';
-    
-    switch (reportType) {
-      case 'circulation':
-        csv = 'Date,Total Loans,Total Returns,Active Loans,Overdue Books\n';
-        filename = 'circulation_report.csv';
-        if (reportData.daily_stats) {
-          reportData.daily_stats.forEach(stat => {
-            csv += `${stat.date},${stat.loans},${stat.returns},${stat.active},${stat.overdue}\n`;
-          });
-        }
-        break;
-      case 'inventory':
-        csv = 'Category,Total Books,Available,Borrowed,Reserved\n';
-        filename = 'inventory_report.csv';
-        if (reportData.by_category) {
-          reportData.by_category.forEach(cat => {
-            csv += `${cat.category},${cat.total},${cat.available},${cat.borrowed},${cat.reserved}\n`;
-          });
-        }
-        break;
-      case 'members':
-        csv = 'Status,Count,Percentage\n';
-        filename = 'members_report.csv';
-        if (reportData.by_status) {
-          reportData.by_status.forEach(stat => {
-            csv += `${stat.status},${stat.count},${stat.percentage}%\n`;
-          });
-        }
-        break;
-      case 'financial':
-        csv = 'Type,Amount,Count\n';
-        filename = 'financial_report.csv';
-        if (reportData.fines) {
-          csv += `Total Fines,${reportData.fines.total},${reportData.fines.count}\n`;
-          csv += `Paid Fines,${reportData.fines.paid},${reportData.fines.paid_count}\n`;
-          csv += `Unpaid Fines,${reportData.fines.unpaid},${reportData.fines.unpaid_count}\n`;
-        }
-        break;
-      default:
-        break;
-    }
-    
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
-    window.URL.revokeObjectURL(url);
-    toast.success('Report exported successfully!');
-  };
-
-  const exportToJSON = () => {
-    if (!reportData) return;
-    
-    const json = JSON.stringify(reportData, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${reportType}_report.json`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-    toast.success('Report exported successfully!');
   };
 
   const handlePrint = () => {
@@ -686,11 +676,12 @@ const LibrarianReports = () => {
                 )}
                 
                 <Grid item xs={12} md={customDateRange ? 2 : 6}>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                     <Button
                       variant="contained"
                       startIcon={<ExcelIcon />}
                       onClick={() => handleExport('csv')}
+                      disabled={!reportData || loading}
                       sx={{ bgcolor: '#4a9b8e', '&:hover': { bgcolor: '#3d8276' } }}
                     >
                       Export CSV
@@ -699,8 +690,18 @@ const LibrarianReports = () => {
                       variant="outlined"
                       startIcon={<DownloadIcon />}
                       onClick={() => handleExport('json')}
+                      disabled={!reportData || loading}
                     >
                       JSON
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      startIcon={<ExcelIcon />}
+                      onClick={() => handleExport('excel')}
+                      disabled={!reportData || loading}
+                      color="success"
+                    >
+                      Excel
                     </Button>
                   </Box>
                 </Grid>

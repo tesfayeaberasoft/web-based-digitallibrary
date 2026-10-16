@@ -176,23 +176,49 @@ export default function SuperAdminDashboard() {
 
   const handleAction = async (action, extra = {}) => {
     setLoading(true);
+    setError('');
+    setSuccess('');
     try {
       const token = localStorage.getItem('token');
       const { data } = await axios.post('http://localhost:8000/api/super-admin/system-management', { action, data: extra }, { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } });
       if (data.success) {
         const label = data.backup_file || data.export_file;
-        setSuccess(data.message + (label ? ` (${label})` : ''));
+        
+        // Build success message with stats for export
+        let message = data.message;
+        if (action === 'export_data' && data.stats) {
+          message += ` - Books: ${data.stats.books}, Users: ${data.stats.users}, Loans: ${data.stats.loans}, Fines: ${data.stats.fines}`;
+        }
+        if (label) {
+          message += ` (${label})`;
+        }
+        
+        setSuccess(message);
+        
+        // Handle file download
         if (data.download_url) {
           try {
             const dl = await axios.get(data.download_url, { headers: { Authorization: `Bearer ${token}` }, responseType: 'blob' });
             const url = window.URL.createObjectURL(new Blob([dl.data]));
-            const a   = document.createElement('a'); a.href = url; a.setAttribute('download', label || 'download');
-            document.body.appendChild(a); a.click(); a.remove(); window.URL.revokeObjectURL(url);
-          } catch { /* silent */ }
+            const a   = document.createElement('a'); 
+            a.href = url; 
+            a.setAttribute('download', label || 'download');
+            document.body.appendChild(a); 
+            a.click(); 
+            a.remove(); 
+            window.URL.revokeObjectURL(url);
+          } catch (err) { 
+            console.error('Download error:', err);
+            setError('File generated but download failed. Please contact support.');
+          }
         }
-        await loadData(); setOpenDialog('');
+        
+        await loadData(); 
+        setOpenDialog('');
       } else throw new Error(data.message);
-    } catch (e) { setError(e.response?.data?.message || e.message || `Action failed: ${action}`); }
+    } catch (e) { 
+      setError(e.response?.data?.message || e.message || `Action failed: ${action}`); 
+    }
     finally { setLoading(false); }
   };
 

@@ -137,4 +137,27 @@ function getCurrentUser() {
     $token = $matches[1];
     return verifyJWT($token);
 }
-?>
+
+/**
+ * Require specific role(s) - Use this in role-protected endpoints
+ */
+function requireRole($allowedRoles) {
+    $decoded = requireAuth();
+    
+    // Normalize to array
+    if (!is_array($allowedRoles)) {
+        $allowedRoles = [$allowedRoles];
+    }
+    
+    // Check if user's role is in allowed roles
+    if (!in_array($decoded['role'], $allowedRoles)) {
+        http_response_code(403);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Insufficient permissions. Required role: ' . implode(' or ', $allowedRoles)
+        ]);
+        exit;
+    }
+    
+    return $decoded;
+}
