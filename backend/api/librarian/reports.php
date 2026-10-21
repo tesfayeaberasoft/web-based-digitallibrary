@@ -11,7 +11,11 @@ require_once __DIR__ . '/../../utils/jwt.php';
 
 try {
     // Require librarian or admin role
-    $currentUser = requireRole(['librarian', 'admin']);
+    $currentUser = requireAuth();
+    if (!in_array(strtolower($currentUser['role'] ?? ''), ['librarian', 'admin'], true)) {
+        http_response_code(403);
+        throw new Exception('Access denied. Librarian or admin role required.');
+    }
     
     $db = Database::getInstance()->getConnection();
     
@@ -74,7 +78,7 @@ function getCirculationReport($db, $start_date, $end_date) {
             COUNT(DISTINCT bl.book_id) as books_circulated,
             COALESCE(SUM(f.paid_amount), 0) as total_revenue
         FROM book_loans bl
-        LEFT JOIN fines f ON f.user_id = bl.user_id
+        LEFT JOIN fines f ON f.loan_id = bl.id
         WHERE bl.loan_date BETWEEN :start_date AND :end_date
     ";
     

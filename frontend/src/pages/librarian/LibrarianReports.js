@@ -49,6 +49,7 @@ const LibrarianReports = () => {
   const [loading, setLoading] = useState(false);
   const [tabValue, setTabValue] = useState(0);
   const [reportData, setReportData] = useState(null);
+  const [reportError, setReportError] = useState('');
   
   // Filters
   const [reportType, setReportType] = useState('circulation');
@@ -74,13 +75,12 @@ const LibrarianReports = () => {
   const fetchReportData = async () => {
     setLoading(true);
     setReportData(null); // Clear previous data
+    setReportError('');
     try {
       const token = localStorage.getItem('token');
       
       if (!token) {
-        toast.error('Authentication token missing. Please log in again.');
-        setLoading(false);
-        return;
+        throw new Error('Authentication token missing. Please log in again.');
       }
       
       console.log('Fetching report:', {
@@ -100,16 +100,16 @@ const LibrarianReports = () => {
       
       console.log('Report response:', response.data);
       
-      if (response.data.success) {
-        setReportData(response.data.data);
-        toast.success(`${reportType.charAt(0).toUpperCase() + reportType.slice(1)} report loaded successfully`);
-      } else {
-        toast.error(response.data.message || 'Failed to load report');
-        console.error('Report error:', response.data);
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to load report data');
       }
+      setReportData(response.data.data);
+      toast.success(`${reportType.charAt(0).toUpperCase() + reportType.slice(1)} report loaded successfully`);
     } catch (err) {
-      const errorMsg = err.response?.data?.message || err.message || 'Failed to load report data';
-      toast.error(errorMsg);
+      setReportData(null);
+      const message = err.response?.data?.message || err.message || 'Failed to load report data';
+      setReportError(message);
+      toast.error(message);
       console.error('Error fetching report:', err);
       console.error('Error response:', err.response?.data);
     } finally {
@@ -717,6 +717,12 @@ const LibrarianReports = () => {
           )}
 
           {/* Report Content */}
+          {!loading && reportError && (
+            <Alert severity="error" sx={{ mb: 3 }}>
+              {reportError}
+            </Alert>
+          )}
+
           {!loading && reportData && (
             <Box>
               {renderSummaryCards()}
@@ -729,7 +735,7 @@ const LibrarianReports = () => {
           )}
 
           {/* No Data State */}
-          {!loading && !reportData && (
+          {!loading && !reportError && !reportData && (
             <Card>
               <CardContent sx={{ textAlign: 'center', py: 8 }}>
                 <ChartIcon sx={{ fontSize: 80, color: '#ccc', mb: 2 }} />

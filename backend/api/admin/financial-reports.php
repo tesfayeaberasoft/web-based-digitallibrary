@@ -92,7 +92,9 @@ try {
  * Get financial overview dashboard data
  */
 function getFinancialOverview($db) {
-    $stmt = $db->query("
+    $paymentSource = getPaymentSource($db);
+    if ($paymentSource) {
+        $stmt = $db->query("
         SELECT 
             COUNT(*) as total_transactions,
             SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) as successful_payments,
@@ -104,20 +106,34 @@ function getFinancialOverview($db) {
             AVG(CASE WHEN status = 'success' THEN amount ELSE NULL END) as avg_transaction_amount,
             MIN(created_at) as first_payment_date,
             MAX(created_at) as last_payment_date
-        FROM payments
-    ");
-    $transactions = $stmt->fetch(PDO::FETCH_ASSOC);
+        FROM {$paymentSource['table']}
+        ");
+        $transactions = $stmt->fetch(PDO::FETCH_ASSOC);
+    } else {
+        $transactions = [
+            'total_transactions' => 0,
+            'successful_payments' => 0,
+            'failed_payments' => 0,
+            'pending_payments' => 0,
+            'total_revenue' => 0,
+            'pending_revenue' => 0,
+            'avg_transaction_amount' => 0,
+            'first_payment_date' => null,
+            'last_payment_date' => null,
+        ];
+    }
 
     // Fines summary
+    $fineStatusColumn = columnExists($db, 'fines', 'payment_status') ? 'payment_status' : 'status';
     $finesStmt = $db->query("
         SELECT 
             COUNT(*) as total_fines,
-            SUM(CASE WHEN payment_status = 'paid' THEN 1 ELSE 0 END) as paid_fines,
-            SUM(CASE WHEN payment_status = 'unpaid' THEN 1 ELSE 0 END) as unpaid_fines,
-            SUM(CASE WHEN payment_status = 'partial' THEN 1 ELSE 0 END) as partial_fines,
+            SUM(CASE WHEN $fineStatusColumn = 'paid' THEN 1 ELSE 0 END) as paid_fines,
+            SUM(CASE WHEN $fineStatusColumn IN ('unpaid', 'pending') THEN 1 ELSE 0 END) as unpaid_fines,
+            SUM(CASE WHEN $fineStatusColumn = 'partial' THEN 1 ELSE 0 END) as partial_fines,
             COALESCE(SUM(amount), 0) as total_fine_amount,
-            COALESCE(SUM(CASE WHEN payment_status = 'paid' THEN amount ELSE 0 END), 0) as paid_fine_amount,
-            COALESCE(SUM(CASE WHEN payment_status IN ('unpaid', 'partial') THEN amount - COALESCE(paid_amount, 0) ELSE 0 END), 0) as outstanding_balance
+            COALESCE(SUM(CASE WHEN $fineStatusColumn = 'paid' THEN amount ELSE 0 END), 0) as paid_fine_amount,
+            COALESCE(SUM(CASE WHEN $fineStatusColumn IN ('unpaid', 'pending', 'partial') THEN amount - COALESCE(paid_amount, 0) ELSE 0 END), 0) as outstanding_balance
         FROM fines
     ");
     $fines = $finesStmt->fetch(PDO::FETCH_ASSOC);
@@ -153,26 +169,86 @@ function getFinancialOverview($db) {
     ];
 }
 
+function getPaymentSource($db) {
+    $stmt = $db->query("SHOW TABLES LIKE 'payments'");
+    if ($stmt->fetchColumn()) {
+        return [
+            'table' => 'payments',
+            'reference' => 'tx_ref',
+            'fine_id' => 'fine_id',
+            'chapa_reference' => 'chapa_reference',
+            'verified_at' => 'verified_at',
+            'has_purpose' => false,
+        ];
+    }
+
+    $stmt = $db->query("SHOW TABLES LIKE 'payment_transactions'");
+    if ($stmt->fetchColumn()) {
+        return [
+            'table' => 'payment_transactions',
+            'reference' => 'transaction_reference',
+            'fine_id' => 'related_id',
+            'chapa_reference' => 'chapa_transaction_id',
+            'verified_at' => 'NULL',
+            'has_purpose' => true,
+        ];
+    }
+
+    return null;
+}
+
+function columnExists($db, $table, $column) {
+    $stmt = $db->prepare("
+        SELECT 1
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = ?
+          AND COLUMN_NAME = ?
+        LIMIT 1
+    ");
+    $stmt->execute([$table, $column]);
+    return (bool) $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
 /**
  * Get detailed payment transaction records
  */
 function getPaymentDetails($db) {
+    $paymentSource = getPaymentSource($db);
+    if (!$paymentSource) {
+        return [];
+    }
+
     $page = max(1, intval($_GET['page'] ?? 1));
     $limit = min(100, max(1, intval($_GET['limit'] ?? 50)));
     $offset = ($page - 1) * $limit;
     $status = $_GET['status'] ?? '';
     $search = $_GET['search'] ?? '';
+    $paymentTable = $paymentSource['table'];
+    $referenceColumn = $paymentSource['reference'];
+    $fineIdColumn = $paymentSource['fine_id'];
+    $chapaReferenceColumn = $paymentSource['chapa_reference'];
+    $fineJoin = $paymentSource['has_purpose']
+        ? "LEFT JOIN fines f ON p.related_id = f.id AND p.purpose = 'fine_payment'"
+        : 'LEFT JOIN fines f ON p.fine_id = f.id';
+    $fineStatusColumn = columnExists($db, 'fines', 'payment_status') ? 'f.payment_status' : 'f.status';
+    $verifiedAtExpression = $paymentSource['verified_at'] === 'NULL'
+        ? 'NULL'
+        : "p.{$paymentSource['verified_at']}";
 
     $where = [];
     $params = [];
 
+    if ($paymentSource['has_purpose']) {
+        $where[] = "p.purpose = 'fine_payment'";
+    }
     if ($status) {
         $where[] = "p.status = ?";
         $params[] = $status;
     }
 
     if ($search) {
-        $where[] = "(u.full_name LIKE ? OR u.email LIKE ? OR p.tx_ref LIKE ?)";
+        $where[] = "(u.full_name LIKE ? OR u.email LIKE ? OR p.$referenceColumn LIKE ?)";
         $params[] = "%$search%";
         $params[] = "%$search%";
         $params[] = "%$search%";
@@ -181,7 +257,7 @@ function getPaymentDetails($db) {
     $whereSQL = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
     // Get total count
-    $countStmt = $db->prepare("SELECT COUNT(*) as total FROM payments p JOIN users u ON p.user_id = u.id $whereSQL");
+    $countStmt = $db->prepare("SELECT COUNT(*) as total FROM $paymentTable p JOIN users u ON p.user_id = u.id $whereSQL");
     $countStmt->execute($params);
     $total = intval($countStmt->fetch(PDO::FETCH_ASSOC)['total']);
 
@@ -189,15 +265,15 @@ function getPaymentDetails($db) {
     $stmt = $db->prepare("
         SELECT 
             p.id,
-            p.tx_ref,
+            p.$referenceColumn AS tx_ref,
             p.user_id,
-            p.fine_id,
+            p.$fineIdColumn AS fine_id,
             p.amount,
             p.currency,
             p.status,
             p.payment_method,
-            p.chapa_reference,
-            p.verified_at,
+            p.$chapaReferenceColumn AS chapa_reference,
+            $verifiedAtExpression AS verified_at,
             p.created_at,
             p.updated_at,
             
@@ -206,23 +282,14 @@ function getPaymentDetails($db) {
             u.user_id AS student_id,
             
             f.amount as fine_amount,
-            f.payment_status,
+            $fineStatusColumn AS payment_status,
             f.description as fine_description,
-            
-            pl.event_type,
-            pl.status_before,
-            pl.status_after
-            
-        FROM payments p
+            NULL AS event_type,
+            NULL AS status_before,
+            NULL AS status_after
+        FROM $paymentTable p
         JOIN users u ON p.user_id = u.id
-        LEFT JOIN fines f ON p.fine_id = f.id
-        LEFT JOIN (
-            SELECT payment_id, event_type, status_before, status_after, created_at
-            FROM payment_logs
-            WHERE event_type IN ('verification', 'callback')
-            ORDER BY created_at DESC
-        ) pl ON p.id = pl.payment_id
-        
+        $fineJoin
         $whereSQL
         ORDER BY p.created_at DESC
         LIMIT ? OFFSET ?
@@ -278,13 +345,18 @@ function getPaymentDetails($db) {
  * Get revenue analytics — returns a flat monthly array expected by the frontend.
  */
 function getRevenueAnalytics($db) {
+    $paymentSource = getPaymentSource($db);
+    if (!$paymentSource) {
+        return [];
+    }
+
     // Monthly revenue for the last 12 months (flat array matching frontend expectations)
     $stmt = $db->query("
         SELECT 
             DATE_FORMAT(created_at, '%Y-%m') AS month,
             COUNT(*) AS transaction_count,
             COALESCE(SUM(CASE WHEN status = 'success' THEN amount ELSE 0 END), 0) AS revenue
-        FROM payments
+        FROM {$paymentSource['table']}
         WHERE created_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
         GROUP BY DATE_FORMAT(created_at, '%Y-%m')
         ORDER BY month ASC
@@ -305,31 +377,43 @@ function getRevenueAnalytics($db) {
  * Get specific user payment history
  */
 function getUserPaymentHistory($db, $userId) {
+    $paymentSource = getPaymentSource($db);
+    if (!$paymentSource) {
+        return [];
+    }
+
+    $paymentTable = $paymentSource['table'];
+    $referenceColumn = $paymentSource['reference'];
+    $fineIdColumn = $paymentSource['fine_id'];
+    $chapaReferenceColumn = $paymentSource['chapa_reference'];
+    $fineJoin = $paymentSource['has_purpose']
+        ? "LEFT JOIN fines f ON p.related_id = f.id AND p.purpose = 'fine_payment'"
+        : 'LEFT JOIN fines f ON p.fine_id = f.id';
+    $fineStatusColumn = columnExists($db, 'fines', 'payment_status') ? 'f.payment_status' : 'f.status';
+    $verifiedAtExpression = $paymentSource['verified_at'] === 'NULL'
+        ? 'NULL'
+        : "p.{$paymentSource['verified_at']}";
+
     $stmt = $db->prepare("
         SELECT 
             p.id,
-            p.tx_ref,
+            p.$referenceColumn AS tx_ref,
             p.amount,
             p.currency,
             p.status,
             p.payment_method,
-            p.verified_at,
+            $verifiedAtExpression AS verified_at,
             p.created_at,
             
             f.id as fine_id,
             f.amount as fine_amount,
-            f.payment_status,
+            $fineStatusColumn as payment_status,
             f.description,
-            
-            pl.event_type,
-            pl.status_before,
-            pl.status_after
-            
-        FROM payments p
-        JOIN fines f ON p.fine_id = f.id
-        LEFT JOIN payment_logs pl ON p.id = pl.payment_id
-        
+            p.$chapaReferenceColumn AS chapa_reference
+        FROM $paymentTable p
+        $fineJoin
         WHERE p.user_id = ?
+        " . ($paymentSource['has_purpose'] ? "AND p.purpose = 'fine_payment'" : '') . "
         ORDER BY p.created_at DESC
     ");
     
@@ -360,6 +444,20 @@ function getUserPaymentHistory($db, $userId) {
  * Get revenue for a specific date range
  */
 function getRevenueByDateRange($db, $fromDate, $toDate) {
+    $paymentSource = getPaymentSource($db);
+    if (!$paymentSource) {
+        return [
+            'date_range' => ['from' => $fromDate, 'to' => $toDate],
+            'by_day' => [],
+            'totals' => [
+                'total_transactions' => 0,
+                'total_successful' => 0,
+                'total_failed' => 0,
+                'total_revenue' => 0.0,
+            ],
+        ];
+    }
+
     $stmt = $db->prepare("
         SELECT 
             DATE(created_at) as date,
@@ -370,7 +468,7 @@ function getRevenueByDateRange($db, $fromDate, $toDate) {
             COALESCE(SUM(CASE WHEN status = 'success' THEN amount ELSE 0 END), 0) as revenue,
             COALESCE(SUM(amount), 0) as total_amount,
             AVG(CASE WHEN status = 'success' THEN amount ELSE NULL END) as avg_successful_amount
-        FROM payments
+        FROM {$paymentSource['table']}
         WHERE DATE(created_at) BETWEEN ? AND ?
         GROUP BY DATE(created_at)
         ORDER BY date DESC
