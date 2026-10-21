@@ -9,6 +9,7 @@ header('Content-Type: application/json');
 try {
     require_once __DIR__ . '/../../config/config.php';
     require_once __DIR__ . '/../../utils/jwt.php';
+    require_once __DIR__ . '/../../utils/ebook-storage.php';
     
     $decoded = requireAuth();
     
@@ -31,7 +32,7 @@ try {
     $db = Database::getInstance()->getConnection();
     
     // Get book details before deletion for notifications
-    $stmt = $db->prepare("SELECT title, author FROM books WHERE id = ?");
+    $stmt = $db->prepare("SELECT title, author, file_path FROM books WHERE id = ?");
     $stmt->execute([$book_id]);
     $book = $stmt->fetch(PDO::FETCH_ASSOC);
     
@@ -73,6 +74,7 @@ try {
         echo json_encode(['success' => false, 'message' => 'Book not found']);
         exit;
     }
+    deleteStoredEbook($book['file_path']);
     
     // Send notifications to users who had this book reserved
     if (!empty($reserved_users)) {

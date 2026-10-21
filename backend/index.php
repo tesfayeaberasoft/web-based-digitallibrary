@@ -9,7 +9,8 @@ require_once __DIR__ . '/config/database.php';
 // Handle CORS
 header('Access-Control-Allow-Origin: http://localhost:3000');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, Range');
+header('Access-Control-Expose-Headers: Accept-Ranges, Content-Range, Content-Length');
 header('Access-Control-Allow-Credentials: true');
 
 // Handle OPTIONS preflight requests
@@ -197,6 +198,16 @@ switch (true) {
     
     case preg_match('#^/books$#', $path) && $request_method === 'POST':
         require __DIR__ . '/api/books/create.php';
+        break;
+
+    case preg_match('#^/books/(\d+)/content$#', $path, $matches) && $request_method === 'GET':
+        $_GET['id'] = $matches[1];
+        require __DIR__ . '/api/books/content.php';
+        break;
+
+    case preg_match('#^/books/(\d+)/ebook$#', $path, $matches) && $request_method === 'POST':
+        $_GET['id'] = $matches[1];
+        require __DIR__ . '/api/books/upload-ebook.php';
         break;
     
     case preg_match('#^/books/(\d+)$#', $path, $matches) && $request_method === 'GET':

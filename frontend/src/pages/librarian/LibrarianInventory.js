@@ -107,6 +107,7 @@ const LibrarianInventory = () => {
     total_copies: '',
     condition_status: 'good'
   });
+  const [ebookFile, setEbookFile] = useState(null);
   
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -176,6 +177,7 @@ const LibrarianInventory = () => {
   };
 
   const handleOpenDialog = (book = null) => {
+    setEbookFile(null);
     if (book) {
       setEditMode(true);
       setCurrentBook(book);
@@ -216,6 +218,7 @@ const LibrarianInventory = () => {
     setOpenDialog(false);
     setEditMode(false);
     setCurrentBook(null);
+    setEbookFile(null);
   };
 
   const handleChange = (e) => {
@@ -238,11 +241,23 @@ const LibrarianInventory = () => {
           formData,
           config
         );
+        if (ebookFile) {
+          const uploadData = new FormData();
+          uploadData.append('ebook_file', ebookFile);
+          await axios.post(
+            `http://localhost:8000/api/books/${currentBook.id}/ebook`,
+            uploadData,
+            config
+          );
+        }
         toast.success('Book updated successfully!');
       } else {
+        const bookData = new FormData();
+        Object.entries(formData).forEach(([key, value]) => bookData.append(key, value));
+        if (ebookFile) bookData.append('ebook_file', ebookFile);
         await axios.post(
           'http://localhost:8000/api/books',
-          formData,
+          bookData,
           config
         );
         toast.success('Book added successfully!');
@@ -1408,6 +1423,39 @@ const LibrarianInventory = () => {
                   value={formData.description}
                   onChange={handleChange}
                 />
+              </Grid>
+              <Grid item xs={12}>
+                <Button variant="outlined" component="label" startIcon={<UploadIcon />}>
+                  {ebookFile ? 'Change selected eBook' : 'Select PDF or EPUB eBook'}
+                  <input
+                    hidden
+                    type="file"
+                    accept=".pdf,.epub,application/pdf,application/epub+zip"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (!file) return;
+                      const extension = file.name.split('.').pop()?.toLowerCase();
+                      if (!['pdf', 'epub'].includes(extension)) {
+                        toast.error('Only PDF and EPUB files are supported.');
+                        event.target.value = '';
+                        return;
+                      }
+                      if (file.size > 50 * 1024 * 1024) {
+                        toast.error('eBook files must be 50 MB or smaller.');
+                        event.target.value = '';
+                        return;
+                      }
+                      setEbookFile(file);
+                    }}
+                  />
+                </Button>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  {ebookFile
+                    ? `${ebookFile.name} (${(ebookFile.size / (1024 * 1024)).toFixed(1)} MB)`
+                    : editMode && currentBook?.has_digital_content
+                      ? `Existing ${currentBook.file_type?.toUpperCase()} content is available. Select a file to replace it.`
+                      : 'Optional. PDF or EPUB, up to 50 MB.'}
+                </Typography>
               </Grid>
             </Grid>
           </DialogContent>

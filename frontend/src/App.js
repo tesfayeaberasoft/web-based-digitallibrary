@@ -52,6 +52,7 @@ import UserReadingGoals from './pages/user/UserReadingGoals';
 import UserNotificationSettings from './pages/user/UserNotificationSettings';
 import UserFines from './pages/user/UserFines';
 import PaymentReturn from './pages/user/PaymentReturn';
+import BookReader from './pages/user/BookReader';
 
 import './App.css';
 
@@ -116,6 +117,11 @@ function App() {
               {/* Public Routes */}
               <Route path="/" element={<HomePage />} />
               <Route path="/browse" element={<BrowseBooks />} />
+              <Route path="/read/:bookId" element={
+                <ProtectedRoute allowedRoles={['user', 'librarian', 'admin', 'super-admin']}>
+                  <BookReader />
+                </ProtectedRoute>
+              } />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
 

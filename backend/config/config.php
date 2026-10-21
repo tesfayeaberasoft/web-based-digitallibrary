@@ -38,7 +38,8 @@ ini_set('display_errors', 1);
 // CORS headers
 header("Access-Control-Allow-Origin: http://localhost:3000");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, Range");
+header("Access-Control-Expose-Headers: Accept-Ranges, Content-Range, Content-Length");
 header("Access-Control-Allow-Credentials: true");
 
 // Handle preflight requests

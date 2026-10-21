@@ -6,9 +6,12 @@
 
 header('Content-Type: application/json');
 
+$uploadedEbook = null;
+
 try {
     require_once __DIR__ . '/../../config/config.php';
     require_once __DIR__ . '/../../utils/jwt.php';
+    require_once __DIR__ . '/../../utils/ebook-storage.php';
     
     $decoded = requireAuth();
     
@@ -19,8 +22,13 @@ try {
         exit;
     }
     
-    // Get POST data
-    $data = json_decode(file_get_contents('php://input'), true);
+    // Keep the JSON API compatible while allowing multipart eBook uploads.
+    $data = !empty($_POST)
+        ? $_POST
+        : json_decode(file_get_contents('php://input'), true);
+    if (!is_array($data)) {
+        throw new EbookUploadException('Book details are required.');
+    }
     
     // Validate required fields
     $required = ['title', 'author', 'isbn', 'category_id', 'total_copies'];
@@ -34,6 +42,9 @@ try {
     
     require_once __DIR__ . '/../../config/database.php';
     $db = Database::getInstance()->getConnection();
+    if (!$db) {
+        throw new RuntimeException('Database connection failed.');
+    }
     
     // Check if ISBN already exists
     $stmt = $db->prepare("SELECT id FROM books WHERE isbn = ?");
@@ -43,14 +54,16 @@ try {
         echo json_encode(['success' => false, 'message' => 'Book with this ISBN already exists']);
         exit;
     }
+
+    $uploadedEbook = storeEbookUpload($_FILES['ebook_file'] ?? null);
     
-    // Insert book
+    $db->beginTransaction();
     $stmt = $db->prepare("
         INSERT INTO books (
             title, author, isbn, publisher, publication_year,
             category_id, description, language, pages,
-            total_copies, available_copies, status, condition_status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)
+            total_copies, available_copies, status, condition_status, file_path, file_type
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?)
     ");
     
     $available_copies = $data['total_copies'];
@@ -68,7 +81,9 @@ try {
         $data['pages'] ?? null,
         $data['total_copies'],
         $available_copies,
-        $condition_status
+        $condition_status,
+        $uploadedEbook['path'] ?? null,
+        $uploadedEbook['type'] ?? 'physical'
     ]);
     
     $book_id = $db->lastInsertId();
@@ -79,6 +94,7 @@ try {
         VALUES (?, 'create_book', 'books', ?, ?)
     ");
     $stmt->execute([$decoded['user_id'], $book_id, $_SERVER['REMOTE_ADDR']]);
+    $db->commit();
     
     echo json_encode([
         'success' => true,
@@ -87,10 +103,22 @@ try {
     ]);
     
 } catch (Exception $e) {
+    if (isset($db) && $db->inTransaction()) {
+        $db->rollBack();
+    }
+    if ($uploadedEbook !== null) {
+        deleteStoredEbook($uploadedEbook['path']);
+    }
+    if ($e instanceof EbookUploadException) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        exit;
+    }
+    error_log('Book creation failed: ' . $e->getMessage());
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => 'Server error: ' . $e->getMessage()
+        'message' => 'Book could not be created.'
     ]);
 }
 ?>

@@ -122,6 +122,15 @@ export default function BrowseBooks() {
     setSelectedBook(book); setConfirmOpen(true);
   };
 
+  const handleReadOnline = (book) => {
+    if (!user) {
+      setSnackbar({ open: true, msg: 'Please login to read this eBook', sev: 'warning' });
+      navigate('/login');
+      return;
+    }
+    navigate(`/read/${book.id}`);
+  };
+
   const handleConfirm = async () => {
     if (!selectedBook) return;
     setBorrowing(true); setConfirmOpen(false);
@@ -414,12 +423,20 @@ export default function BrowseBooks() {
                         <Divider sx={{ borderColor:C.light }} />
 
                         {/* ── Action ── */}
-                        <CardActions sx={{ p:2 }}>
+                        <CardActions sx={{ p:2, gap:1 }}>
+                          {book.can_read_online && (
+                            <Button variant="outlined" startIcon={<AutoStories />}
+                              onClick={() => handleReadOnline(book)}
+                              sx={{ ...gradBtn(true), flex:1, minWidth:0 }}>
+                              Read Online
+                            </Button>
+                          )}
                           <Button fullWidth variant="contained" disabled={borrowing}
                             startIcon={isAvail ? <BookIcon /> : <Bookmark />}
                             onClick={() => handleBorrow(book)}
                             sx={{
                               ...gradBtn(),
+                              flex:1,
                               ...(isAvail ? {} : {
                                 background:`linear-gradient(135deg,#f59e0b,#fbbf24)`,
                                 '&:hover':{ background:`linear-gradient(135deg,#d97706,#f59e0b)` },

@@ -85,6 +85,9 @@ try {
         $book['avg_rating'] = $book['avg_rating'] ? round((float)$book['avg_rating'], 1) : null;
         $book['review_count'] = (int)$book['review_count'];
         $book['is_available'] = $book['available_copies'] > 0;
+        $book['has_digital_content'] = !empty($book['file_path']);
+        $book['can_read_online'] = $book['has_digital_content'] && $book['status'] === 'active';
+        unset($book['file_path']);
     }
 
     echo json_encode([

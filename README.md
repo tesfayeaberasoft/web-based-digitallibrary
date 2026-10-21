@@ -32,6 +32,7 @@ A comprehensive, full-stack digital library management system with role-based ac
 - **Role-Based Access Control** - Admin, Librarian, and User roles with specific permissions
 - **Analytics Dashboard** - Comprehensive statistics and performance metrics
 - **Reading History** - Track user reading progress and completed books
+- **Digital Content Support** - Upload PDF/EPUB files and read them in authenticated browser-based viewers
 - **Achievements System** - Gamification with badges and reading goals
 - **Multi-Library Support** - Manage multiple branches and inventory
 - **Audit Logs** - Complete activity tracking for security and accountability
@@ -103,7 +104,7 @@ cd backend
 # Edit config/database.php with your MySQL credentials
 
 # 4. Start Backend Server
-php -S localhost:8000 router.php
+php -d upload_max_filesize=50M -d post_max_size=55M -S localhost:8000 router.php
 
 # 5. Setup Frontend (in new terminal)
 cd frontend
@@ -114,6 +115,14 @@ npm start
 **💡 Windows Users:** Double-click `start-backend.bat` and `start-frontend.bat` for easy startup!
 
 The application will open at `http://localhost:3000`
+
+### Digital eBook uploads
+
+Admins and librarians can attach a PDF or EPUB (up to 50 MB) when adding a book or replace the file from the inventory edit form. Files are stored in the ignored `private-storage/ebooks/` directory outside the PHP web root; the database stores only a generated relative storage key. No schema migration is needed because `books.file_path` and `books.file_type` are already defined in `database/schema.sql`.
+
+The development `start-backend.bat` sets PHP's upload limits for 50 MB files. For other PHP servers, enable the `fileinfo` and `zip` extensions and set `upload_max_filesize=50M` and `post_max_size=55M`. The authenticated `GET /api/books/{id}/content` endpoint streams file bytes (including PDF range requests); it never exposes the storage path. The React reader uses `react-pdf` for PDFs and `react-reader` for EPUBs.
+
+Authentication and hidden download controls deter casual access, but cannot prevent a reader from saving content delivered to their browser, taking screenshots, or otherwise capturing it. Use licensing/DRM controls if stronger copy protection is required.
 
 For detailed setup instructions, see [SETUP.md](SETUP.md) or [START_SERVER.md](START_SERVER.md)
 

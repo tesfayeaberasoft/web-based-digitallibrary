@@ -9,6 +9,7 @@ header('Content-Type: application/json');
 try {
     require_once __DIR__ . '/../../config/config.php';
     require_once __DIR__ . '/../../utils/jwt.php';
+    require_once __DIR__ . '/../../utils/ebook-storage.php';
     $decoded = requireAuth();
     
     // Only librarians and admins can perform bulk operations
@@ -53,7 +54,7 @@ try {
     }
     
     // Validate book IDs exist
-    $stmt = $db->prepare("SELECT id, title FROM books WHERE id IN ($placeholders)");
+    $stmt = $db->prepare("SELECT id, title, file_path FROM books WHERE id IN ($placeholders)");
     $stmt->execute($book_ids);
     $existing_books = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
@@ -91,6 +92,9 @@ try {
         $deleted_count = $stmt->rowCount();
         
         $db->commit();
+        foreach ($existing_books as $book) {
+            deleteStoredEbook($book['file_path']);
+        }
         
         echo json_encode([
             'success' => true,
