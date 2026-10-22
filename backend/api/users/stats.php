@@ -120,8 +120,8 @@ try {
     // Get reservations count
     $stmt = $db->prepare("
         SELECT COUNT(*) as reservations_count
-        FROM reservations
-        WHERE user_id = ? AND status = 'active'
+        FROM book_reservations
+        WHERE user_id = ? AND status IN ('pending', 'available')
     ");
     $stmt->execute([$user_id]);
     $reservations = $stmt->fetch(PDO::FETCH_ASSOC)['reservations_count'];
