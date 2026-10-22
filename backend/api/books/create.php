@@ -60,10 +60,10 @@ try {
     $db->beginTransaction();
     $stmt = $db->prepare("
         INSERT INTO books (
-            title, author, isbn, publisher, publication_year,
+            title, author, isbn, cover_image, publisher, publication_year,
             category_id, description, language, pages,
             total_copies, available_copies, status, condition_status, file_path, file_type
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?)
     ");
     
     $available_copies = $data['total_copies'];
@@ -73,6 +73,7 @@ try {
         $data['title'],
         $data['author'],
         $data['isbn'],
+        $data['cover_image'] ?? null,
         $data['publisher'] ?? null,
         $data['publication_year'] ?? null,
         $data['category_id'],

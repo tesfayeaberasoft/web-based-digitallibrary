@@ -54,6 +54,8 @@ import DashboardLayout from '../../components/layout/DashboardLayout';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
+const API_BASE_URL = (process.env.REACT_APP_API_URL || 'http://localhost:8000').replace(/\/+$/, '');
+
 const LibrarianInventory = () => {
   const [books, setBooks] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -98,6 +100,7 @@ const LibrarianInventory = () => {
     title: '',
     author: '',
     isbn: '',
+    cover_image: '',
     publisher: '',
     publication_year: '',
     category_id: '',
@@ -108,6 +111,7 @@ const LibrarianInventory = () => {
     condition_status: 'good'
   });
   const [ebookFile, setEbookFile] = useState(null);
+  const [metadataLoading, setMetadataLoading] = useState(false);
   
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -185,6 +189,7 @@ const LibrarianInventory = () => {
         title: book.title,
         author: book.author,
         isbn: book.isbn,
+        cover_image: book.cover_image || '',
         publisher: book.publisher || '',
         publication_year: book.publication_year || '',
         category_id: book.category_id,
@@ -201,6 +206,7 @@ const LibrarianInventory = () => {
         title: '',
         author: '',
         isbn: '',
+        cover_image: '',
         publisher: '',
         publication_year: '',
         category_id: '',
@@ -226,6 +232,42 @@ const LibrarianInventory = () => {
       ...formData,
       [e.target.name]: e.target.value
     });
+  };
+
+  const handleFetchMetadata = async () => {
+    if (!formData.isbn.trim()) {
+      toast.error('Enter an ISBN to fetch book details.');
+      return;
+    }
+
+    setMetadataLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const { data } = await axios.get(`${API_BASE_URL}/api/books/metadata`, {
+        params: { isbn: formData.isbn },
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!data.success || !data.metadata) {
+        throw new Error(data.message || 'Could not retrieve book metadata.');
+      }
+
+      setFormData((current) => ({
+        ...current,
+        title: data.metadata.title || current.title,
+        author: data.metadata.author || current.author,
+        publisher: data.metadata.publisher || current.publisher,
+        cover_image: data.metadata.cover_image || '',
+        publication_year: data.metadata.publication_year || current.publication_year,
+        description: data.metadata.description || current.description,
+        pages: data.metadata.pages || current.pages,
+        language: data.metadata.language || current.language
+      }));
+      toast.success('Book details fetched from Google Books.');
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || 'Could not retrieve book metadata.');
+    } finally {
+      setMetadataLoading(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -1316,7 +1358,17 @@ const LibrarianInventory = () => {
                   name="isbn"
                   value={formData.isbn}
                   onChange={handleChange}
+                  helperText="Enter the ISBN, then fetch book details from Google Books."
                 />
+                <Button
+                  variant="contained"
+                  onClick={handleFetchMetadata}
+                  disabled={metadataLoading}
+                  startIcon={metadataLoading ? <CircularProgress size={16} /> : <SearchIcon />}
+                  sx={{ mt: 1 }}
+                >
+                  {metadataLoading ? 'Fetching details...' : 'Fetch Details from Google Books'}
+                </Button>
               </Grid>
               <Grid item xs={12} md={6}>
                 <TextField
@@ -1355,6 +1407,29 @@ const LibrarianInventory = () => {
                   onChange={handleChange}
                 />
               </Grid>
+              {formData.cover_image && (
+                <Grid item xs={12}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box
+                      component="img"
+                      src={formData.cover_image}
+                      alt={`Cover of ${formData.title || 'book'}`}
+                      onError={() => setFormData((current) => ({ ...current, cover_image: '' }))}
+                      sx={{
+                        width: 120,
+                        height: 170,
+                        objectFit: 'contain',
+                        borderRadius: 1,
+                        boxShadow: 2,
+                        bgcolor: 'grey.100'
+                      }}
+                    />
+                    <Typography variant="body2" color="text.secondary">
+                      Book cover preview
+                    </Typography>
+                  </Box>
+                </Grid>
+              )}
               <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth

@@ -142,6 +142,10 @@ Reviews use the existing `book_reviews` table. Signed-in users can submit one 1â
 | `POST /api/favorites` | Signed in | Add a book (`book_id`) to favorites |
 | `DELETE /api/favorites/{bookId}` | Signed in | Remove a book from favorites |
 
+### Google Books metadata lookup
+
+Admins and librarians can enter an ISBN and select **Fetch Details from Google Books** in the inventory book form. The authenticated `GET /api/books/metadata?isbn={isbn}` endpoint validates the ISBN, queries Google Books over HTTPS from the PHP backend, and returns the matching title, authors, publisher, cover image, and optional publication details. The highest-resolution cover available in the API response is previewed and saved with the book record. PHP's cURL extension must be enabled. Configure `GOOGLE_BOOKS_API_KEY=your_key` in `backend/.env` (never `frontend/.env`), then restart the PHP backend; the key stays server-side and is not sent to the browser.
+
 Notification settings are included in `database/schema.sql`. To add the preferences table to an existing database, rerun `backend/setup-database.php` or apply `backend/migrations/create-notification-settings.sql` manually.
 
 For detailed setup instructions, see [SETUP.md](SETUP.md) or [START_SERVER.md](START_SERVER.md)
