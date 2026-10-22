@@ -262,7 +262,11 @@ const LibrarianInventory = () => {
         pages: data.metadata.pages || current.pages,
         language: data.metadata.language || current.language
       }));
-      toast.success('Book details fetched from Google Books.');
+      toast.success(
+        data.source === 'open_library'
+          ? 'Google Books was unavailable; book details were fetched from Open Library.'
+          : 'Book details fetched from Google Books.'
+      );
     } catch (err) {
       toast.error(err.response?.data?.message || err.message || 'Could not retrieve book metadata.');
     } finally {
