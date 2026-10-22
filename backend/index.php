@@ -200,6 +200,10 @@ switch (true) {
         require __DIR__ . '/api/books/create.php';
         break;
 
+    case preg_match('#^/books/metadata$#', $path) && $request_method === 'GET':
+        require __DIR__ . '/api/books/metadata.php';
+        break;
+
     case preg_match('#^/books/(\d+)/content$#', $path, $matches) && $request_method === 'GET':
         $_GET['id'] = $matches[1];
         require __DIR__ . '/api/books/content.php';

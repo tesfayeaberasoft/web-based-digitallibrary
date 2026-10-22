@@ -47,7 +47,7 @@ try {
     
     $allowed_fields = ['title', 'author', 'isbn', 'publisher', 'publication_year', 
                        'category_id', 'description', 'language', 'pages', 
-                       'total_copies', 'status', 'condition_status'];
+                       'total_copies', 'status', 'condition_status', 'cover_image'];
     
     foreach ($allowed_fields as $field) {
         if (isset($data[$field])) {
