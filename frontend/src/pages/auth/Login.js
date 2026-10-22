@@ -484,6 +484,30 @@ const Login = () => {
                         Sign Up
                       </Link>
                     </Typography>
+
+                    <Button
+                      fullWidth
+                      variant="outlined"
+                      startIcon={<MenuBook />}
+                      onClick={() => navigate('/browse')}
+                      sx={{
+                        mt: 2,
+                        py: 1.15,
+                        borderRadius: 2,
+                        borderColor: `${C.secondary}80`,
+                        color: C.primary,
+                        fontWeight: 700,
+                        '&:hover': {
+                          borderColor: C.primary,
+                          bgcolor: C.light,
+                          transform: 'translateY(-1px)',
+                        },
+                        '&:focus-visible': { outline: `2px solid ${C.primary}`, outlineOffset: 2 },
+                        transition: 'all 180ms ease',
+                      }}
+                    >
+                      Browse Books
+                    </Button>
                   </Box>
 
                   {/* Quick Access (for development) */}
