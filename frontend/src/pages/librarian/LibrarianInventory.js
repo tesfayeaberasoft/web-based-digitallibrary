@@ -262,11 +262,12 @@ const LibrarianInventory = () => {
         pages: data.metadata.pages || current.pages,
         language: data.metadata.language || current.language
       }));
-      toast.success(
-        data.source === 'open_library'
-          ? 'Google Books was unavailable; book details were fetched from Open Library.'
-          : 'Book details fetched from Google Books.'
-      );
+      if (data.source === 'open_library') {
+        const reason = data.fallback_reason ? `${data.fallback_reason} ` : '';
+        toast.info(`${reason}Book details were fetched from Open Library.`);
+      } else {
+        toast.success('Book details fetched from Google Books.');
+      }
     } catch (err) {
       toast.error(err.response?.data?.message || err.message || 'Could not retrieve book metadata.');
     } finally {
