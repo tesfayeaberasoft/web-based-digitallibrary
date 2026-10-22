@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box, Container, Typography, Grid, Card, CardContent,
   CardActions, Button, TextField, MenuItem, Chip, Rating,
@@ -40,6 +40,8 @@ const C = {
   accent:    '#95d5b2',
 };
 
+const API_BASE_URL = 'http://localhost:8000';
+
 const gradBtn = (outline = false) => outline ? {
   borderColor: C.secondary, color: C.primary, fontWeight: 700, borderRadius: 2,
   '&:hover': { borderColor: C.primary, bgcolor: C.lighter, transform: 'translateY(-1px)' },
@@ -56,22 +58,109 @@ const gradBtn = (outline = false) => outline ? {
   transition: 'all 0.3s ease',
 };
 
-/* ── deterministic cover colour from book id ── */
-const COVER_GRADS = [
-  `linear-gradient(135deg, ${C.primary}, ${C.secondary})`,
-  `linear-gradient(135deg, #3b82f6, #60a5fa)`,
-  `linear-gradient(135deg, #8b5cf6, #a78bfa)`,
-  `linear-gradient(135deg, #f59e0b, #fbbf24)`,
-  `linear-gradient(135deg, #ef4444, #f87171)`,
-  `linear-gradient(135deg, #06b6d4, #67e8f9)`,
-  `linear-gradient(135deg, ${C.secondary}, ${C.accent})`,
-  `linear-gradient(135deg, #ec4899, #f9a8d4)`,
-];
-const coverGrad = (id) => COVER_GRADS[(id || 0) % COVER_GRADS.length];
+const getCoverImageUrl = (coverImage) => {
+  if (typeof coverImage !== 'string' || !coverImage.trim()) return '';
+
+  try {
+    return new URL(coverImage.trim(), `${API_BASE_URL}/`).toString();
+  } catch {
+    return '';
+  }
+};
+
+function BookCover({ book, isAvail, compact = false }) {
+  const savedCover = getCoverImageUrl(book.cover_image);
+  const isbn = typeof book.isbn === 'string' ? book.isbn.replace(/[^0-9X]/gi, '') : '';
+  const isbnCover = isbn
+    ? `https://covers.openlibrary.org/b/isbn/${encodeURIComponent(isbn)}-M.jpg?default=false`
+    : '';
+  const sources = [savedCover, isbnCover].filter((source, index, all) => source && all.indexOf(source) === index);
+  const [sourceIndex, setSourceIndex] = useState(0);
+
+  useEffect(() => {
+    setSourceIndex(0);
+  }, [savedCover, isbnCover]);
+
+  const handleImageError = () => {
+    setSourceIndex((current) => Math.min(current + 1, sources.length));
+  };
+
+  const handleImageLoad = (event) => {
+    if (event.currentTarget.naturalWidth <= 1) handleImageError(event);
+  };
+
+  return (
+    <Box sx={{
+      width: compact ? 56 : '100%',
+      height: compact ? 76 : 220,
+      position: 'relative',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      overflow: 'hidden',
+      p: compact ? 0 : 2,
+      bgcolor: '#f3f6f4',
+    }}>
+      {sourceIndex < sources.length ? (
+        <Box
+          component="img"
+          src={sources[sourceIndex]}
+          alt={`Cover of ${book.title}`}
+          loading="lazy"
+          decoding="async"
+          onError={handleImageError}
+          onLoad={handleImageLoad}
+          sx={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain',
+          }}
+        />
+      ) : (
+        <Box sx={{ textAlign: 'center', color: '#718078' }}>
+          <AutoStories sx={{ fontSize: compact ? 28 : 52, mb: compact ? 0 : 1, color: '#aab8af' }} />
+          {!compact && (
+            <Typography variant="caption" sx={{
+              display: '-webkit-box',
+              overflow: 'hidden',
+              WebkitBoxOrient: 'vertical',
+              WebkitLineClamp: 2,
+              fontWeight: 600,
+              lineHeight: 1.35,
+            }}>
+              {book.title}
+            </Typography>
+          )}
+        </Box>
+      )}
+      {!compact && (
+        <Chip
+          label={isAvail ? `${book.available_copies} Available` : 'Unavailable'}
+          size="small"
+          icon={isAvail
+            ? <CheckCircle sx={{ fontSize: 13, color: `${C.primary} !important` }} />
+            : <BookmarkBorder sx={{ fontSize: 13, color: '#64746a !important' }} />}
+          sx={{
+            position: 'absolute',
+            top: 10,
+            right: 10,
+            bgcolor: 'rgba(255,255,255,.92)',
+            color: isAvail ? C.primary : '#526158',
+            fontWeight: 700,
+            fontSize: '0.72rem',
+            border: '1px solid rgba(255,255,255,.8)',
+            boxShadow: '0 2px 8px rgba(25,45,32,.12)',
+          }}
+        />
+      )}
+    </Box>
+  );
+}
 
 export default function BrowseBooks() {
   const { user }    = useAuth();
   const navigate    = useNavigate();
+  const searchInputRef = useRef(null);
 
   const [books,       setBooks]       = useState([]);
   const [categories,  setCategories]  = useState([]);
@@ -225,55 +314,182 @@ export default function BrowseBooks() {
 
   const available  = books.filter(b => b.available_copies > 0).length;
   const unavailable= books.filter(b => b.available_copies === 0).length;
+  const focusSearch = () => {
+    const searchInput = searchInputRef.current;
+    searchInput?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    searchInput?.focus({ preventScroll: true });
+  };
 
   /* ─────────────────────── render ─────────────────────── */
   return (
     <Box sx={{ bgcolor: C.lighter, minHeight: '100vh' }}>
-      <Navbar title="Digital Library" showUserMenu />
+      <Navbar title="Digital Library" showUserMenu browseHeader />
 
       {/* ── Hero Banner ── */}
       <Box sx={{
-        background: `linear-gradient(135deg, ${C.primary} 0%, ${C.secondary} 100%)`,
-        py: { xs: 5, md: 7 }, position: 'relative', overflow: 'hidden',
+        background: `radial-gradient(ellipse at 82% 12%, rgba(149,213,178,.42), transparent 36%), linear-gradient(120deg, ${C.dark} 0%, ${C.primary} 55%, ${C.secondary} 100%)`,
+        py: { xs: 5, md: 8 },
+        position: 'relative',
+        overflow: 'hidden',
+        isolation: 'isolate',
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          inset: 0,
+          zIndex: -1,
+          background: 'linear-gradient(100deg, transparent 20%, rgba(255,255,255,.07) 50%, transparent 80%)',
+          backgroundSize: '220% 100%',
+          transition: 'background-position 700ms ease',
+        },
+        '&:hover::after': { backgroundPosition: '100% 0' },
       }}>
-        {/* decorative circles */}
+        {/* Decorative shapes */}
         {[
-          { s:300, t:-80,  r:-80,  o:.1 },
-          { s:200, b:-60,  l:-60,  o:.08 },
-          { s:150, t:'40%',r:'15%',o:.06 },
+          { s: 340, t: -135, r: -85, opacity: 0.11 },
+          { s: 220, b: -130, l: '42%', opacity: 0.08 },
+          { s: 145, t: '36%', r: '17%', opacity: 0.07 },
         ].map((c, i) => (
           <Box key={i} sx={{
-            position:'absolute', width:c.s, height:c.s, borderRadius:'50%',
-            background:'rgba(255,255,255,0.2)',
-            top:c.t, bottom:c.b, left:c.l, right:c.r, opacity:c.o,
-          }}/>
+            position: 'absolute',
+            width: c.s,
+            height: c.s,
+            borderRadius: '50%',
+            border: '1px solid rgba(255,255,255,.34)',
+            background: 'radial-gradient(circle at 35% 30%, rgba(255,255,255,.2), rgba(255,255,255,.015) 70%)',
+            top: c.t,
+            bottom: c.b,
+            left: c.l,
+            right: c.r,
+            opacity: c.opacity,
+            pointerEvents: 'none',
+            transition: 'transform 600ms ease, opacity 600ms ease',
+            '.browse-books-hero:hover &': {
+              transform: `translate(${i % 2 ? '-8px' : '8px'}, ${i % 2 ? '6px' : '-6px'})`,
+              opacity: c.opacity + 0.04,
+            },
+          }} />
         ))}
-        <Container sx={{ position:'relative', zIndex:1 }}>
-          <Box sx={{ display:'flex', alignItems:'center', gap:2, mb:2 }}>
-            <Avatar sx={{ width:56, height:56, bgcolor:'rgba(255,255,255,0.2)' }}>
-              <LibraryBooks sx={{ fontSize:32, color:'white' }} />
-            </Avatar>
-            <Box>
-              <Typography variant="h3" fontWeight={900} sx={{ color:'white', lineHeight:1.1 }}>
-                Browse Books
+        <Container className="browse-books-hero" sx={{ position: 'relative', zIndex: 1 }}>
+          <Box sx={{
+            display: 'flex',
+            alignItems: { xs: 'flex-start', sm: 'center' },
+            justifyContent: 'space-between',
+            gap: 3,
+            flexWrap: 'wrap',
+          }}>
+            <Box sx={{ flex: '1 1 360px' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2.5 }}>
+                <Avatar sx={{
+                  width: { xs: 52, md: 62 },
+                  height: { xs: 52, md: 62 },
+                  bgcolor: 'rgba(255,255,255,.16)',
+                  border: '1px solid rgba(255,255,255,.32)',
+                  boxShadow: '0 8px 24px rgba(8,43,28,.16)',
+                  backdropFilter: 'blur(10px)',
+                }}>
+                  <LibraryBooks sx={{ fontSize: { xs: 29, md: 34 }, color: 'white' }} />
+                </Avatar>
+                <Box>
+                  <Typography variant="overline" sx={{
+                    display: 'block',
+                    color: 'rgba(255,255,255,.72)',
+                    fontWeight: 800,
+                    letterSpacing: '.18em',
+                    lineHeight: 1.5,
+                  }}>
+                    YOUR NEXT CHAPTER STARTS HERE
+                  </Typography>
+                  <Typography variant="h3" fontWeight={900} sx={{
+                    color: 'white',
+                    fontSize: { xs: '2rem', sm: '2.65rem', md: '3.35rem' },
+                    letterSpacing: '-.045em',
+                    lineHeight: 1.08,
+                    textShadow: '0 3px 18px rgba(10,47,30,.2)',
+                  }}>
+                    Browse Books
+                  </Typography>
+                </Box>
+              </Box>
+              <Typography variant="h6" sx={{
+                color: 'rgba(255,255,255,.86)',
+                fontWeight: 400,
+                maxWidth: 520,
+                fontSize: { xs: '1rem', md: '1.15rem' },
+                lineHeight: 1.65,
+              }}>
+                Find your next favourite read from a collection made for curious minds.
               </Typography>
-              <Typography variant="h6" sx={{ color:'rgba(255,255,255,.85)', fontWeight:400 }}>
-                Discover your next favourite read
-              </Typography>
+              <Button
+                variant="contained"
+                startIcon={<SearchIcon />}
+                onClick={focusSearch}
+                sx={{
+                  mt: 3,
+                  px: 2.5,
+                  py: 1.2,
+                  borderRadius: 2.5,
+                  color: C.dark,
+                  bgcolor: 'white',
+                  fontWeight: 800,
+                  textTransform: 'none',
+                  boxShadow: '0 8px 24px rgba(8,43,28,.2)',
+                  transition: 'transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease',
+                  '&:hover': {
+                    bgcolor: '#f2fff6',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 12px 28px rgba(8,43,28,.26)',
+                  },
+                  '&:focus-visible': { outline: '3px solid rgba(255,255,255,.65)', outlineOffset: 3 },
+                }}
+              >
+                Start exploring
+              </Button>
             </Box>
-          </Box>
 
-          {/* summary pills */}
-          <Box sx={{ display:'flex', flexWrap:'wrap', gap:1.5, mt:3 }}>
+            <Box sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: 'repeat(3, minmax(0, 1fr))', sm: '1fr' },
+              gap: 1.2,
+              width: { xs: '100%', sm: 220 },
+              flexShrink: 0,
+            }}>
             {[
-              { label:`${totalBooks} Total Books`,    color:'rgba(255,255,255,.25)' },
-              { label:`${available} Available`,       color:'rgba(255,255,255,.25)' },
-              { label:`${categories.length} Categories`, color:'rgba(255,255,255,.25)' },
-            ].map((p,i) => (
-              <Chip key={i} label={p.label} size="small"
-                sx={{ bgcolor:p.color, color:'white', fontWeight:700,
-                  border:'1px solid rgba(255,255,255,.3)', backdropFilter:'blur(8px)' }} />
+              { value: totalBooks, label: 'Books' },
+              { value: available, label: 'Available now' },
+              { value: categories.length, label: 'Categories' },
+            ].map((stat) => (
+              <Box key={stat.label} sx={{
+                px: { xs: 1, sm: 2 },
+                py: { xs: 1.5, sm: 1.25 },
+                borderRadius: 2.5,
+                textAlign: { xs: 'center', sm: 'left' },
+                bgcolor: 'rgba(255,255,255,.12)',
+                border: '1px solid rgba(255,255,255,.22)',
+                backdropFilter: 'blur(12px)',
+                transition: 'transform 180ms ease, background-color 180ms ease',
+                '&:hover': {
+                  transform: 'translateX(4px)',
+                  bgcolor: 'rgba(255,255,255,.19)',
+                },
+              }}>
+                <Typography sx={{
+                  color: 'white',
+                  fontSize: { xs: '1.2rem', sm: '1.45rem' },
+                  fontWeight: 850,
+                  lineHeight: 1.1,
+                }}>
+                  {stat.value}
+                </Typography>
+                <Typography variant="caption" sx={{
+                  color: 'rgba(255,255,255,.78)',
+                  fontWeight: 650,
+                  fontSize: { xs: '.65rem', sm: '.76rem' },
+                }}>
+                  {stat.label}
+                </Typography>
+              </Box>
             ))}
+            </Box>
           </Box>
         </Container>
       </Box>
@@ -293,7 +509,7 @@ export default function BrowseBooks() {
           </Box>
           <Grid container spacing={2} alignItems="center">
             <Grid item xs={12} md={5}>
-              <TextField fullWidth placeholder="Search by title, author, or ISBN…"
+              <TextField inputRef={searchInputRef} fullWidth placeholder="Search by title, author, or ISBN…"
                 value={searchQuery} onChange={e => { setSearchQuery(e.target.value); setPage(1); }}
                 InputProps={{ startAdornment:(
                   <InputAdornment position="start">
@@ -408,42 +624,7 @@ export default function BrowseBooks() {
                         },
                       }}>
                         {/* ── Cover ── */}
-                        <Box sx={{
-                          height: 200,
-                          background: coverGrad(book.id),
-                          position: 'relative',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          p: 2,
-                          overflow: 'hidden',
-                        }}>
-                          {/* availability badge */}
-                          <Chip
-                            label={isAvail ? `${book.available_copies} Available` : 'Unavailable'}
-                            size="small"
-                            icon={isAvail
-                              ? <CheckCircle sx={{ fontSize:13, color:'white !important' }} />
-                              : <BookmarkBorder sx={{ fontSize:13, color:'white !important' }} />}
-                            sx={{
-                              position:'absolute', top:10, right:10,
-                              bgcolor: isAvail ? 'rgba(255,255,255,.25)' : 'rgba(0,0,0,.25)',
-                              color:'white', fontWeight:700, fontSize:'0.72rem',
-                              border:'1px solid rgba(255,255,255,.35)',
-                              backdropFilter:'blur(8px)',
-                            }}
-                          />
-                          {/* book icon + title preview */}
-                          <AutoStories sx={{ fontSize:56, color:'rgba(255,255,255,.6)', mb:1 }} />
-                          <Typography variant="caption" sx={{
-                            color:'rgba(255,255,255,.9)', fontWeight:700, textAlign:'center',
-                            overflow:'hidden', textOverflow:'ellipsis', display:'-webkit-box',
-                            WebkitLineClamp:2, WebkitBoxOrient:'vertical', lineHeight:1.3,
-                          }}>
-                            {book.title}
-                          </Typography>
-                        </Box>
+                        <BookCover book={book} isAvail={isAvail} />
 
                         {/* ── Content ── */}
                         <CardContent sx={{ flexGrow:1, p:2.5 }}>
@@ -584,9 +765,11 @@ export default function BrowseBooks() {
           {selectedBook && (
             <Box sx={{ display:'flex', gap:2, mb:3, p:2,
               bgcolor:C.lighter, borderRadius:2, border:`1px solid ${C.light}` }}>
-              <Avatar sx={{ width:56, height:56, flexShrink:0, background:coverGrad(selectedBook.id) }}>
-                <AutoStories sx={{ color:'white', fontSize:28 }} />
-              </Avatar>
+              <BookCover
+                book={selectedBook}
+                isAvail={selectedBook.available_copies > 0}
+                compact
+              />
               <Box>
                 <Typography variant="subtitle1" fontWeight={800} sx={{ color:C.dark }}>
                   {selectedBook.title}
