@@ -113,6 +113,7 @@ try {
     $response = false;
     $status = 0;
     $curlError = '';
+    $googleErrorMessage = '';
     for ($attempt = 1; $attempt <= 3; $attempt++) {
         $curl = curl_init($url);
         curl_setopt_array($curl, [
@@ -129,20 +130,35 @@ try {
         $curlError = curl_error($curl);
         curl_close($curl);
 
+        $googleResponse = is_string($response) ? json_decode($response, true) : null;
+        $googleErrorMessage = is_array($googleResponse)
+            ? (string) ($googleResponse['error']['message'] ?? '')
+            : '';
         $transientFailure = $response === false || in_array($status, [500, 502, 503, 504], true);
         if (!$transientFailure || $attempt === 3) {
             break;
         }
 
-        usleep(250000 * $attempt);
+        usleep(500000 * (2 ** ($attempt - 1)));
     }
 
     $googleUnavailable = $response === false || $status === 429 || in_array($status, [500, 502, 503, 504], true);
     if ($googleUnavailable) {
         if ($response === false) {
+            $fallbackReason = 'Google Books could not be reached.';
+        } elseif ($status === 429) {
+            $fallbackReason = 'Google Books rate limit reached (HTTP 429).';
+        } else {
+            $fallbackReason = 'Google Books temporarily unavailable (HTTP ' . $status . ').';
+        }
+
+        if ($response === false) {
             error_log('Google Books request failed: ' . $curlError);
         } else {
-            error_log('Google Books returned HTTP ' . $status);
+            error_log(
+                'Google Books returned HTTP ' . $status
+                . ($googleErrorMessage !== '' ? ': ' . $googleErrorMessage : '')
+            );
         }
 
         $fallbackMetadata = fetchOpenLibraryMetadata($isbn);
@@ -150,6 +166,7 @@ try {
             echo json_encode([
                 'success' => true,
                 'source' => 'open_library',
+                'fallback_reason' => $fallbackReason,
                 'metadata' => $fallbackMetadata,
             ]);
             exit;
@@ -196,6 +213,7 @@ try {
             echo json_encode([
                 'success' => true,
                 'source' => 'open_library',
+                'fallback_reason' => 'Google Books returned no exact match for this ISBN.',
                 'metadata' => $fallbackMetadata,
             ]);
             exit;
