@@ -149,6 +149,22 @@ CREATE TABLE notifications (
     INDEX idx_type (type)
 );
 
+-- Per-user notification preferences
+CREATE TABLE notification_settings (
+    user_id INT PRIMARY KEY,
+    email_enabled TINYINT(1) NOT NULL DEFAULT 1,
+    sms_enabled TINYINT(1) NOT NULL DEFAULT 0,
+    push_enabled TINYINT(1) NOT NULL DEFAULT 1,
+    due_reminder_days VARCHAR(100) NOT NULL DEFAULT '[3, 1]',
+    overdue_reminder_days VARCHAR(100) NOT NULL DEFAULT '[1, 3, 7]',
+    reservation_notifications TINYINT(1) NOT NULL DEFAULT 1,
+    fine_notifications TINYINT(1) NOT NULL DEFAULT 1,
+    general_notifications TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 -- Delivery history for in-app, email, and SMS notifications
 CREATE TABLE notification_logs (
     id INT PRIMARY KEY AUTO_INCREMENT,

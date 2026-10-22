@@ -79,7 +79,8 @@ try {
         // Only run safe migrations, skip ones with stored procedures
         $migrationFiles = [
             'add_condition_status_column.sql',
-            'create_user_favorites.sql'
+            'create_user_favorites.sql',
+            'create-notification-settings.sql'
         ];
         
         require_once __DIR__ . '/config/database.php';

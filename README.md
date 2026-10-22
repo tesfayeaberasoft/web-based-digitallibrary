@@ -142,6 +142,8 @@ Reviews use the existing `book_reviews` table. Signed-in users can submit one 1â
 | `POST /api/favorites` | Signed in | Add a book (`book_id`) to favorites |
 | `DELETE /api/favorites/{bookId}` | Signed in | Remove a book from favorites |
 
+Notification settings are included in `database/schema.sql`. To add the preferences table to an existing database, rerun `backend/setup-database.php` or apply `backend/migrations/create-notification-settings.sql` manually.
+
 For detailed setup instructions, see [SETUP.md](SETUP.md) or [START_SERVER.md](START_SERVER.md)
 
 ## ðŸ“– Documentation
