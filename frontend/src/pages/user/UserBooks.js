@@ -51,6 +51,9 @@ export default function UserBooks() {
   const [selectedLoan, setSelectedLoan]     = useState(null);
   const [returning, setReturning]           = useState(false);
   const [renewing, setRenewing]             = useState(false);
+  const [cancelOpen, setCancelOpen]         = useState(false);
+  const [selectedRes, setSelectedRes]       = useState(null);
+  const [cancelling, setCancelling]         = useState(false);
 
   useEffect(() => { fetchBooks(); }, []);
 
@@ -102,6 +105,23 @@ export default function UserBooks() {
       }
     } catch (e) { setError(e.response?.data?.message || 'Failed to renew book.'); }
     finally { setRenewing(false); }
+  };
+
+  const handleCancelReservation = async () => {
+    if (!selectedRes) return;
+    setCancelling(true); setError(''); setSuccess('');
+    try {
+      const token = localStorage.getItem('token');
+      const { data } = await axios.delete(
+        `http://localhost:8000/api/reservations/${selectedRes.id}/cancel`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (data.success) {
+        setSuccess(`Reservation for "${selectedRes.book_title}" cancelled successfully.`);
+        setCancelOpen(false); setSelectedRes(null); fetchBooks();
+      }
+    } catch (e) { setError(e.response?.data?.message || 'Failed to cancel reservation.'); }
+    finally { setCancelling(false); }
   };
 
   const statusChip = (loan) => {
@@ -275,6 +295,7 @@ export default function UserBooks() {
             </Box>
 
             <Button fullWidth variant="outlined" color="error" size="small"
+              onClick={() => { setSelectedRes(res); setCancelOpen(true); }}
               sx={{ borderRadius: 2, fontWeight: 700 }}>
               Cancel Reservation
             </Button>

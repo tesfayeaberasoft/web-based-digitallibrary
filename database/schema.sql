@@ -185,6 +185,17 @@ CREATE TABLE book_reviews (
     INDEX idx_rating (rating)
 );
 
+-- User favorites / wishlist
+CREATE TABLE user_favorites (
+    user_id INT NOT NULL,
+    book_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, book_id),
+    INDEX idx_user_favorites_book (book_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE
+);
+
 -- Reading history and progress tracking
 CREATE TABLE reading_history (
     id INT PRIMARY KEY AUTO_INCREMENT,

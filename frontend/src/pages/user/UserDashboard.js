@@ -58,9 +58,33 @@ const UserDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [favorites, setFavorites] = useState([]);
+  const [favoritesLoading, setFavoritesLoading] = useState(true);
+  const [favoritesError, setFavoritesError] = useState('');
 
   useEffect(() => {
     fetchStats();
+  }, []);
+
+  useEffect(() => {
+    const fetchFavorites = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const { data } = await axios.get('http://localhost:8000/api/favorites', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!data.success) throw new Error(data.message || 'Could not load favorites.');
+        setFavorites(data.favorites || []);
+      } catch (requestError) {
+        setFavoritesError(
+          requestError.response?.data?.message || requestError.message || 'Could not load favorites.'
+        );
+      } finally {
+        setFavoritesLoading(false);
+      }
+    };
+
+    fetchFavorites();
   }, []);
 
   const fetchStats = async () => {
@@ -715,7 +739,7 @@ const UserDashboard = () => {
                         { icon: <Search />, label: 'Browse Books', path: '/browse', color: C.primary },
                         { icon: <BookmarkBorder />, label: 'My Reservations', path: '/my-books', color: C.secondary },
                         { icon: <LibraryBooks />, label: 'Borrowed Books', path: '/my-books', color: C.accent },
-                        { icon: <Favorite />, label: 'Favorites', path: '/my-books', color: C.primary }
+                        { icon: <Favorite />, label: 'Favorites', path: '/favorites', color: C.primary }
                       ].map((action, index) => (
                         <Grid item xs={6} key={index}>
                           <Paper
@@ -788,6 +812,76 @@ const UserDashboard = () => {
               </Fade>
             </Grid>
           </Grid>
+
+          {/* Favorite Books */}
+          <Card elevation={0} sx={{ mt: 4, border: `1px solid ${C.light}`, borderRadius: 3 }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, mb: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Avatar sx={{ background: `linear-gradient(135deg, ${C.primary}, ${C.secondary})` }}>
+                    <Favorite />
+                  </Avatar>
+                  <Box>
+                    <Typography variant="h6" fontWeight={700} sx={{ color: C.dark }}>
+                      My Favorite Books
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Books you have saved to revisit
+                    </Typography>
+                  </Box>
+                </Box>
+                <Button endIcon={<ArrowForward />} onClick={() => navigate('/favorites')}>
+                  View all
+                </Button>
+              </Box>
+
+              {favoritesError ? (
+                <Alert severity="error">{favoritesError}</Alert>
+              ) : favoritesLoading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                  <CircularProgress size={32} sx={{ color: C.primary }} />
+                </Box>
+              ) : favorites.length === 0 ? (
+                <Paper sx={{ p: 3, textAlign: 'center', bgcolor: C.lighter, borderRadius: 2 }}>
+                  <Typography color="text.secondary" sx={{ mb: 2 }}>
+                    You have not saved any favorite books yet.
+                  </Typography>
+                  <Button variant="outlined" onClick={() => navigate('/browse')}>
+                    Browse books
+                  </Button>
+                </Paper>
+              ) : (
+                <Grid container spacing={2}>
+                  {favorites.slice(0, 4).map((book) => (
+                    <Grid item xs={12} sm={6} md={3} key={book.id}>
+                      <Paper
+                        sx={{
+                          height: '100%',
+                          p: 2,
+                          bgcolor: C.lighter,
+                          border: `1px solid ${C.light}`,
+                          borderRadius: 2
+                        }}
+                      >
+                        <Typography variant="subtitle1" fontWeight={700} noWrap title={book.title}>
+                          {book.title}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" noWrap title={book.author}>
+                          {book.author}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
+                          {book.category_name || 'Uncategorized'}
+                        </Typography>
+                        <Button size="small" sx={{ mt: 1 }} onClick={() => navigate('/browse')}>
+                          View in library
+                        </Button>
+                      </Paper>
+                    </Grid>
+                  ))}
+                </Grid>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Fines Widget */}
           <Fade in={true} timeout={2000}>

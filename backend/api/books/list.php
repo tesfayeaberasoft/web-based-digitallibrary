@@ -62,8 +62,8 @@ try {
 
     // Get books with category information
     $query = "SELECT b.*, c.name as category_name, c.color_code as category_color,
-                     (SELECT AVG(rating) FROM book_reviews WHERE book_id = b.id) as avg_rating,
-                     (SELECT COUNT(*) FROM book_reviews WHERE book_id = b.id) as review_count
+                     (SELECT AVG(rating) FROM book_reviews WHERE book_id = b.id AND status = 'approved') as avg_rating,
+                     (SELECT COUNT(*) FROM book_reviews WHERE book_id = b.id AND status = 'approved') as review_count
               FROM books b
               LEFT JOIN categories c ON b.category_id = c.id
               $whereClause

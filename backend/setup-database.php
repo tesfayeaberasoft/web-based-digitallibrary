@@ -78,7 +78,8 @@ try {
     if (is_dir($migrationDir)) {
         // Only run safe migrations, skip ones with stored procedures
         $migrationFiles = [
-            'add_condition_status_column.sql'
+            'add_condition_status_column.sql',
+            'create_user_favorites.sql'
         ];
         
         require_once __DIR__ . '/config/database.php';

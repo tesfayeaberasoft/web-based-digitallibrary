@@ -51,6 +51,7 @@ import UserAchievements from './pages/user/UserAchievements';
 import UserReadingGoals from './pages/user/UserReadingGoals';
 import UserNotificationSettings from './pages/user/UserNotificationSettings';
 import UserFines from './pages/user/UserFines';
+import UserFavorites from './pages/user/UserFavorites';
 import PaymentReturn from './pages/user/PaymentReturn';
 import BookReader from './pages/user/BookReader';
 
@@ -255,6 +256,11 @@ function App() {
               <Route path="/my-books" element={
                 <ProtectedRoute allowedRoles={['user', 'librarian', 'admin']}>
                   <UserBooks />
+                </ProtectedRoute>
+              } />
+              <Route path="/favorites" element={
+                <ProtectedRoute allowedRoles={['user', 'librarian', 'admin', 'super-admin']}>
+                  <UserFavorites />
                 </ProtectedRoute>
               } />
               <Route path="/history" element={

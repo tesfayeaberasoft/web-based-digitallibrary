@@ -15,6 +15,8 @@ import {
   Close,
   Bookmark,
   BookmarkBorder,
+  Favorite,
+  FavoriteBorder,
   Star,
   AutoStories,
   LibraryBooks,
@@ -26,6 +28,7 @@ import Navbar from '../../components/layout/Navbar';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import BookReviewsDialog from '../../components/books/BookReviewsDialog';
 
 /* ── green palette ── */
 const C = {
@@ -84,10 +87,34 @@ export default function BrowseBooks() {
   const [page,        setPage]        = useState(1);
   const [totalPages,  setTotalPages]  = useState(1);
   const [totalBooks,  setTotalBooks]  = useState(0);
+  const [favoriteIds, setFavoriteIds] = useState(() => new Set());
+  const [reviewsBook, setReviewsBook] = useState(null);
   const LIMIT = 12;
 
   useEffect(() => { fetchCategories(); }, []);
   useEffect(() => { fetchBooks(); }, [page, searchQuery, selCategory, avail]); // eslint-disable-line
+  useEffect(() => {
+    let active = true;
+    const fetchFavorites = async () => {
+      if (!user) {
+        setFavoriteIds(new Set());
+        return;
+      }
+      try {
+        const token = localStorage.getItem('token');
+        const { data } = await axios.get('http://localhost:8000/api/favorites', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (active && data.success) {
+          setFavoriteIds(new Set((data.favorites || []).map((book) => Number(book.id))));
+        }
+      } catch (requestError) {
+        if (active) console.error('Unable to load favorites:', requestError);
+      }
+    };
+    fetchFavorites();
+    return () => { active = false; };
+  }, [user]);
 
   const fetchCategories = async () => {
     try {
@@ -129,6 +156,48 @@ export default function BrowseBooks() {
       return;
     }
     navigate(`/read/${book.id}`);
+  };
+
+  const handleFavoriteToggle = async (book) => {
+    if (!user) {
+      setSnackbar({ open: true, msg: 'Please login to save favorites', sev: 'warning' });
+      navigate('/login');
+      return;
+    }
+    const isFavorite = favoriteIds.has(Number(book.id));
+    try {
+      const token = localStorage.getItem('token');
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      const { data } = isFavorite
+        ? await axios.delete(`http://localhost:8000/api/favorites/${book.id}`, config)
+        : await axios.post('http://localhost:8000/api/favorites', { book_id: book.id }, config);
+      if (!data.success) throw new Error(data.message || 'Could not update favorites.');
+      setFavoriteIds((current) => {
+        const next = new Set(current);
+        if (isFavorite) next.delete(Number(book.id));
+        else next.add(Number(book.id));
+        return next;
+      });
+      setSnackbar({
+        open: true,
+        msg: isFavorite ? 'Removed from favorites' : 'Added to favorites',
+        sev: 'success'
+      });
+    } catch (requestError) {
+      setSnackbar({
+        open: true,
+        msg: requestError.response?.data?.message || requestError.message || 'Could not update favorites.',
+        sev: 'error'
+      });
+    }
+  };
+
+  const handleReviewsUpdated = (bookId, summary) => {
+    setBooks((current) => current.map((book) => (
+      Number(book.id) === Number(bookId)
+        ? { ...book, avg_rating: summary.average_rating, review_count: summary.review_count }
+        : book
+    )));
   };
 
   const handleConfirm = async () => {
@@ -406,10 +475,16 @@ export default function BrowseBooks() {
                           <Box sx={{ display:'flex', alignItems:'center', gap:0.8, mb:1.5 }}>
                             <Rating value={parseFloat(book.avg_rating) || 0}
                               precision={0.5} size="small" readOnly
-                              sx={{ '& .MuiRating-iconFilled':{ color:C.secondary } }} />
-                            <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                              ({book.review_count || 0})
-                            </Typography>
+                              onClick={() => setReviewsBook(book)}
+                              sx={{ cursor: 'pointer', '& .MuiRating-iconFilled':{ color:C.secondary } }}
+                            />
+                            <Button
+                              size="small"
+                              onClick={() => setReviewsBook(book)}
+                              sx={{ minWidth: 0, p: 0, color: 'text.secondary', fontWeight: 600 }}
+                            >
+                              {book.review_count || 0} reviews
+                            </Button>
                           </Box>
 
                           {/* isbn chip */}
@@ -424,6 +499,23 @@ export default function BrowseBooks() {
 
                         {/* ── Action ── */}
                         <CardActions sx={{ p:2, gap:1 }}>
+                          <Tooltip title={favoriteIds.has(Number(book.id)) ? 'Remove from favorites' : 'Add to favorites'}>
+                            <IconButton
+                              aria-label={favoriteIds.has(Number(book.id)) ? 'Remove from favorites' : 'Add to favorites'}
+                              color={favoriteIds.has(Number(book.id)) ? 'error' : 'default'}
+                              onClick={() => handleFavoriteToggle(book)}
+                            >
+                              {favoriteIds.has(Number(book.id)) ? <Favorite /> : <FavoriteBorder />}
+                            </IconButton>
+                          </Tooltip>
+                          <Button
+                            variant="outlined"
+                            startIcon={<Star />}
+                            onClick={() => setReviewsBook(book)}
+                            sx={{ ...gradBtn(true), flex: 1, minWidth: 0 }}
+                          >
+                            Review
+                          </Button>
                           {book.can_read_online && (
                             <Button variant="outlined" startIcon={<AutoStories />}
                               onClick={() => handleReadOnline(book)}
@@ -562,6 +654,13 @@ export default function BrowseBooks() {
           {snackbar.msg}
         </Alert>
       </Snackbar>
+      <BookReviewsDialog
+        open={Boolean(reviewsBook)}
+        book={reviewsBook}
+        isAuthenticated={Boolean(user)}
+        onClose={() => setReviewsBook(null)}
+        onUpdated={(summary) => handleReviewsUpdated(reviewsBook?.id, summary)}
+      />
     </Box>
   );
 }

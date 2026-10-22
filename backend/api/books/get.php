@@ -29,8 +29,8 @@ try {
             c.name as category_name,
             c.description as category_description,
             (b.total_copies - b.available_copies) as borrowed_count,
-            COALESCE(AVG(r.rating), 0) as avg_rating,
-            COUNT(DISTINCT r.id) as review_count,
+            COALESCE(AVG(CASE WHEN r.status = 'approved' THEN r.rating END), 0) as avg_rating,
+            COUNT(DISTINCT CASE WHEN r.status = 'approved' THEN r.id END) as review_count,
             COUNT(DISTINCT bl.id) as total_borrows
         FROM books b
         LEFT JOIN categories c ON b.category_id = c.id
@@ -59,7 +59,7 @@ try {
             u.full_name as user_name
         FROM book_reviews r
         JOIN users u ON r.user_id = u.id
-        WHERE r.book_id = ?
+        WHERE r.book_id = ? AND r.status = 'approved'
         ORDER BY r.created_at DESC
         LIMIT 5
     ");
