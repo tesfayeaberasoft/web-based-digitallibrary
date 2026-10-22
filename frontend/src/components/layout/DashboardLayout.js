@@ -12,7 +12,7 @@ import {
   ChevronLeft, ChevronRight, Settings, AdminPanelSettings, People,
   SupervisorAccount, Assignment, QrCodeScanner, LibraryBooks, Queue,
   Inventory, GetApp, Shield, LocalFireDepartment, AccessTime, Close,
-  ReceiptLong
+  ReceiptLong, Favorite
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -100,6 +100,7 @@ export default function DashboardLayout({ children, title }) {
         return [
           { text: 'Overview', icon: <Dashboard />, path: '/dashboard', color: C.primary },
           { text: 'My Books', icon: <MenuBook />, path: '/my-books', color: C.primary },
+          { text: 'My Favorites', icon: <Favorite />, path: '/favorites', color: C.primary },
           { text: 'History', icon: <History />, path: '/history', color: C.primary },
           { text: 'Reading Goals', icon: <TrendingUp />, path: '/reading-goals', color: C.primary },
           { text: 'Achievements', icon: <EmojiEvents />, path: '/achievements', color: C.primary },

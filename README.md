@@ -124,6 +124,24 @@ The development `start-backend.bat` sets PHP's upload limits for 50 MB files. Fo
 
 Authentication and hidden download controls deter casual access, but cannot prevent a reader from saving content delivered to their browser, taking screenshots, or otherwise capturing it. Use licensing/DRM controls if stronger copy protection is required.
 
+### Book reviews and favorites
+
+Fresh databases created from `database/schema.sql` include the `user_favorites` table. For an existing database, rerun `backend/setup-database.php` to apply the migration, or run it manually from the repository root:
+
+```bash
+mysql -u root -p digital_library < backend/migrations/create_user_favorites.sql
+```
+
+Reviews use the existing `book_reviews` table. Signed-in users can submit one 1–5 star rating per book and update it later; review text is optional and limited to 2,000 characters. Public review lists and rating aggregates include approved reviews only. The browse page provides the review dialog and favorite toggle, and signed-in users can manage saved books at `/favorites`.
+
+| Endpoint | Access | Purpose |
+| --- | --- | --- |
+| `GET /api/books/{id}/reviews` | Public | Read approved reviews and the rating summary |
+| `POST /api/books/{id}/reviews` | Signed in | Create or update the current user's rating and review (`rating`, optional `review_text`) |
+| `GET /api/favorites` | Signed in | List the current user's favorites |
+| `POST /api/favorites` | Signed in | Add a book (`book_id`) to favorites |
+| `DELETE /api/favorites/{bookId}` | Signed in | Remove a book from favorites |
+
 For detailed setup instructions, see [SETUP.md](SETUP.md) or [START_SERVER.md](START_SERVER.md)
 
 ## 📖 Documentation
@@ -189,7 +207,8 @@ Based on **Digital Library Management System Requirements Specification V4**:
 - ⏳ API Integration (Structure ready)
 
 ### D. Engagement Features 🚧
-- ⏳ User Reviews & Ratings (Structure ready)
+- ✅ User Reviews & Ratings
+- ✅ User Favorites / Wishlist
 - ⏳ Book Preview (Structure ready)
 - ✅ Reading Lists & Bookmarks
 - ⏳ Social Sharing (Structure ready)

@@ -205,9 +205,24 @@ switch (true) {
         require __DIR__ . '/api/books/content.php';
         break;
 
+    case preg_match('#^/books/(\d+)/reviews$#', $path, $matches) && in_array($request_method, ['GET', 'POST'], true):
+        $_GET['id'] = $matches[1];
+        require __DIR__ . '/api/books/reviews.php';
+        break;
+
     case preg_match('#^/books/(\d+)/ebook$#', $path, $matches) && $request_method === 'POST':
         $_GET['id'] = $matches[1];
         require __DIR__ . '/api/books/upload-ebook.php';
+        break;
+
+    // User favorites
+    case preg_match('#^/favorites$#', $path) && in_array($request_method, ['GET', 'POST'], true):
+        require __DIR__ . '/api/favorites.php';
+        break;
+
+    case preg_match('#^/favorites/(\d+)$#', $path, $matches) && $request_method === 'DELETE':
+        $_GET['book_id'] = $matches[1];
+        require __DIR__ . '/api/favorites.php';
         break;
     
     case preg_match('#^/books/(\d+)$#', $path, $matches) && $request_method === 'GET':

@@ -37,7 +37,8 @@ import {
   LibraryBooks,
   Queue,
   AdminPanelSettings,
-  Shield
+  Shield,
+  Favorite
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -70,6 +71,7 @@ const Sidebar = ({ open = true }) => {
           { text: 'Analytics', icon: <TrendingUp />, path: '/admin/analytics', color: '#4a9b8e' },
           { text: 'Users', icon: <People />, path: '/admin/users', color: '#4a9b8e' },
           { text: 'Librarians', icon: <SupervisorAccount />, path: '/admin/librarians', color: '#4a9b8e' },
+          { text: 'Favorites', icon: <Favorite />, path: '/favorites', color: '#4a9b8e' },
           { text: 'Settings', icon: <Settings />, path: '/admin/settings', color: '#4a9b8e' },
         ];
       case 'librarian':
@@ -82,12 +84,14 @@ const Sidebar = ({ open = true }) => {
           { text: 'Reservations', icon: <Queue />, path: '/librarian/reservations', color: '#4a9b8e' },
           { text: 'Inventory', icon: <Inventory />, path: '/librarian/inventory', color: '#4a9b8e' },
           { text: 'Members', icon: <People />, path: '/librarian/members', color: '#4a9b8e' },
+          { text: 'Favorites', icon: <Favorite />, path: '/favorites', color: '#4a9b8e' },
           { text: 'Reports', icon: <TrendingUp />, path: '/librarian/reports', color: '#4a9b8e' },
         ];
       default:
         return [
           { text: 'Overview', icon: <Dashboard />, path: '/dashboard', color: '#4a9b8e' },
           { text: 'My Books', icon: <MenuBook />, path: '/my-books', color: '#4a9b8e' },
+          { text: 'Favorites', icon: <Favorite />, path: '/favorites', color: '#4a9b8e' },
           { text: 'History', icon: <History />, path: '/history', color: '#4a9b8e' },
           { text: 'Reading Goals', icon: <TrendingUp />, path: '/reading-goals', color: '#4a9b8e' },
           { text: 'Achievements', icon: <EmojiEvents />, path: '/achievements', color: '#4a9b8e' },
