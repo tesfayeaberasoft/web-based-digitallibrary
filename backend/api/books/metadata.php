@@ -6,14 +6,9 @@
 
 header('Content-Type: application/json');
 
-function fetchOpenLibraryMetadata($isbn)
+function fetchOpenLibraryJson($url)
 {
-    $query = [
-        'bibkeys' => 'ISBN:' . $isbn,
-        'format' => 'json',
-        'jscmd' => 'data',
-    ];
-    $curl = curl_init('https://openlibrary.org/api/books?' . http_build_query($query));
+    $curl = curl_init($url);
     curl_setopt_array($curl, [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_FOLLOWLOCATION => false,
@@ -26,7 +21,6 @@ function fetchOpenLibraryMetadata($isbn)
     $response = curl_exec($curl);
     $status = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
     $curlError = curl_error($curl);
-    curl_close($curl);
 
     if ($response === false || $status !== 200) {
         error_log('Open Library fallback failed with HTTP ' . $status . ($curlError !== '' ? ': ' . $curlError : ''));
@@ -34,47 +28,88 @@ function fetchOpenLibraryMetadata($isbn)
     }
 
     $result = json_decode($response, true);
+    return is_array($result) ? $result : null;
+}
+
+function fetchOpenLibraryMetadata($isbn)
+{
+    $query = [
+        'bibkeys' => 'ISBN:' . $isbn,
+        'format' => 'json',
+        'jscmd' => 'data',
+    ];
+    $result = fetchOpenLibraryJson('https://openlibrary.org/api/books?' . http_build_query($query));
     $book = $result['ISBN:' . $isbn] ?? null;
-    if (!is_array($book)) {
-        return null;
-    }
 
     $authors = [];
-    foreach ($book['authors'] ?? [] as $author) {
-        if (is_string($author['name'] ?? null)) {
-            $authors[] = $author['name'];
-        }
-    }
-
     $publishers = [];
-    foreach ($book['publishers'] ?? [] as $publisher) {
-        if (is_string($publisher['name'] ?? null)) {
-            $publishers[] = $publisher['name'];
-        }
-    }
-
+    $title = '';
+    $coverImage = null;
     $publicationYear = null;
-    if (is_string($book['publish_date'] ?? null)
-        && preg_match('/\b\d{4}\b/', $book['publish_date'], $yearMatch)) {
-        $publicationYear = $yearMatch[0];
-    }
+    $pages = null;
+    $description = '';
+    $language = '';
 
-    $images = $book['cover'] ?? [];
-    $coverImage = $images['large'] ?? $images['medium'] ?? $images['small'] ?? null;
-    if (is_string($coverImage) && strpos($coverImage, 'https://') !== 0) {
-        $coverImage = null;
+    if (is_array($book)) {
+        foreach ($book['authors'] ?? [] as $author) {
+            if (is_string($author['name'] ?? null)) {
+                $authors[] = $author['name'];
+            }
+        }
+
+        foreach ($book['publishers'] ?? [] as $publisher) {
+            if (is_string($publisher['name'] ?? null)) {
+                $publishers[] = $publisher['name'];
+            }
+        }
+
+        $title = $book['title'] ?? '';
+        $publishers = implode(', ', $publishers);
+        if (is_string($book['publish_date'] ?? null)
+            && preg_match('/\b\d{4}\b/', $book['publish_date'], $yearMatch)) {
+            $publicationYear = $yearMatch[0];
+        }
+
+        $images = $book['cover'] ?? [];
+        $coverImage = $images['large'] ?? $images['medium'] ?? $images['small'] ?? null;
+        if (is_string($coverImage) && strpos($coverImage, 'https://') !== 0) {
+            $coverImage = null;
+        }
+        $pages = $book['number_of_pages'] ?? null;
+    } else {
+        $searchQuery = [
+            'isbn' => $isbn,
+            'fields' => 'title,author_name,publisher,first_publish_year,cover_i,number_of_pages_median,language',
+            'limit' => 1,
+        ];
+        $searchResult = fetchOpenLibraryJson('https://openlibrary.org/search.json?' . http_build_query($searchQuery));
+        $book = $searchResult['docs'][0] ?? null;
+        if (!is_array($book)) {
+            return null;
+        }
+
+        $title = $book['title'] ?? '';
+        $authors = array_values(array_filter($book['author_name'] ?? [], 'is_string'));
+        $publishers = array_values(array_filter($book['publisher'] ?? [], 'is_string'));
+        $publishers = $publishers[0] ?? '';
+        $publicationYear = $book['first_publish_year'] ?? null;
+        $pages = $book['number_of_pages_median'] ?? null;
+        $language = is_array($book['language'] ?? null) ? ($book['language'][0] ?? '') : '';
+        if (!empty($book['cover_i'])) {
+            $coverImage = 'https://covers.openlibrary.org/b/id/' . rawurlencode((string) $book['cover_i']) . '-L.jpg';
+        }
     }
 
     return [
-        'title' => $book['title'] ?? '',
+        'title' => $title,
         'authors' => $authors,
         'author' => implode(', ', $authors),
-        'publisher' => implode(', ', $publishers),
+        'publisher' => $publishers,
         'cover_image' => $coverImage,
         'publication_year' => $publicationYear,
-        'description' => '',
-        'pages' => $book['number_of_pages'] ?? null,
-        'language' => '',
+        'description' => $description,
+        'pages' => $pages,
+        'language' => $language,
     ];
 }
 
@@ -128,7 +163,6 @@ try {
         $response = curl_exec($curl);
         $status = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
         $curlError = curl_error($curl);
-        curl_close($curl);
 
         $googleResponse = is_string($response) ? json_decode($response, true) : null;
         $googleErrorMessage = is_array($googleResponse)

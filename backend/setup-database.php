@@ -85,6 +85,9 @@ try {
         
         require_once __DIR__ . '/config/database.php';
         $db = Database::getInstance()->getConnection();
+
+        require_once __DIR__ . '/utils/settings-helper.php';
+        ensureSettingsTableSchema($db);
         
         foreach ($migrationFiles as $migrationFile) {
             $filePath = $migrationDir . '/' . $migrationFile;

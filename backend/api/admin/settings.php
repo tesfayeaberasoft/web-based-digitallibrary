@@ -46,7 +46,12 @@ function handleGetSettings($db) {
     try {
         createSettingsTable($db);
 
-        $stmt = $db->prepare("SELECT * FROM system_settings WHERE category != 'super_admin' ORDER BY category, setting_key");
+        $stmt = $db->prepare("
+            SELECT * FROM system_settings
+            WHERE category NOT IN ('super_admin', 'integration_secrets')
+              AND setting_key NOT IN ('chapa_public_key', 'chapa_secret_key', 'google_books_api_key', 'sendgrid_api_key')
+            ORDER BY category, setting_key
+        ");
         $stmt->execute();
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -122,19 +127,7 @@ function handleUpdateSettings($db, $decoded) {
 }
 
 function createSettingsTable($db) {
-    $sql = "
-        CREATE TABLE IF NOT EXISTS system_settings (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            category VARCHAR(50) NOT NULL,
-            setting_key VARCHAR(100) NOT NULL,
-            setting_value TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            UNIQUE KEY unique_setting (category, setting_key)
-        )
-    ";
-    
-    $db->exec($sql);
+    ensureSettingsTableSchema($db);
 }
 
 function getDefaultSettings() {

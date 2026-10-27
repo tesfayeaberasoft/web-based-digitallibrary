@@ -133,6 +133,66 @@ const APPEARANCE_KEY_ALIASES = [
     'animations_enabled' => 'animationsEnabled',
 ];
 
+function ensureSettingsTableSchema($db) {
+    $db->exec("
+        CREATE TABLE IF NOT EXISTS system_settings (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            category VARCHAR(50) NOT NULL DEFAULT 'system',
+            setting_key VARCHAR(100) NOT NULL,
+            setting_value TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            UNIQUE KEY unique_setting (category, setting_key)
+        )
+    ");
+
+    $columns = $db->query('SHOW COLUMNS FROM system_settings')->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('category', $columns, true)) {
+        $db->exec("ALTER TABLE system_settings ADD COLUMN category VARCHAR(50) NOT NULL DEFAULT 'system' AFTER id");
+    }
+
+    $legacySettings = [
+        'library_name' => ['library', 'libraryName'],
+        'max_books_per_user' => ['library_policies', 'max_user_borrow_books'],
+        'fine_per_day' => ['library_policies', 'due_fines_per_day'],
+        'max_borrow_days' => ['library_policies', 'max_book_return_days'],
+        'max_renewal_count' => ['library_policies', 'renewal_limit'],
+        'chapa_public_key' => ['integration_secrets', 'chapa_public_key'],
+        'chapa_secret_key' => ['integration_secrets', 'chapa_secret_key'],
+        'google_books_api_key' => ['integration_secrets', 'google_books_api_key'],
+        'sendgrid_api_key' => ['integration_secrets', 'sendgrid_api_key'],
+    ];
+
+    $update = $db->prepare('UPDATE system_settings SET category = ?, setting_key = ? WHERE setting_key = ?');
+    foreach ($legacySettings as $legacyKey => [$category, $key]) {
+        $update->execute([$category, $key, $legacyKey]);
+    }
+
+    $indexes = [];
+    foreach ($db->query('SHOW INDEX FROM system_settings') as $index) {
+        $indexes[$index['Key_name']]['unique'] = (int) $index['Non_unique'] === 0;
+        $indexes[$index['Key_name']]['columns'][(int) $index['Seq_in_index']] = $index['Column_name'];
+    }
+
+    foreach ($indexes as $name => $index) {
+        $indexColumns = array_values($index['columns']);
+        if ($name !== 'PRIMARY' && $index['unique'] && $indexColumns === ['setting_key']) {
+            $db->exec('ALTER TABLE system_settings DROP INDEX `' . str_replace('`', '``', $name) . '`');
+        }
+    }
+
+    $hasCategoryKeyIndex = false;
+    foreach ($indexes as $index) {
+        if ($index['unique'] && array_values($index['columns']) === ['category', 'setting_key']) {
+            $hasCategoryKeyIndex = true;
+            break;
+        }
+    }
+    if (!$hasCategoryKeyIndex) {
+        $db->exec('ALTER TABLE system_settings ADD UNIQUE KEY unique_setting (category, setting_key)');
+    }
+}
+
 function getDefaultAppearanceSettings() {
     return [
         'theme' => 'light',
