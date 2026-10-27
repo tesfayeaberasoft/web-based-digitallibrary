@@ -297,6 +297,7 @@ export default function UserProfile() {
                       <Grid item xs={12} sm={f.sm} key={f.name}>
                         <TextField fullWidth label={f.label} name={f.name} type={f.type}
                           value={formData[f.name]} onChange={handleChange} disabled={!editing}
+                          helperText={f.name === 'phone' ? 'For Chapa payments, use an Ethiopian mobile number: 09XXXXXXXX or +2519XXXXXXXX.' : undefined}
                           InputProps={{ startAdornment:(
                             <InputAdornment position="start">
                               {React.cloneElement(f.icon, { sx:{ color: editing ? C.secondary : 'text.disabled', fontSize:20 } })}

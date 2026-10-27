@@ -71,17 +71,22 @@ try {
         throw new Exception('This fine has already been paid');
     }
 
-    // Use the DB user data to fill gaps (e.g. if JWT omits phone)
+    // Use the current DB profile so recent phone-number changes are honored.
     if (!$userEmail || !filter_var($userEmail, FILTER_VALIDATE_EMAIL)) {
         $userEmail = $fine['u_email'];
     }
     if (!$userName)  $userName  = $fine['u_name'];
-    if (!$userPhone) $userPhone = $fine['u_phone'] ?? '';
+    $userPhone = $fine['u_phone'] ?? '';
 
     // Validate email (Chapa is very strict about email format)
     $userEmail = strtolower(trim($userEmail));  // Normalize email
     if (!filter_var($userEmail, FILTER_VALIDATE_EMAIL)) {
         throw new Exception('Invalid email address. Please update your profile with a valid email.');
+    }
+
+    $userPhone = normalizeChapaPhoneNumber($userPhone);
+    if ($userPhone === null) {
+        throw new Exception('Please update your profile with a valid Ethiopian mobile number (09XXXXXXXX or +2519XXXXXXXX) before paying.');
     }
     
     // For Chapa TEST mode, use a test email format if real email fails
@@ -143,7 +148,7 @@ try {
         'email'        => trim($userEmail),  // Ensure no whitespace
         'first_name'   => $nameParts[0],
         'last_name'    => $nameParts[1] ?? 'User',
-        'phone_number' => $userPhone ?: '0900000000',
+        'phone_number' => $userPhone,
         'tx_ref'       => $txRef,
         'callback_url' => $callbackUrl,
         'return_url'   => $returnUrl . '?tx_ref=' . urlencode($txRef),
@@ -285,4 +290,22 @@ function _logPaymentEvent($db, $paymentId, $txRef, $eventType, $statusBefore, $s
     } catch (Exception $e) {
         error_log('payment_log insert failed: ' . $e->getMessage());
     }
+}
+
+function normalizeChapaPhoneNumber($phone) {
+    $digits = preg_replace('/\D+/', '', (string) $phone);
+
+    if (preg_match('/^09\d{8}$/', $digits)) {
+        return $digits;
+    }
+
+    if (preg_match('/^9\d{8}$/', $digits)) {
+        return '0' . $digits;
+    }
+
+    if (preg_match('/^2519\d{8}$/', $digits)) {
+        return '0' . substr($digits, 3);
+    }
+
+    return null;
 }
