@@ -82,7 +82,8 @@ try {
             'create_user_favorites.sql',
             'create-notification-settings.sql',
             'ensure-super-admin-account.sql',
-            'create_notes_table.sql'
+            'create_notes_table.sql',
+            'create_messages_table.sql'
         ];
         
         require_once __DIR__ . '/config/database.php';
