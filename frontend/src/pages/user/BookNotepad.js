@@ -191,23 +191,37 @@ export default function BookNotepad({ bookId, bookTitle, token }) {
   return (
     <Box
       component="section"
+      className="reading-notepad"
       aria-label="Personal reading notes"
       sx={{
         minWidth: 0,
-        minHeight: { xs: 420, lg: '70vh' },
+        minHeight: { xs: 430, lg: '70vh' },
         display: 'flex',
         flexDirection: 'column',
         border: 1,
-        borderColor: 'divider',
-        borderRadius: 1,
+        borderColor: 'rgba(45, 106, 79, 0.18)',
+        borderRadius: 3,
         bgcolor: 'background.paper',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        boxShadow: '0 12px 32px rgba(27, 67, 50, 0.08)'
       }}
     >
-      <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1} sx={{ p: 2 }}>
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+        spacing={1}
+        sx={{
+          p: { xs: 1.75, sm: 2.25 },
+          background: 'linear-gradient(115deg, #f3faf5 0%, #ffffff 78%)'
+        }}
+      >
         <Box sx={{ minWidth: 0 }}>
-          <Typography variant="h6" fontWeight={700}>Reading notes</Typography>
-          <Typography variant="body2" color="text.secondary" noWrap title={bookTitle}>
+          <Typography variant="overline" color="primary.main" fontWeight={700} letterSpacing={1.2}>
+            YOUR READING SPACE
+          </Typography>
+          <Typography variant="h6" fontWeight={750} lineHeight={1.2}>Reading notes</Typography>
+          <Typography variant="body2" color="text.secondary" noWrap title={bookTitle} sx={{ mt: 0.4 }}>
             {bookTitle}
           </Typography>
         </Box>
@@ -217,12 +231,25 @@ export default function BookNotepad({ bookId, bookTitle, token }) {
           startIcon={saveStatus === 'saving' ? <CircularProgress size={16} color="inherit" /> : <Save />}
           disabled={!editor || loadingNote || Boolean(loadError) || saveStatus === 'saving'}
           onClick={handleManualSave}
+          sx={{ flexShrink: 0, borderRadius: 2, px: { xs: 1.25, sm: 2 } }}
         >
-          Save
+          Save Note
         </Button>
       </Stack>
       <Divider />
-      <Stack direction="row" alignItems="center" spacing={0.25} sx={{ px: 1, py: 0.75 }}>
+      <Stack
+        direction="row"
+        alignItems="center"
+        spacing={0.25}
+        sx={{
+          px: 1,
+          py: 0.75,
+          overflowX: 'auto',
+          bgcolor: '#f9fcfa',
+          '&::-webkit-scrollbar': { height: 4 },
+          '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(45,106,79,.24)', borderRadius: 4 }
+        }}
+      >
         {toolbarButton('Bold', <FormatBold fontSize="small" />, editorState.bold, (chain) => chain.toggleBold())}
         {toolbarButton('Italic', <FormatItalic fontSize="small" />, editorState.italic, (chain) => chain.toggleItalic())}
         {toolbarButton('Heading 1', <LooksOne fontSize="small" />, editorState.heading1, (chain) => chain.toggleHeading({ level: 1 }))}
@@ -236,7 +263,15 @@ export default function BookNotepad({ bookId, bookTitle, token }) {
       </Stack>
       <Divider />
       {loadError && <Alert severity="error" sx={{ m: 1 }}>{loadError}</Alert>}
-      <Box sx={{ flex: 1, minHeight: 240, overflowY: 'auto', p: 2 }}>
+      <Box
+        sx={{
+          flex: 1,
+          minHeight: 260,
+          overflowY: 'auto',
+          p: { xs: 2, sm: 2.75 },
+          background: 'linear-gradient(180deg, #ffffff 0%, #fcfefc 100%)'
+        }}
+      >
         {loadingNote ? (
           <Stack direction="row" spacing={1} alignItems="center" justifyContent="center" sx={{ py: 5 }}>
             <CircularProgress size={20} />
@@ -245,10 +280,22 @@ export default function BookNotepad({ bookId, bookTitle, token }) {
         ) : <EditorContent editor={editor} />}
       </Box>
       <Divider />
-      <Stack direction="row" alignItems="center" spacing={1} sx={{ px: 2, py: 1 }}>
+      <Stack
+        direction="row"
+        alignItems="center"
+        spacing={1}
+        sx={{ px: 2, py: 1.25, bgcolor: '#f9fcfa', borderTop: '1px solid', borderColor: 'divider' }}
+      >
         <Box
           aria-hidden="true"
-          sx={{ width: 7, height: 7, flex: '0 0 auto', borderRadius: '50%', bgcolor: saveStatus === 'error' ? 'error.main' : saveStatus === 'saving' ? 'warning.main' : 'success.main' }}
+          sx={{
+            width: 8,
+            height: 8,
+            flex: '0 0 auto',
+            borderRadius: '50%',
+            bgcolor: saveStatus === 'error' ? 'error.main' : saveStatus === 'saving' ? 'warning.main' : 'success.main',
+            boxShadow: saveStatus === 'saved' ? '0 0 0 3px rgba(82, 183, 136, .14)' : 'none'
+          }}
         />
         <Typography variant="caption" color={saveStatus === 'error' ? 'error.main' : 'text.secondary'} aria-live="polite">
           {statusText}
