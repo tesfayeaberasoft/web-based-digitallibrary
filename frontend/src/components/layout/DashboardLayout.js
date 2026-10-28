@@ -12,7 +12,7 @@ import {
   ChevronLeft, ChevronRight, Settings, AdminPanelSettings, People,
   SupervisorAccount, Assignment, QrCodeScanner, LibraryBooks, Queue,
   Inventory, GetApp, Shield, LocalFireDepartment, AccessTime, Close,
-  ReceiptLong, Favorite
+  ReceiptLong, Favorite, ChatBubbleOutlineOutlined
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -74,6 +74,7 @@ export default function DashboardLayout({ children, title }) {
           { text: 'Security', icon: <Shield />, path: '/super-admin/security', color: '#d32f2f' },
           { text: 'Audit Logs', icon: <History />, path: '/super-admin/audit-logs', color: '#d32f2f' },
           { text: 'Analytics', icon: <TrendingUp />, path: '/super-admin/analytics', color: '#d32f2f' },
+          { text: 'Messages', icon: <ChatBubbleOutlineOutlined />, path: '/messages', color: '#d32f2f' },
         ];
       case 'admin':
         return [
@@ -83,6 +84,7 @@ export default function DashboardLayout({ children, title }) {
           { text: 'Users', icon: <People />, path: '/admin/users', color: C.primary },
           { text: 'Librarians', icon: <SupervisorAccount />, path: '/admin/librarians', color: C.primary },
           { text: 'Settings', icon: <Settings />, path: '/admin/settings', color: C.primary },
+          { text: 'Messages', icon: <ChatBubbleOutlineOutlined />, path: '/messages', color: C.primary },
         ];
       case 'librarian':
         return [
@@ -95,6 +97,7 @@ export default function DashboardLayout({ children, title }) {
           { text: 'Inventory', icon: <Inventory />, path: '/librarian/inventory', color: C.primary },
           { text: 'Members', icon: <People />, path: '/librarian/members', color: C.primary },
           { text: 'Reports', icon: <TrendingUp />, path: '/librarian/reports', color: C.primary },
+          { text: 'Messages', icon: <ChatBubbleOutlineOutlined />, path: '/messages', color: C.primary },
         ];
       default:
         return [
@@ -106,6 +109,7 @@ export default function DashboardLayout({ children, title }) {
           { text: 'Achievements', icon: <EmojiEvents />, path: '/achievements', color: C.primary },
           { text: 'My Fines', icon: <LocalFireDepartment />, path: '/fines', color: '#ff6b6b' },
           { text: 'Notification Settings', icon: <Settings />, path: '/notification-settings', color: C.primary },
+          { text: 'Help & Support', icon: <ChatBubbleOutlineOutlined />, path: '/support', color: C.primary },
         ];
     }
   };

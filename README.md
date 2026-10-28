@@ -143,6 +143,26 @@ Reviews use the existing `book_reviews` table. Signed-in users can submit one 1â
 | `POST /api/favorites` | Signed in | Add a book (`book_id`) to favorites |
 | `DELETE /api/favorites/{bookId}` | Signed in | Remove a book from favorites |
 
+### Messaging and support
+
+Fresh databases created from `database/schema.sql` include the `messages` table. For an existing database, run `backend/setup-database.php` or apply the migration manually:
+
+```bash
+mysql -u root -p digital_library < backend/migrations/create_messages_table.sql
+```
+
+Signed-in members can open **Help & Support** at `/support` to message an active librarian. Librarians can respond and contact admins; admins can contact librarians or super admins; super admins can contact admins. The backend derives the sender's active role from the database and validates each recipient, so clients cannot choose or impersonate roles. Message history is limited to the two participants, and only the recipient can mark a message as read.
+
+The staff **Messages** dashboard is available at `/messages`. Both interfaces refresh conversations every five seconds to provide real-time-like updates without a separate socket service.
+
+| Endpoint | Access | Purpose |
+| --- | --- | --- |
+| `GET /api/messages/contacts` | Signed in | List active contacts allowed for the current role |
+| `GET /api/messages/threads` | Signed in | List the current user's conversations and unread counts |
+| `GET /api/messages/conversation?peer_id={userId}` | Signed in | Fetch up to 100 messages with an authorized participant |
+| `POST /api/messages` | Signed in | Send `{ "receiver_id": 1, "message_content": "..." }` (maximum 4,000 characters) |
+| `PUT /api/messages/{messageId}/read` | Message recipient | Mark a received message as read |
+
 ### Google Books metadata lookup
 
 Admins and librarians can enter an ISBN and select **Fetch Details from Google Books** in the inventory book form. The authenticated `GET /api/books/metadata?isbn={isbn}` endpoint validates the ISBN, queries Google Books over HTTPS from the PHP backend, and returns the matching title, authors, publisher, cover image, and optional publication details. Temporary network and Google server errors are retried up to three times with increasing delays. If Google Books is unavailable, rate-limited, or has no matching book, the endpoint tries Open Library and identifies both the source and fallback reason in its response. The inventory form displays that reason so transient upstream failures can be distinguished from rate limits. The highest-resolution cover available is previewed and saved with the book record. PHP's cURL extension must be enabled. Configure `GOOGLE_BOOKS_API_KEY=your_key` in `backend/.env` (never `frontend/.env`), then restart the PHP backend; the key stays server-side and is not sent to the browser.

@@ -214,6 +214,30 @@ switch (true) {
         require __DIR__ . '/api/notes.php';
         break;
 
+    case preg_match('#^/messages/contacts$#', $path) && $request_method === 'GET':
+        $_GET['action'] = 'contacts';
+        require __DIR__ . '/api/messages.php';
+        break;
+
+    case preg_match('#^/messages/threads$#', $path) && $request_method === 'GET':
+        $_GET['action'] = 'threads';
+        require __DIR__ . '/api/messages.php';
+        break;
+
+    case preg_match('#^/messages/conversation$#', $path) && $request_method === 'GET':
+        $_GET['action'] = 'conversation';
+        require __DIR__ . '/api/messages.php';
+        break;
+
+    case preg_match('#^/messages$#', $path) && $request_method === 'POST':
+        require __DIR__ . '/api/messages.php';
+        break;
+
+    case preg_match('#^/messages/(\d+)/read$#', $path, $matches) && $request_method === 'PUT':
+        $_GET['message_id'] = $matches[1];
+        require __DIR__ . '/api/messages.php';
+        break;
+
     case preg_match('#^/books/(\d+)/reviews$#', $path, $matches) && in_array($request_method, ['GET', 'POST'], true):
         $_GET['id'] = $matches[1];
         require __DIR__ . '/api/books/reviews.php';

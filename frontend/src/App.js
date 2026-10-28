@@ -14,6 +14,7 @@ import Register from './pages/auth/Register';
 import HomePage from './pages/public/HomePage';
 import BrowseBooks from './pages/public/BrowseBooks';
 import NotificationsPage from './pages/shared/NotificationsPage';
+import StaffMessaging from './pages/shared/StaffMessaging';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -54,6 +55,7 @@ import UserFines from './pages/user/UserFines';
 import UserFavorites from './pages/user/UserFavorites';
 import PaymentReturn from './pages/user/PaymentReturn';
 import BookReader from './pages/user/BookReader';
+import UserSupportDesk from './pages/user/UserSupportDesk';
 
 import './App.css';
 
@@ -121,6 +123,16 @@ function App() {
               <Route path="/read/:bookId" element={
                 <ProtectedRoute allowedRoles={['user', 'librarian', 'admin', 'super-admin']}>
                   <BookReader />
+                </ProtectedRoute>
+              } />
+              <Route path="/support" element={
+                <ProtectedRoute allowedRoles={['user']}>
+                  <UserSupportDesk />
+                </ProtectedRoute>
+              } />
+              <Route path="/messages" element={
+                <ProtectedRoute allowedRoles={['librarian', 'admin', 'super-admin']}>
+                  <StaffMessaging />
                 </ProtectedRoute>
               } />
               <Route path="/login" element={<Login />} />
