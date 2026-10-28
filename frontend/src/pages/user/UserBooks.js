@@ -50,6 +50,7 @@ export default function UserBooks() {
   const [renewOpen, setRenewOpen]           = useState(false);
   const [selectedLoan, setSelectedLoan]     = useState(null);
   const [returning, setReturning]           = useState(false);
+  const [returnError, setReturnError]       = useState('');
   const [renewing, setRenewing]             = useState(false);
   const [cancelOpen, setCancelOpen]         = useState(false);
   const [selectedRes, setSelectedRes]       = useState(null);
@@ -80,6 +81,7 @@ export default function UserBooks() {
   const handleReturn = async () => {
     if (!selectedLoan) return;
     setReturning(true); setError(''); setSuccess('');
+    setReturnError('');
     try {
       const token = localStorage.getItem('token');
       const { data } = await axios.put(`http://localhost:8000/api/loans/${selectedLoan.id}/return`, {}, { headers: { Authorization: `Bearer ${token}` } });
@@ -89,7 +91,13 @@ export default function UserBooks() {
           : `"${selectedLoan.book_title}" returned successfully!`);
         setReturnOpen(false); setSelectedLoan(null); fetchBooks();
       }
-    } catch (e) { setError(e.response?.data?.message || 'Failed to return book.'); }
+    } catch (e) {
+      if (e.response?.data?.error_code === 'UNPAID_FINES' || e.response?.status === 409) {
+        setReturnError(e.response.data.message || 'ሳትከፍል return ማድረግ አትችልም');
+      } else {
+        setError(e.response?.data?.message || 'Failed to return book.');
+      }
+    }
     finally { setReturning(false); }
   };
 
@@ -228,7 +236,7 @@ export default function UserBooks() {
             {/* actions */}
             <Box sx={{ display: 'flex', gap: 1 }}>
               <Button fullWidth variant="contained" size="small" startIcon={<ReturnIcon />}
-                onClick={() => { setSelectedLoan(loan); setReturnOpen(true); }}
+                onClick={() => { setSelectedLoan(loan); setReturnError(''); setReturnOpen(true); }}
                 sx={{ ...gradBtn(), py: 1 }}>Return</Button>
               <Button fullWidth variant="outlined" size="small" startIcon={<ScheduleIcon />}
                 onClick={() => { setSelectedLoan(loan); setRenewOpen(true); }}
@@ -412,7 +420,7 @@ export default function UserBooks() {
           )}
 
           {/* Return Dialog */}
-          <Dialog open={returnOpen} onClose={() => setReturnOpen(false)} maxWidth="sm" fullWidth
+          <Dialog open={returnOpen} onClose={() => { setReturnOpen(false); setReturnError(''); }} maxWidth="sm" fullWidth
             PaperProps={{ sx: { borderRadius: 3 } }}>
             <DialogTitle sx={{ background: `linear-gradient(135deg, ${C.primary}, ${C.secondary})`, color: 'white', fontWeight: 700 }}>
               Return Book
@@ -421,6 +429,16 @@ export default function UserBooks() {
               <Typography variant="body1" sx={{ mb: 2 }}>
                 Are you sure you want to return <strong>"{selectedLoan?.book_title}"</strong>?
               </Typography>
+              {returnError && (
+                <Alert
+                  severity="warning"
+                  onClose={() => setReturnError('')}
+                  action={<Button color="inherit" size="small" href="/fines">Pay fines</Button>}
+                  sx={{ mb: 2, borderRadius: 2 }}
+                >
+                  {returnError}
+                </Alert>
+              )}
               {selectedLoan && daysUntilDue(selectedLoan.due_date) < 0 && (
                 <Alert severity="warning" sx={{ borderRadius: 2 }}>
                   This book is overdue by {Math.abs(daysUntilDue(selectedLoan.due_date))} day(s). A fine will be applied.
@@ -428,7 +446,7 @@ export default function UserBooks() {
               )}
             </DialogContent>
             <DialogActions sx={{ p: 2.5, gap: 1 }}>
-              <Button onClick={() => setReturnOpen(false)} variant="outlined"
+              <Button onClick={() => { setReturnOpen(false); setReturnError(''); }} variant="outlined"
                 sx={{ borderColor: '#e5e7eb', color: 'text.secondary', borderRadius: 2 }}>Cancel</Button>
               <Button onClick={handleReturn} variant="contained" disabled={returning}
                 startIcon={returning ? <CircularProgress size={18} sx={{ color: 'white' }} /> : <ReturnIcon />}

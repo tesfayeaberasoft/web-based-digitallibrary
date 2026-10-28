@@ -63,7 +63,7 @@ try {
         $total_fine = 0;
         $fine_ids = [];
         $user_notifications = [];
-        
+
         foreach ($loans as $loan) {
             $due_date = $loan['due_date'];
             $fine_amount = 0;
@@ -218,7 +218,11 @@ try {
     }
     
 } catch (Exception $e) {
+    if (isset($db) && $db instanceof PDO && $db->inTransaction()) {
+        $db->rollBack();
+    }
+    error_log('Bulk book return failed: ' . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'Bulk book return failed. Please try again.']);
 }
 ?>

@@ -74,6 +74,15 @@ try {
     $db->beginTransaction();
     
     try {
+        $loanLock = $db->prepare("SELECT id FROM book_loans WHERE id = ? AND status = 'active' FOR UPDATE");
+        $loanLock->execute([$loan['id']]);
+        if (!$loanLock->fetchColumn()) {
+            $db->rollBack();
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'No active loan found for this book']);
+            exit;
+        }
+
         $return_date = date('Y-m-d');
         $due_date = $loan['due_date'];
         
@@ -195,7 +204,8 @@ try {
     }
     
 } catch (Exception $e) {
+    error_log('Barcode book return failed: ' . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'Book return failed. Please try again.']);
 }
 ?>

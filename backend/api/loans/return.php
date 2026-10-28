@@ -9,6 +9,7 @@ header('Content-Type: application/json');
 try {
     require_once __DIR__ . '/../../config/config.php';
     require_once __DIR__ . '/../../utils/jwt.php';
+    require_once __DIR__ . '/../../utils/fine-balance.php';
     $decoded = requireAuth();
     
     $loan_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
@@ -21,21 +22,47 @@ try {
     
     require_once __DIR__ . '/../../config/database.php';
     $db = Database::getInstance()->getConnection();
+    $db->beginTransaction();
     
-    // Get loan details
-    $stmt = $db->prepare("
+    $isSelfServiceReturn = ($decoded['role'] ?? '') === 'user';
+    $loanQuery = "
         SELECT l.*, b.title as book_title, b.id as book_id
         FROM book_loans l
         JOIN books b ON l.book_id = b.id
         WHERE l.id = ? AND l.status = 'active'
-    ");
-    $stmt->execute([$loan_id]);
+    ";
+    $loanParams = [$loan_id];
+    if ($isSelfServiceReturn) {
+        $loanQuery .= ' AND l.user_id = ?';
+        $loanParams[] = $decoded['user_id'];
+    }
+    $loanQuery .= ' FOR UPDATE';
+
+    $stmt = $db->prepare($loanQuery);
+    $stmt->execute($loanParams);
     $loan = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if (!$loan) {
+        $db->rollBack();
         http_response_code(404);
         echo json_encode(['success' => false, 'message' => 'Active loan not found']);
         exit;
+    }
+
+    if ($isSelfServiceReturn) {
+        $unpaidFines = getOutstandingFineRows($db, $loan['user_id'], true);
+        $outstandingBalance = outstandingFineBalance($unpaidFines);
+        if ($outstandingBalance > 0) {
+            $db->rollBack();
+            http_response_code(409);
+            echo json_encode([
+                'success' => false,
+                'error_code' => 'UNPAID_FINES',
+                'message' => 'ሳትከፍል return ማድረግ አትችልም',
+                'outstanding_balance' => round($outstandingBalance, 2)
+            ], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
     }
     
     $return_date = date('Y-m-d');
@@ -119,6 +146,8 @@ try {
         VALUES (?, 'return_book', 'book_loans', ?, ?)
     ");
     $stmt->execute([$decoded['user_id'], $loan_id, $_SERVER['REMOTE_ADDR']]);
+
+    $db->commit();
     
     echo json_encode([
         'success' => true,
@@ -127,7 +156,11 @@ try {
     ]);
     
 } catch (Exception $e) {
+    if (isset($db) && $db instanceof PDO && $db->inTransaction()) {
+        $db->rollBack();
+    }
+    error_log('Book return failed: ' . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'Book return failed. Please try again.']);
 }
 ?>
