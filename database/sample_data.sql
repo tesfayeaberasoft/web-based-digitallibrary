@@ -34,6 +34,10 @@ INSERT INTO categories (name, description, color_code) VALUES
 INSERT INTO users (user_id, full_name, email, password_hash, role, status) VALUES
 ('ADMIN001', 'System Administrator', 'admin@digitallibrary.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin', 'active');
 
+-- Insert default super administrator
+INSERT INTO users (user_id, full_name, email, password_hash, role, status) VALUES
+('SUPER001', 'Super Administrator', 'superadmin@digitallibrary.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'super-admin', 'active');
+
 -- Insert sample librarians
 INSERT INTO users (user_id, full_name, email, phone, address, password_hash, role, status) VALUES
 ('LIB001', 'Sarah Johnson', 'sarah@library.com', '+1-555-0101', '123 Library St, City, State', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'librarian', 'active'),

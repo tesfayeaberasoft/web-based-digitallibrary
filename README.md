@@ -50,6 +50,7 @@ A comprehensive, full-stack digital library management system with role-based ac
 
 | Role | Email | Password |
 |------|-------|----------|
+| Super Admin | superadmin@digitallibrary.com | password |
 | Admin | admin@digitallibrary.com | password |
 | Librarian | sarah@library.com | password |
 | User | john.doe@example.com | password |

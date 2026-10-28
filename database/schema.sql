@@ -13,7 +13,7 @@ CREATE TABLE users (
     phone VARCHAR(20),
     address TEXT,
     password_hash VARCHAR(255) NOT NULL,
-    role ENUM('admin', 'librarian', 'user') DEFAULT 'user',
+    role ENUM('admin', 'librarian', 'user', 'super-admin') DEFAULT 'user',
     status ENUM('active', 'inactive', 'suspended') DEFAULT 'active',
     profile_image VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

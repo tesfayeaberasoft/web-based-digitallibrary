@@ -80,7 +80,8 @@ try {
         $migrationFiles = [
             'add_condition_status_column.sql',
             'create_user_favorites.sql',
-            'create-notification-settings.sql'
+            'create-notification-settings.sql',
+            'ensure-super-admin-account.sql'
         ];
         
         require_once __DIR__ . '/config/database.php';
