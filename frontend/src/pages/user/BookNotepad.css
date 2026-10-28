@@ -1,13 +1,24 @@
+.reading-notepad {
+  --note-primary: #2d6a4f;
+  --note-accent: #52b788;
+  --note-muted: #687a70;
+}
+
 .tiptap-note-content {
   min-height: 260px;
   outline: none;
   color: inherit;
-  line-height: 1.65;
+  line-height: 1.75;
   overflow-wrap: anywhere;
+  caret-color: var(--note-primary);
+}
+
+.tiptap-note-content:focus-visible {
+  outline: none;
 }
 
 .tiptap-note-content > * + * {
-  margin-top: 0.75em;
+  margin-top: 0.9em;
 }
 
 .tiptap-note-content h1,
@@ -31,14 +42,23 @@
 }
 
 .tiptap-note-content blockquote {
-  border-left: 3px solid #6b8f71;
-  color: #53665a;
+  border-left: 3px solid var(--note-accent);
+  color: var(--note-muted);
   margin-left: 0;
-  padding-left: 1rem;
+  padding: 0.15rem 0 0.15rem 1rem;
+}
+
+.tiptap-note-content a {
+  color: var(--note-primary);
+  text-decoration-color: var(--note-accent);
+}
+
+.tiptap-note-content ::selection {
+  background: rgba(82, 183, 136, 0.22);
 }
 
 .tiptap-note-content p.is-editor-empty:first-child::before {
-  color: #80877f;
+  color: #8a9a91;
   content: attr(data-placeholder);
   float: left;
   height: 0;

@@ -2,24 +2,49 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import axios from 'axios';
 import {
   Alert,
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Avatar,
   Box,
   Button,
   Chip,
   CircularProgress,
   Divider,
+  FormHelperText,
   IconButton,
   Paper,
   Stack,
   TextField,
   Typography
 } from '@mui/material';
-import { ChatBubbleOutlineOutlined, Send } from '@mui/icons-material';
+import {
+  AccessTime,
+  ChatBubbleOutlineOutlined,
+  ExpandMore,
+  HelpOutlineOutlined,
+  LocalLibraryOutlined,
+  Send
+} from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { useAuth } from '../../contexts/AuthContext';
 
 const API_URL = 'http://localhost:8000/api';
 const POLL_INTERVAL = 5000;
+const SUPPORT_FAQS = [
+  {
+    question: 'How do I borrow a book?',
+    answer: 'Open the book record and choose the borrow or request option. A librarian can help if the book is unavailable.'
+  },
+  {
+    question: 'How do I access an eBook?',
+    answer: 'Open a book that has digital content and select Read. PDF and EPUB titles open in the built-in reader.'
+  },
+  {
+    question: 'How long does it take to get a reply?',
+    answer: 'A librarian will respond as soon as possible during library hours. Your conversation stays in this support desk.'
+  }
+];
 
 const roleLabel = (role) => ({
   'super-admin': 'Super Admin',
@@ -43,11 +68,13 @@ export default function MessagingPage({ supportMode = false }) {
   const [selectedId, setSelectedId] = useState('');
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState('');
+  const [subject, setSubject] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [pageError, setPageError] = useState('');
   const [conversationError, setConversationError] = useState('');
   const messagesEndRef = useRef(null);
+  const shouldAutoScrollRef = useRef(true);
 
   const threadById = useMemo(
     () => new Map(threads.map((thread) => [String(thread.user_id), thread])),
@@ -130,6 +157,7 @@ export default function MessagingPage({ supportMode = false }) {
   }, [token, supportMode, refreshThreads]);
 
   useEffect(() => {
+    shouldAutoScrollRef.current = true;
     if (!selectedId) {
       setMessages([]);
       return undefined;
@@ -186,25 +214,36 @@ export default function MessagingPage({ supportMode = false }) {
   }, [selectedId, token, user?.id, refreshThreads]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    if (shouldAutoScrollRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
   }, [messages]);
 
   const handleSend = async (event) => {
     event.preventDefault();
     const messageContent = draft.trim();
     if (!messageContent || !selectedPeer || sending) return;
+    const isNewSupportRequest = supportMode && !threadById.has(String(selectedPeer.id));
+    if (isNewSupportRequest && !subject.trim()) {
+      setPageError('Add a subject so the librarian knows what you need help with.');
+      return;
+    }
 
     setSending(true);
     setPageError('');
     try {
       const { data } = await axios.post(`${API_URL}/messages`, {
         receiver_id: Number(selectedPeer.id),
-        message_content: messageContent
+        message_content: isNewSupportRequest
+          ? `Subject: ${subject.trim()}\n\n${messageContent}`
+          : messageContent
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      shouldAutoScrollRef.current = true;
       setMessages((current) => [...current, data.message]);
       setDraft('');
+      setSubject('');
       await refreshThreads();
     } catch (error) {
       setPageError(error.response?.data?.message || 'Your message could not be sent. Please try again.');
@@ -221,42 +260,62 @@ export default function MessagingPage({ supportMode = false }) {
   return (
     <DashboardLayout title={title}>
       <Stack spacing={2}>
-        <Box>
-          <Typography variant="h4" fontWeight={700}>{title}</Typography>
-          <Typography color="text.secondary">
-            {supportMode
-              ? 'Contact a librarian for help and follow replies here.'
-              : 'Chat with the staff members available to your role.'}
-          </Typography>
-        </Box>
+        <Paper
+          sx={{
+            p: { xs: 2.5, sm: 3.5 },
+            borderRadius: 3,
+            color: 'common.white',
+            background: 'linear-gradient(120deg, #1b4332 0%, #2d6a4f 55%, #52b788 100%)',
+            boxShadow: '0 12px 32px rgba(27, 67, 50, 0.18)'
+          }}
+        >
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ sm: 'center' }}>
+            <Avatar sx={{ width: 54, height: 54, bgcolor: 'rgba(255,255,255,.16)', color: 'common.white' }}>
+              {supportMode ? <LocalLibraryOutlined /> : <ChatBubbleOutlineOutlined />}
+            </Avatar>
+            <Box>
+              <Typography variant="h4" fontWeight={750}>{title}</Typography>
+              <Typography sx={{ mt: 0.5, color: 'rgba(255,255,255,.84)' }}>
+                {supportMode
+                  ? 'Get help from the library team and keep every reply in one place.'
+                  : 'A shared space for quick, secure conversations with your team.'}
+              </Typography>
+            </Box>
+          </Stack>
+        </Paper>
         {pageError && <Alert severity="error" onClose={() => setPageError('')}>{pageError}</Alert>}
         <Paper
           elevation={1}
           sx={{
             display: 'grid',
             gridTemplateColumns: { xs: '1fr', md: 'minmax(240px, 0.75fr) minmax(0, 1.8fr)' },
-            minHeight: 560,
+            minHeight: { xs: 660, md: 680 },
             overflow: 'hidden',
             border: 1,
-            borderColor: 'divider'
+            borderColor: 'divider',
+            borderRadius: 3,
+            boxShadow: '0 12px 36px rgba(27, 67, 50, 0.08)'
           }}
         >
-          <Box sx={{ borderRight: { md: 1 }, borderColor: 'divider', minWidth: 0 }}>
+          <Box sx={{ borderRight: { md: 1 }, borderColor: 'divider', minWidth: 0, bgcolor: '#f7fbf8' }}>
             <Box sx={{ p: 2 }}>
               <Typography variant="h6" fontWeight={700}>
-                {supportMode ? 'Support desk' : 'Conversations'}
+                {supportMode ? 'Your requests' : 'Conversations'}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {supportMode ? 'Active librarians' : 'Contacts and recent chats'}
+                {supportMode ? 'Librarian conversations' : 'Contacts and recent chats'}
               </Typography>
             </Box>
             <Divider />
             {loading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress size={26} /></Box>
             ) : peers.length === 0 ? (
-              <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>{noContactsText}</Typography>
+              <Stack spacing={1} alignItems="flex-start" sx={{ p: 2 }}>
+                <HelpOutlineOutlined color="action" />
+                <Typography variant="body2" color="text.secondary">{noContactsText}</Typography>
+              </Stack>
             ) : (
-              <Stack divider={<Divider flexItem />}>
+              <Stack spacing={0.5} sx={{ p: 1, maxHeight: { xs: 220, md: 570 }, overflowY: 'auto' }}>
                 {peers.map((peer) => (
                   <Button
                     key={peer.id}
@@ -265,9 +324,10 @@ export default function MessagingPage({ supportMode = false }) {
                     sx={{
                       justifyContent: 'flex-start',
                       textAlign: 'left',
-                      borderRadius: 0,
-                      p: 1.5,
-                      bgcolor: peer.id === String(selectedId) ? 'action.selected' : 'transparent'
+                      borderRadius: 2,
+                      p: 1.25,
+                      bgcolor: peer.id === String(selectedId) ? 'rgba(45,106,79,.10)' : 'transparent',
+                      '&:hover': { bgcolor: 'rgba(45,106,79,.08)' }
                     }}
                   >
                     <ContactAvatar name={peer.full_name} role={peer.role} />
@@ -286,6 +346,15 @@ export default function MessagingPage({ supportMode = false }) {
                       <Typography variant="caption" color="text.secondary" display="block">
                         {roleLabel(peer.role)}
                       </Typography>
+                      {supportMode && peer.last_message_id && (
+                        <Chip
+                          size="small"
+                          icon={String(peer.sender_id) === String(user?.id) ? <AccessTime /> : undefined}
+                          label={String(peer.sender_id) === String(user?.id) ? 'Pending' : 'Resolved'}
+                          color={String(peer.sender_id) === String(user?.id) ? 'warning' : 'success'}
+                          sx={{ mt: 0.75, height: 22, '& .MuiChip-label': { px: 1 } }}
+                        />
+                      )}
                       {peer.message_content && (
                         <Typography variant="body2" color="text.secondary" noWrap sx={{ mt: 0.25 }}>
                           {peer.message_content}
@@ -298,14 +367,21 @@ export default function MessagingPage({ supportMode = false }) {
             )}
           </Box>
 
-          <Box sx={{ display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: 560 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: { xs: 440, md: 680 } }}>
             {selectedPeer ? (
               <>
-                <Stack direction="row" spacing={1.5} alignItems="center" sx={{ p: 2 }}>
+                <Stack
+                  direction="row"
+                  spacing={1.5}
+                  alignItems="center"
+                  sx={{ p: 2, background: 'linear-gradient(90deg, #ffffff 0%, #f5faf6 100%)' }}
+                >
                   <ContactAvatar name={selectedPeer.full_name} role={selectedPeer.role} />
                   <Box>
                     <Typography fontWeight={700}>{selectedPeer.full_name}</Typography>
-                    <Typography variant="body2" color="text.secondary">{roleLabel(selectedPeer.role)}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {supportMode ? 'Library support team' : roleLabel(selectedPeer.role)}
+                    </Typography>
                   </Box>
                 </Stack>
                 <Divider />
@@ -313,7 +389,20 @@ export default function MessagingPage({ supportMode = false }) {
                 <Box
                   aria-live="polite"
                   aria-label="Conversation messages"
-                  sx={{ flex: 1, minHeight: 300, maxHeight: 520, overflowY: 'auto', p: 2, bgcolor: 'grey.50' }}
+                  onScroll={(event) => {
+                    const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
+                    shouldAutoScrollRef.current = scrollHeight - scrollTop - clientHeight < 100;
+                  }}
+                  sx={{
+                    flex: 1,
+                    minHeight: 280,
+                    maxHeight: { xs: 370, md: 440 },
+                    overflowY: 'auto',
+                    p: { xs: 1.5, sm: 2.5 },
+                    bgcolor: '#f5f8f6',
+                    backgroundImage: 'radial-gradient(#dce9e0 0.7px, transparent 0.7px)',
+                    backgroundSize: '18px 18px'
+                  }}
                 >
                   {messages.length === 0 ? (
                     <Stack alignItems="center" justifyContent="center" spacing={1} sx={{ height: '100%', color: 'text.secondary' }}>
@@ -329,13 +418,15 @@ export default function MessagingPage({ supportMode = false }) {
                       >
                         <Box
                           sx={{
-                            maxWidth: '80%',
-                            px: 1.75,
-                            py: 1.25,
-                            borderRadius: 2,
-                            bgcolor: ownMessage ? 'primary.main' : 'background.paper',
-                            color: ownMessage ? 'primary.contrastText' : 'text.primary',
-                            boxShadow: 1,
+                            maxWidth: { xs: '92%', sm: '78%' },
+                            px: 2,
+                            py: 1.35,
+                            borderRadius: ownMessage ? '18px 18px 5px 18px' : '18px 18px 18px 5px',
+                            background: ownMessage
+                              ? 'linear-gradient(135deg, #2d6a4f 0%, #40916c 100%)'
+                              : 'common.white',
+                            color: ownMessage ? 'common.white' : 'text.primary',
+                            boxShadow: '0 3px 12px rgba(27, 67, 50, 0.10)',
                             overflowWrap: 'anywhere',
                             whiteSpace: 'pre-wrap'
                           }}
@@ -355,6 +446,18 @@ export default function MessagingPage({ supportMode = false }) {
                 </Box>
                 <Divider />
                 <Box component="form" onSubmit={handleSend} sx={{ p: 2 }}>
+                  {supportMode && !threadById.has(String(selectedPeer.id)) && (
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Request subject"
+                      placeholder="What can we help with?"
+                      value={subject}
+                      onChange={(event) => setSubject(event.target.value)}
+                      inputProps={{ maxLength: 120, 'aria-label': 'Support request subject' }}
+                      sx={{ mb: 1.5 }}
+                    />
+                  )}
                   <Stack direction="row" spacing={1} alignItems="flex-end">
                     <TextField
                       fullWidth
@@ -362,6 +465,7 @@ export default function MessagingPage({ supportMode = false }) {
                       minRows={2}
                       maxRows={5}
                       label="Write a message"
+                      placeholder={supportMode ? 'Describe what you need help with…' : 'Write your message…'}
                       value={draft}
                       onChange={(event) => setDraft(event.target.value)}
                       inputProps={{ maxLength: 4000, 'aria-label': 'Message text' }}
@@ -377,6 +481,11 @@ export default function MessagingPage({ supportMode = false }) {
                       {sending ? <CircularProgress size={24} /> : <Send />}
                     </IconButton>
                   </Stack>
+                  {supportMode && (
+                    <FormHelperText sx={{ mt: 1 }}>
+                      New requests are marked pending until a librarian replies. A reply marks the request resolved; send another message to reopen it.
+                    </FormHelperText>
+                  )}
                 </Box>
               </>
             ) : (
@@ -392,6 +501,41 @@ export default function MessagingPage({ supportMode = false }) {
             )}
           </Box>
         </Paper>
+        {supportMode && (
+          <Paper
+            component="section"
+            variant="outlined"
+            sx={{ p: { xs: 1.5, sm: 2.5 }, borderRadius: 3, borderColor: 'rgba(45,106,79,.18)' }}
+          >
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+              <HelpOutlineOutlined color="primary" />
+              <Box>
+                <Typography variant="h6" fontWeight={700}>Quick answers</Typography>
+                <Typography variant="body2" color="text.secondary">A few things readers often ask.</Typography>
+              </Box>
+            </Stack>
+            {SUPPORT_FAQS.map((faq) => (
+              <Accordion
+                key={faq.question}
+                disableGutters
+                elevation={0}
+                sx={{
+                  '&:before': { display: 'none' },
+                  borderTop: '1px solid',
+                  borderColor: 'divider',
+                  bgcolor: 'transparent'
+                }}
+              >
+                <AccordionSummary expandIcon={<ExpandMore />} sx={{ px: 0 }}>
+                  <Typography fontWeight={600}>{faq.question}</Typography>
+                </AccordionSummary>
+                <AccordionDetails sx={{ px: 0, pt: 0, color: 'text.secondary' }}>
+                  <Typography variant="body2">{faq.answer}</Typography>
+                </AccordionDetails>
+              </Accordion>
+            ))}
+          </Paper>
+        )}
       </Stack>
     </DashboardLayout>
   );
