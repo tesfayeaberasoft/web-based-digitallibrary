@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Alert,
@@ -13,6 +13,7 @@ import { ArrowBack, NavigateBefore, NavigateNext } from '@mui/icons-material';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { ReactReader } from 'react-reader';
 import DashboardLayout from '../../components/layout/DashboardLayout';
+import BookNotepad from './BookNotepad';
 import axios from 'axios';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 
@@ -32,14 +33,22 @@ export default function BookReader() {
   const [location, setLocation] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [pageCount, setPageCount] = useState(0);
-  const [pageWidth, setPageWidth] = useState(Math.min(window.innerWidth - 40, 800));
+  const [pageWidth, setPageWidth] = useState(720);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const readerContainerRef = useRef(null);
 
   useEffect(() => {
-    const updatePageWidth = () => setPageWidth(Math.min(window.innerWidth - 40, 800));
-    window.addEventListener('resize', updatePageWidth);
-    return () => window.removeEventListener('resize', updatePageWidth);
+    const container = readerContainerRef.current;
+    if (!container) return undefined;
+
+    const updatePageWidth = () => {
+      setPageWidth(Math.max(240, Math.min(container.clientWidth - 32, 800)));
+    };
+    const observer = new ResizeObserver(updatePageWidth);
+    observer.observe(container);
+    updatePageWidth();
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -167,19 +176,34 @@ export default function BookReader() {
         >
           Back to library
         </Button>
-        <Paper
-          elevation={2}
-          onContextMenu={(event) => event.preventDefault()}
-          sx={{ p: { xs: 2, md: 3 }, minHeight: '70vh', overflow: 'auto' }}
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: book ? { xs: 'minmax(0, 1fr)', lg: 'minmax(0, 1.5fr) minmax(320px, 0.85fr)' } : 'minmax(0, 1fr)',
+            gap: 2,
+            alignItems: 'start'
+          }}
         >
-          {book && (
-            <Box sx={{ mb: 2, textAlign: 'center' }}>
-              <Typography variant="h5" fontWeight={700}>{book.title}</Typography>
-              <Typography color="text.secondary">{book.author}</Typography>
+          <Paper
+            component="section"
+            elevation={2}
+            onContextMenu={(event) => event.preventDefault()}
+            sx={{ p: { xs: 2, md: 3 }, minHeight: '70vh', minWidth: 0, overflow: 'auto' }}
+          >
+            {book && (
+              <Box sx={{ mb: 2, textAlign: 'center' }}>
+                <Typography variant="h5" fontWeight={700}>{book.title}</Typography>
+                <Typography color="text.secondary">{book.author}</Typography>
+              </Box>
+            )}
+            <Box ref={readerContainerRef} sx={{ minWidth: 0 }}>
+              {readerContent()}
             </Box>
+          </Paper>
+          {book && !loading && !error && (
+            <BookNotepad bookId={bookId} bookTitle={book.title} token={token} />
           )}
-          {readerContent()}
-        </Paper>
+        </Box>
         <Typography variant="caption" color="text.secondary" textAlign="center">
           This reader does not provide download or print controls. Digital content can still be captured from a screen or browser.
         </Typography>

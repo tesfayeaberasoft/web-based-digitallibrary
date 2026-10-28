@@ -81,7 +81,8 @@ try {
             'add_condition_status_column.sql',
             'create_user_favorites.sql',
             'create-notification-settings.sql',
-            'ensure-super-admin-account.sql'
+            'ensure-super-admin-account.sql',
+            'create_notes_table.sql'
         ];
         
         require_once __DIR__ . '/config/database.php';

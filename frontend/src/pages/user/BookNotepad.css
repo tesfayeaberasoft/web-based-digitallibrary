@@ -1,0 +1,46 @@
+.tiptap-note-content {
+  min-height: 260px;
+  outline: none;
+  color: inherit;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.tiptap-note-content > * + * {
+  margin-top: 0.75em;
+}
+
+.tiptap-note-content h1,
+.tiptap-note-content h2,
+.tiptap-note-content h3 {
+  line-height: 1.25;
+  margin-top: 1.2em;
+}
+
+.tiptap-note-content h1 {
+  font-size: 1.5rem;
+}
+
+.tiptap-note-content h2 {
+  font-size: 1.25rem;
+}
+
+.tiptap-note-content ul,
+.tiptap-note-content ol {
+  padding-left: 1.5rem;
+}
+
+.tiptap-note-content blockquote {
+  border-left: 3px solid #6b8f71;
+  color: #53665a;
+  margin-left: 0;
+  padding-left: 1rem;
+}
+
+.tiptap-note-content p.is-editor-empty:first-child::before {
+  color: #80877f;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}

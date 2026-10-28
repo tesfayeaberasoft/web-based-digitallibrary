@@ -209,6 +209,11 @@ switch (true) {
         require __DIR__ . '/api/books/content.php';
         break;
 
+    case preg_match('#^/books/(\d+)/notes$#', $path, $matches) && in_array($request_method, ['GET', 'PUT'], true):
+        $_GET['id'] = $matches[1];
+        require __DIR__ . '/api/notes.php';
+        break;
+
     case preg_match('#^/books/(\d+)/reviews$#', $path, $matches) && in_array($request_method, ['GET', 'POST'], true):
         $_GET['id'] = $matches[1];
         require __DIR__ . '/api/books/reviews.php';
