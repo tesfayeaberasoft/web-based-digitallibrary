@@ -152,12 +152,33 @@ const AuthProvider = ({ children }) => {
       if (response.data.success) {
         return { success: true, message: 'Registration successful. Please login.' };
       } else {
-        return { success: false, message: response.data.message };
+        return {
+          success: false,
+          message: response.data.message,
+          errors: response.data.errors || {},
+        };
       }
     } catch (error) {
       return { 
         success: false, 
-        message: error.response?.data?.message || 'Registration failed. Please try again.' 
+        message: error.response?.data?.message || 'Registration failed. Please try again.',
+        errors: error.response?.data?.errors || {},
+      };
+    }
+  };
+
+  const checkEmailAvailability = async (email) => {
+    try {
+      const response = await axios.post('http://localhost:8000/api/auth/email-availability', { email });
+      return {
+        success: true,
+        available: response.data.available,
+        message: response.data.message,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Unable to verify this email address. Please try again.',
       };
     }
   };
@@ -201,6 +222,7 @@ const AuthProvider = ({ children }) => {
     login,
     googleLogin,
     register,
+    checkEmailAvailability,
     logout,
     updateUser,
     isAuthenticated,

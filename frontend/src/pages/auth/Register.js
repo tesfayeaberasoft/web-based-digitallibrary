@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Box,
   Card,
@@ -56,7 +56,7 @@ const steps = ['Personal Info', 'Security', 'Confirmation'];
 
 const Register = () => {
   const navigate = useNavigate();
-  const { register, googleLogin } = useAuth();
+  const { register, googleLogin, checkEmailAvailability } = useAuth();
   
   const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState({
@@ -72,6 +72,11 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [visible, setVisible] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [touched, setTouched] = useState({});
+  const [emailAvailability, setEmailAvailability] = useState(null);
+  const [emailCheckLoading, setEmailCheckLoading] = useState(false);
+  const emailCheckRequest = useRef(0);
 
   React.useEffect(() => {
     setVisible(true);
@@ -83,10 +88,100 @@ const Register = () => {
       ...prev,
       [name]: value
     }));
+    if (touched[name]) {
+      setFieldErrors(prev => ({
+        ...prev,
+        [name]: validateField(name, value)
+      }));
+    }
+    if (name === 'email') {
+      emailCheckRequest.current += 1;
+      setEmailAvailability(null);
+      setEmailCheckLoading(false);
+    } else if (name === 'password' && touched.confirmPassword) {
+      setFieldErrors(prev => ({
+        ...prev,
+        confirmPassword: value === formData.confirmPassword ? '' : 'Passwords do not match.'
+      }));
+    }
   };
 
-  const handleNext = () => {
-    if (validateStep()) {
+  const validateField = (name, value) => {
+    const trimmed = value.trim();
+    switch (name) {
+      case 'fullName':
+        if (trimmed.length < 3 || trimmed.length > 100 || !/^[\p{L}\p{M} ]+$/u.test(trimmed)) {
+          return 'Name must be at least 3 characters and contain letters and spaces only.';
+        }
+        return '';
+      case 'email':
+        if (trimmed.length > 100 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(trimmed)) {
+          return 'Enter a valid email address.';
+        }
+        return '';
+      case 'phone':
+        if (!/^(?:\+251|0)?[79]\d{8}$/.test(trimmed.replace(/[\s()-]/g, ''))) {
+          return 'Enter a valid Ethiopian mobile number, such as 0912345678 or +251912345678.';
+        }
+        return '';
+      case 'address':
+        if (trimmed.length < 5) {
+          return 'Address must be at least 5 characters.';
+        }
+        return '';
+      case 'password':
+        if (value.length < 8 || !/[A-Z]/.test(value) || !/[a-z]/.test(value)
+          || !/[0-9]/.test(value) || !/[^A-Za-z0-9]/.test(value)) {
+          return 'Use at least 8 characters, including uppercase and lowercase letters, a number, and a special character.';
+        }
+        return '';
+      case 'confirmPassword':
+        return value !== formData.password ? 'Passwords do not match.' : '';
+      default:
+        return '';
+    }
+  };
+
+  const verifyEmailAvailability = async () => {
+    const email = formData.email.trim().toLowerCase();
+    if (emailAvailability?.email === email) {
+      if (!emailAvailability.available) {
+        setFieldErrors(prev => ({ ...prev, email: 'This email address is already registered.' }));
+        return false;
+      }
+      return true;
+    }
+
+    const requestId = ++emailCheckRequest.current;
+    setEmailCheckLoading(true);
+    const result = await checkEmailAvailability(email);
+    if (requestId !== emailCheckRequest.current) {
+      return false;
+    }
+    setEmailCheckLoading(false);
+
+    if (!result.success) {
+      setFieldErrors(prev => ({ ...prev, email: result.message }));
+      return false;
+    }
+
+    setEmailAvailability({ email, available: result.available });
+    const message = result.available ? '' : 'This email address is already registered.';
+    setFieldErrors(prev => ({ ...prev, email: message }));
+    return result.available;
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    setTouched(prev => ({ ...prev, [name]: true }));
+    setFieldErrors(prev => ({ ...prev, [name]: validateField(name, value) }));
+    if (name === 'email' && !validateField(name, value)) {
+      verifyEmailAvailability();
+    }
+  };
+
+  const handleNext = async () => {
+    if (await validateStep()) {
       setActiveStep(prev => prev + 1);
       setError('');
     }
@@ -97,41 +192,39 @@ const Register = () => {
     setError('');
   };
 
-  const validateStep = () => {
-    switch (activeStep) {
-      case 0:
-        if (!formData.fullName || !formData.email || !formData.phone) {
-          setError('Please fill in all required fields');
-          return false;
-        }
-        if (!/\S+@\S+\.\S+/.test(formData.email)) {
-          setError('Please enter a valid email address');
-          return false;
-        }
-        break;
-      case 1:
-        if (!formData.password || !formData.confirmPassword) {
-          setError('Please fill in all password fields');
-          return false;
-        }
-        if (formData.password.length < 6) {
-          setError('Password must be at least 6 characters long');
-          return false;
-        }
-        if (formData.password !== formData.confirmPassword) {
-          setError('Passwords do not match');
-          return false;
-        }
-        break;
-      default:
-        break;
+  const validateStep = async () => {
+    const fields = activeStep === 0
+      ? ['fullName', 'email', 'phone', 'address']
+      : ['password', 'confirmPassword'];
+    const nextErrors = {};
+    fields.forEach((name) => {
+      nextErrors[name] = validateField(name, formData[name]);
+    });
+    setTouched(prev => ({
+      ...prev,
+      ...fields.reduce((result, name) => ({ ...result, [name]: true }), {})
+    }));
+    setFieldErrors(prev => ({ ...prev, ...nextErrors }));
+
+    if (Object.values(nextErrors).some(Boolean)) {
+      return false;
+    }
+    if (activeStep === 0) {
+      return verifyEmailAvailability();
     }
     return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateStep()) return;
+    const allFields = ['fullName', 'email', 'phone', 'address', 'password', 'confirmPassword'];
+    const nextErrors = {};
+    allFields.forEach((name) => {
+      nextErrors[name] = validateField(name, formData[name]);
+    });
+    setTouched(allFields.reduce((result, name) => ({ ...result, [name]: true }), {}));
+    setFieldErrors(nextErrors);
+    if (Object.values(nextErrors).some(Boolean)) return;
 
     setLoading(true);
     setError('');
@@ -149,6 +242,22 @@ const Register = () => {
       navigate('/login');
     } else {
       setError(result.message);
+      if (result.errors) {
+        const serverErrors = {
+          full_name: 'fullName',
+          email: 'email',
+          phone: 'phone',
+          address: 'address',
+          password: 'password'
+        };
+        setFieldErrors(prev => ({
+          ...prev,
+          ...Object.entries(result.errors).reduce((mapped, [field, message]) => {
+            if (serverErrors[field]) mapped[serverErrors[field]] = message;
+            return mapped;
+          }, {})
+        }));
+      }
       toast.error(result.message);
     }
     
@@ -185,7 +294,10 @@ const Register = () => {
                 name="fullName"
                 value={formData.fullName}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 required
+                error={Boolean(touched.fullName && fieldErrors.fullName)}
+                helperText={touched.fullName ? fieldErrors.fullName : ''}
                 placeholder="John Doe"
                 InputProps={{
                   startAdornment: (
@@ -204,7 +316,10 @@ const Register = () => {
                 type="email"
                 value={formData.email}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 required
+                error={Boolean(touched.email && fieldErrors.email)}
+                helperText={touched.email ? (emailCheckLoading ? 'Checking email availability…' : fieldErrors.email) : ''}
                 placeholder="john@example.com"
                 InputProps={{
                   startAdornment: (
@@ -222,8 +337,11 @@ const Register = () => {
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 required
-                placeholder="+1 (555) 123-4567"
+                error={Boolean(touched.phone && fieldErrors.phone)}
+                helperText={touched.phone ? fieldErrors.phone : ''}
+                placeholder="+251 91 234 5678"
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -242,6 +360,10 @@ const Register = () => {
                 rows={3}
                 value={formData.address}
                 onChange={handleChange}
+                onBlur={handleBlur}
+                required
+                error={Boolean(touched.address && fieldErrors.address)}
+                helperText={touched.address ? fieldErrors.address : ''}
                 placeholder="123 Main St, City, State 12345"
                 InputProps={{
                   startAdornment: (
@@ -265,7 +387,10 @@ const Register = () => {
                 type={showPassword ? 'text' : 'password'}
                 value={formData.password}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 required
+                error={Boolean(touched.password && fieldErrors.password)}
+                helperText={touched.password ? fieldErrors.password : ''}
                 placeholder="••••••••"
                 InputProps={{
                   startAdornment: (
@@ -294,7 +419,10 @@ const Register = () => {
                 type={showConfirmPassword ? 'text' : 'password'}
                 value={formData.confirmPassword}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 required
+                error={Boolean(touched.confirmPassword && fieldErrors.confirmPassword)}
+                helperText={touched.confirmPassword ? fieldErrors.confirmPassword : ''}
                 placeholder="••••••••"
                 InputProps={{
                   startAdornment: (
@@ -318,7 +446,7 @@ const Register = () => {
             <Grid item xs={12}>
               <Box sx={{ p: 2, backgroundColor: C.light, borderRadius: 2 }}>
                 <Typography variant="caption" color="text.secondary">
-                  Password must be at least 6 characters long
+                  Use at least 8 characters, including uppercase and lowercase letters, a number, and a special character.
                 </Typography>
               </Box>
             </Grid>
