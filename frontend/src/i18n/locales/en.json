@@ -1,0 +1,72 @@
+{
+  "common": {
+    "language": "Language",
+    "switchLanguage": "Switch to Amharic",
+    "notifications": "Notifications",
+    "account": "Account",
+    "profile": "My Profile",
+    "dashboard": "Dashboard",
+    "logout": "Logout",
+    "login": "Login",
+    "register": "Register",
+    "browseBooks": "Browse Books",
+    "exportReport": "Export Report",
+    "superAdmin": "Super Admin",
+    "administrator": "Administrator",
+    "librarian": "Librarian",
+    "memberPortal": "Member Portal",
+    "systemHealth": "System Health",
+    "allSystemsOperational": "All Systems Operational",
+    "digitalLibrary": "Digital Library"
+  },
+  "navigation": {
+    "Super Admin": "Super Admin",
+    "System Overview": "System Overview",
+    "Admins": "Admins",
+    "Users": "Users",
+    "Librarians": "Librarians",
+    "Settings": "Settings",
+    "Security": "Security",
+    "Audit Logs": "Audit Logs",
+    "Analytics": "Analytics",
+    "Messages": "Messages",
+    "Overview": "Overview",
+    "Financial Reports": "Financial Reports",
+    "Notifications": "Notifications",
+    "Requests": "Requests",
+    "Barcode": "Barcode",
+    "Bulk Ops": "Bulk Operations",
+    "Reservations": "Reservations",
+    "Inventory": "Inventory",
+    "Members": "Members",
+    "Reports": "Reports",
+    "My Books": "My Books",
+    "My Favorites": "My Favorites",
+    "History": "History",
+    "Reading Goals": "Reading Goals",
+    "Achievements": "Achievements",
+    "My Fines": "My Fines",
+    "Notification Settings": "Notification Settings",
+    "Help & Support": "Help & Support"
+  },
+  "support": {
+    "blockedReturn": "You cannot return the book until you pay your fines.",
+    "requests": "Your requests"
+  },
+  "messaging": {
+    "title": "Messages",
+    "supportTitle": "Help & Support",
+    "conversation": "Conversations",
+    "send": "Send message",
+    "write": "Write a message"
+  },
+  "notepad": {
+    "title": "Reading notes",
+    "save": "Save Note",
+    "saved": "All changes saved",
+    "saving": "Saving…",
+    "unsaved": "Unsaved changes",
+    "failed": "Save failed",
+    "savedAt": "Saved {{time}}"
+  }
+}

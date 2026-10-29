@@ -11,3 +11,11 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+html.language-amharic,
+html.language-amharic body,
+html.language-amharic button,
+html.language-amharic input,
+html.language-amharic textarea {
+  font-family: 'Noto Sans Ethiopic', 'Abyssinica SIL', 'Nyala', 'Segoe UI', sans-serif;
+}

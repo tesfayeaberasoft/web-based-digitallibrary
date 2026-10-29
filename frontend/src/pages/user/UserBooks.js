@@ -19,6 +19,7 @@ import {
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 
 const C = {
   primary: '#2d6a4f', secondary: '#52b788',
@@ -40,6 +41,7 @@ const gradBtn = (outline = false) => outline ? {
 };
 
 export default function UserBooks() {
+  const { t } = useTranslation();
   const [tab, setTab]                       = useState(0);
   const [loans, setLoans]                   = useState([]);
   const [reservations, setReservations]     = useState([]);
@@ -93,7 +95,7 @@ export default function UserBooks() {
       }
     } catch (e) {
       if (e.response?.data?.error_code === 'UNPAID_FINES' || e.response?.status === 409) {
-        setReturnError(e.response.data.message || 'ሳትከፍል return ማድረግ አትችልም');
+        setReturnError(t('support.blockedReturn'));
       } else {
         setError(e.response?.data?.message || 'Failed to return book.');
       }

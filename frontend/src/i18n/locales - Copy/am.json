@@ -1,0 +1,72 @@
+{
+  "common": {
+    "language": "ቋንቋ",
+    "switchLanguage": "ወደ እንግሊዝኛ ቀይር",
+    "notifications": "ማሳወቂያዎች",
+    "account": "መለያ",
+    "profile": "የግል መረጃዬ",
+    "dashboard": "ዳሽቦርድ",
+    "logout": "ውጣ",
+    "login": "ግባ",
+    "register": "ይመዝገቡ",
+    "browseBooks": "መጻሕፍትን ይመልከቱ",
+    "exportReport": "ሪፖርት ያውጡ",
+    "superAdmin": "ዋና አስተዳዳሪ",
+    "administrator": "አስተዳዳሪ",
+    "librarian": "የቤተ መጻሕፍት ሰራተኛ",
+    "memberPortal": "የአባል ገጽ",
+    "systemHealth": "የስርዓት ሁኔታ",
+    "allSystemsOperational": "ሁሉም ስርዓቶች በትክክል እየሰሩ ነው",
+    "digitalLibrary": "ዲጂታል ቤተ መጻሕፍት"
+  },
+  "navigation": {
+    "Super Admin": "ዋና አስተዳዳሪ",
+    "System Overview": "የስርዓት አጠቃላይ እይታ",
+    "Admins": "አስተዳዳሪዎች",
+    "Users": "ተጠቃሚዎች",
+    "Librarians": "የቤተ መጻሕፍት ሰራተኞች",
+    "Settings": "ቅንብሮች",
+    "Security": "ደህንነት",
+    "Audit Logs": "የክትትል መዝገቦች",
+    "Analytics": "ትንታኔ",
+    "Messages": "መልዕክቶች",
+    "Overview": "አጠቃላይ እይታ",
+    "Financial Reports": "የፋይናንስ ሪፖርቶች",
+    "Notifications": "ማሳወቂያዎች",
+    "Requests": "ጥያቄዎች",
+    "Barcode": "ባርኮድ",
+    "Bulk Ops": "የጅምላ ስራዎች",
+    "Reservations": "ቦታ ማስያዣዎች",
+    "Inventory": "የመጻሕፍት ዝርዝር",
+    "Members": "አባላት",
+    "Reports": "ሪፖርቶች",
+    "My Books": "መጻሕፍቴ",
+    "My Favorites": "የምወዳቸው",
+    "History": "ታሪክ",
+    "Reading Goals": "የንባብ ግቦች",
+    "Achievements": "ስኬቶች",
+    "My Fines": "ቅጣቶቼ",
+    "Notification Settings": "የማሳወቂያ ቅንብሮች",
+    "Help & Support": "እገዛ እና ድጋፍ"
+  },
+  "support": {
+    "blockedReturn": "ሳትከፍል return ማድረግ አትችልም",
+    "requests": "የእርስዎ ጥያቄዎች"
+  },
+  "messaging": {
+    "title": "መልዕክቶች",
+    "supportTitle": "እገዛ እና ድጋፍ",
+    "conversation": "ውይይቶች",
+    "send": "መልዕክት ላክ",
+    "write": "መልዕክት ይጻፉ"
+  },
+  "notepad": {
+    "title": "የንባብ ማስታወሻዎች",
+    "save": "ማስታወሻ አስቀምጥ",
+    "saved": "ሁሉም ለውጦች ተቀምጠዋል",
+    "saving": "በማስቀመጥ ላይ…",
+    "unsaved": "ያልተቀመጡ ለውጦች",
+    "failed": "ማስቀመጥ አልተሳካም",
+    "savedAt": "{{time}} ላይ ተቀምጧል"
+  }
+}

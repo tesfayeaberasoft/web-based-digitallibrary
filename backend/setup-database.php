@@ -15,8 +15,9 @@ try {
     $dbUser = defined('DB_USER') ? DB_USER : (getenv('DB_USER') ?: 'root');
     $dbPass = defined('DB_PASS') ? DB_PASS : (getenv('DB_PASS') ?: '');
     
-    $pdo = new PDO("mysql:host=$dbHost", $dbUser, $dbPass);
+    $pdo = new PDO("mysql:host=$dbHost;charset=utf8mb4", $dbUser, $dbPass);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo->exec('SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci');
     
     // Read schema.sql
     $schemaFile = __DIR__ . '/../database/schema.sql';
@@ -120,10 +121,14 @@ try {
                                 ];
                             }
                         }
+
                     }
                 }
             }
         }
+
+        require_once __DIR__ . '/migrations/migrate-utf8mb4.php';
+        migrateDatabaseToUtf8mb4($db);
     }
     
     if (!empty($errors) && count($errors) > 3) {

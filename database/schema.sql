@@ -1,7 +1,9 @@
 -- Digital Library Management System Database Schema
 -- Created for comprehensive library management with all required features
 
-CREATE DATABASE IF NOT EXISTS digital_library;
+CREATE DATABASE IF NOT EXISTS digital_library
+    CHARACTER SET utf8mb4
+    COLLATE utf8mb4_unicode_ci;
 USE digital_library;
 
 -- Users table with role-based access control

@@ -16,6 +16,8 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from './LanguageSwitcher';
 
 // Green theme palette
 const C = {
@@ -35,6 +37,7 @@ export default function DashboardLayout({ children, title }) {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
+  const { t } = useTranslation();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { user, logout } = useAuth();
 
@@ -114,7 +117,10 @@ export default function DashboardLayout({ children, title }) {
     }
   };
 
-  const menuItems = getMenuItems();
+  const menuItems = getMenuItems().map((item) => ({
+    ...item,
+    text: t(`navigation.${item.text}`)
+  }));
   const isActive = (path) => location.pathname === path;
 
   const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
@@ -163,12 +169,12 @@ export default function DashboardLayout({ children, title }) {
               </Avatar>
               <Box>
                 <Typography variant="h6" sx={{ fontWeight: 700, color: C.dark, lineHeight: 1.2 }}>
-                  Library Hub
+                  {t('common.digitalLibrary')}
                 </Typography>
                 <Typography variant="caption" sx={{ color: C.secondary, fontWeight: 500 }}>
-                  {user?.role === 'super-admin' ? 'Super Admin' : 
-                   user?.role === 'admin' ? 'Administrator' : 
-                   user?.role === 'librarian' ? 'Librarian' : 'Member Portal'}
+                  {user?.role === 'super-admin' ? t('common.superAdmin') :
+                   user?.role === 'admin' ? t('common.administrator') :
+                   user?.role === 'librarian' ? t('common.librarian') : t('common.memberPortal')}
                 </Typography>
               </Box>
             </Box>
@@ -286,7 +292,7 @@ export default function DashboardLayout({ children, title }) {
                   transition: 'all 0.3s ease'
                 }}
               >
-                Browse Books
+                {t('common.browseBooks')}
               </Button>
             )}
 
@@ -310,7 +316,7 @@ export default function DashboardLayout({ children, title }) {
                   transition: 'all 0.3s ease'
                 }}
               >
-                Export Report
+                {t('common.exportReport')}
               </Button>
             )}
           </Box>
@@ -328,11 +334,11 @@ export default function DashboardLayout({ children, title }) {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
               <LocalFireDepartment sx={{ color: C.secondary, fontSize: 20 }} />
               <Typography variant="caption" sx={{ fontWeight: 600, color: C.dark }}>
-                System Health
+                {t('common.systemHealth')}
               </Typography>
             </Box>
             <Chip 
-              label="All Systems Operational" 
+              label={t('common.allSystemsOperational')}
               size="small" 
               sx={{ 
                 bgcolor: C.light,
@@ -484,8 +490,10 @@ export default function DashboardLayout({ children, title }) {
 
           <MenuBook sx={{ mr: 2, fontSize: 28 }} />
           <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 700, letterSpacing: 0.5 }}>
-            {title || 'Digital Library'}
+            {title || t('common.digitalLibrary')}
           </Typography>
+
+          <LanguageSwitcher light />
 
           {/* Time Display */}
           <Box sx={{ 
@@ -507,7 +515,7 @@ export default function DashboardLayout({ children, title }) {
 
           {/* Notifications */}
           {user?.role === 'user' && (
-            <Tooltip title="Notifications">
+            <Tooltip title={t('common.notifications')}>
               <IconButton
                 color="inherit"
                 onClick={() => navigate('/notifications')}
@@ -521,7 +529,7 @@ export default function DashboardLayout({ children, title }) {
           )}
 
           {/* Profile Menu */}
-          <Tooltip title="Account">
+          <Tooltip title={t('common.account')}>
             <IconButton
               color="inherit"
               onClick={handleProfileMenuOpen}
@@ -575,14 +583,14 @@ export default function DashboardLayout({ children, title }) {
               />
             </Box>
             <MenuItem onClick={() => { handleProfileMenuClose(); navigate('/profile'); }}>
-              <AccountCircle sx={{ mr: 2 }} /> My Profile
+              <AccountCircle sx={{ mr: 2 }} /> {t('common.profile')}
             </MenuItem>
             <MenuItem onClick={() => { handleProfileMenuClose(); navigate('/dashboard'); }}>
-              <Dashboard sx={{ mr: 2 }} /> Dashboard
+              <Dashboard sx={{ mr: 2 }} /> {t('common.dashboard')}
             </MenuItem>
             <Divider />
             <MenuItem onClick={handleLogoutClick} sx={{ color: '#f44336' }}>
-              <ExitToApp sx={{ mr: 2 }} /> Logout
+              <ExitToApp sx={{ mr: 2 }} /> {t('common.logout')}
             </MenuItem>
           </Menu>
         </Toolbar>
