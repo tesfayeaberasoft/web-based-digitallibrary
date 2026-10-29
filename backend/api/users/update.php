@@ -107,7 +107,7 @@ try {
             exit;
         }
         
-        $updates[] = "password = ?";
+        $updates[] = "password_hash = ?";
         $params[] = password_hash($password, PASSWORD_DEFAULT);
     }
     

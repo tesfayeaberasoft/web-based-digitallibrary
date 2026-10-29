@@ -15,6 +15,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import LanguageSwitcher from '../../components/layout/LanguageSwitcher';
 
 /* ─── Sticky hide-on-scroll helper ─────────────────────────────── */
 function HideOnScroll({ children }) {
@@ -297,6 +298,7 @@ export default function HomePage() {
             </Box>
 
             <Box sx={{ ml: 'auto', display: 'flex', gap: 1.5, alignItems: 'center' }}>
+              <LanguageSwitcher />
               <Button
                 variant="outlined"
                 onClick={() => navigate('/login')}

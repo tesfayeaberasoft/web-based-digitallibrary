@@ -28,6 +28,7 @@ import {
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = 'http://localhost:8000/api';
 const POLL_INTERVAL = 5000;
@@ -63,6 +64,7 @@ function ContactAvatar({ name, role }) {
 
 export default function MessagingPage({ supportMode = false }) {
   const { token, user } = useAuth();
+  const { t } = useTranslation();
   const [contacts, setContacts] = useState([]);
   const [threads, setThreads] = useState([]);
   const [selectedId, setSelectedId] = useState('');
@@ -252,7 +254,7 @@ export default function MessagingPage({ supportMode = false }) {
     }
   };
 
-  const title = supportMode ? 'Help & Support' : 'Messages';
+  const title = supportMode ? t('messaging.supportTitle') : t('messaging.title');
   const noContactsText = supportMode
     ? 'No active librarian is available right now. Please try again later.'
     : 'No eligible contacts are available for your role.';
@@ -300,7 +302,7 @@ export default function MessagingPage({ supportMode = false }) {
           <Box sx={{ borderRight: { md: 1 }, borderColor: 'divider', minWidth: 0, bgcolor: '#f7fbf8' }}>
             <Box sx={{ p: 2 }}>
               <Typography variant="h6" fontWeight={700}>
-                {supportMode ? 'Your requests' : 'Conversations'}
+                {supportMode ? t('support.requests') : t('messaging.conversation')}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 {supportMode ? 'Librarian conversations' : 'Contacts and recent chats'}
@@ -464,7 +466,7 @@ export default function MessagingPage({ supportMode = false }) {
                       multiline
                       minRows={2}
                       maxRows={5}
-                      label="Write a message"
+                      label={t('messaging.write')}
                       placeholder={supportMode ? 'Describe what you need help with…' : 'Write your message…'}
                       value={draft}
                       onChange={(event) => setDraft(event.target.value)}
@@ -473,7 +475,7 @@ export default function MessagingPage({ supportMode = false }) {
                     />
                     <IconButton
                       type="submit"
-                      aria-label="Send message"
+                      aria-label={t('messaging.send')}
                       color="primary"
                       disabled={!draft.trim() || sending || draft.length > 4000}
                       sx={{ mb: 1 }}

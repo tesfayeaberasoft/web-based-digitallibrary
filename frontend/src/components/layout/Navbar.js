@@ -23,10 +23,13 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from './LanguageSwitcher';
 
 const Navbar = ({ title = "Digital Library", showUserMenu = true, browseHeader = false }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
   const [anchorEl, setAnchorEl] = useState(null);
 
   const handleMenu = (event) => {
@@ -141,7 +144,7 @@ const Navbar = ({ title = "Digital Library", showUserMenu = true, browseHeader =
                   whiteSpace: 'nowrap',
                 }}
               >
-                {title}
+                {title === 'Digital Library' ? t('common.digitalLibrary') : title}
               </Typography>
               <Typography
                 component="span"
@@ -166,6 +169,8 @@ const Navbar = ({ title = "Digital Library", showUserMenu = true, browseHeader =
             </Typography>
           </>
         )}
+
+        <LanguageSwitcher light />
 
         {showUserMenu && user && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -218,16 +223,16 @@ const Navbar = ({ title = "Digital Library", showUserMenu = true, browseHeader =
             >
               <MenuItem onClick={handleDashboard}>
                 <Dashboard sx={{ mr: 2 }} />
-                Dashboard
+                {t('common.dashboard')}
               </MenuItem>
               <MenuItem onClick={handleProfile}>
                 <Person sx={{ mr: 2 }} />
-                My Profile
+                {t('common.profile')}
               </MenuItem>
               <Divider />
               <MenuItem onClick={handleLogout}>
                 <ExitToApp sx={{ mr: 2 }} />
-                Logout
+                {t('common.logout')}
               </MenuItem>
             </Menu>
           </Box>
@@ -254,7 +259,7 @@ const Navbar = ({ title = "Digital Library", showUserMenu = true, browseHeader =
               } : undefined}
             >
               <Box component="span" sx={{ display: { xs: browseHeader ? 'none' : 'inline', sm: 'inline' } }}>
-                Login
+                {t('common.login')}
               </Box>
             </Button>
             <Button
@@ -279,7 +284,7 @@ const Navbar = ({ title = "Digital Library", showUserMenu = true, browseHeader =
               } : { borderColor: 'rgba(255,255,255,0.5)' }}
             >
               <Box component="span" sx={{ display: { xs: browseHeader ? 'none' : 'inline', sm: 'inline' } }}>
-                Register
+                {t('common.register')}
               </Box>
             </Button>
           </Box>

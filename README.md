@@ -163,6 +163,12 @@ The staff **Messages** dashboard is available at `/messages`. Both interfaces re
 | `POST /api/messages` | Signed in | Send `{ "receiver_id": 1, "message_content": "..." }` (maximum 4,000 characters) |
 | `PUT /api/messages/{messageId}/read` | Message recipient | Mark a received message as read |
 
+### English and Amharic localization
+
+The React app supports English and Amharic through `react-i18next`. Use the language control in the dashboard or browse header to switch languages; the selection is saved in browser storage and restored on the next visit. Add or update UI translations in `frontend/src/i18n/locales/en.json` and `frontend/src/i18n/locales/am.json`.
+
+The database schema defaults to `utf8mb4` with `utf8mb4_unicode_ci`, and PHP connects with the same character set. For an existing MySQL database, back it up and run `php backend/setup-database.php`; setup applies `backend/migrations/migrate-utf8mb4.php` to convert existing text tables as well as update the database default. Characters that were already stored as `?` cannot be reconstructed by conversion.
+
 ### Google Books metadata lookup
 
 Admins and librarians can enter an ISBN and select **Fetch Details from Google Books** in the inventory book form. The authenticated `GET /api/books/metadata?isbn={isbn}` endpoint validates the ISBN, queries Google Books over HTTPS from the PHP backend, and returns the matching title, authors, publisher, cover image, and optional publication details. Temporary network and Google server errors are retried up to three times with increasing delays. If Google Books is unavailable, rate-limited, or has no matching book, the endpoint tries Open Library and identifies both the source and fallback reason in its response. The inventory form displays that reason so transient upstream failures can be distinguished from rate limits. The highest-resolution cover available is previewed and saved with the book record. PHP's cURL extension must be enabled. Configure `GOOGLE_BOOKS_API_KEY=your_key` in `backend/.env` (never `frontend/.env`), then restart the PHP backend; the key stays server-side and is not sent to the browser.

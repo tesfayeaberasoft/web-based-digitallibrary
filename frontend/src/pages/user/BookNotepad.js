@@ -26,6 +26,7 @@ import {
   Typography
 } from '@mui/material';
 import './BookNotepad.css';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = 'http://localhost:8000/api';
 const EMPTY_DOCUMENT = { type: 'doc', content: [{ type: 'paragraph' }] };
@@ -37,6 +38,7 @@ async function saveNote(bookId, token, document) {
 }
 
 export default function BookNotepad({ bookId, bookTitle, token }) {
+  const { t, i18n } = useTranslation();
   const [document, setDocument] = useState(null);
   const [loadingNote, setLoadingNote] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -179,14 +181,19 @@ export default function BookNotepad({ bookId, bookTitle, token }) {
   const statusText = loadingNote
     ? 'Loading notes'
     : saveStatus === 'saving'
-      ? 'Saving…'
+      ? t('notepad.saving')
       : saveStatus === 'error'
-        ? 'Save failed'
+        ? t('notepad.failed')
         : saveStatus === 'unsaved'
-          ? 'Unsaved changes'
+          ? t('notepad.unsaved')
           : savedAt
-            ? `Saved ${new Date(savedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
-            : 'All changes saved';
+            ? t('notepad.savedAt', {
+              time: new Date(savedAt).toLocaleTimeString(i18n.resolvedLanguage === 'am' ? 'am-ET' : 'en-US', {
+                hour: 'numeric',
+                minute: '2-digit'
+              })
+            })
+            : t('notepad.saved');
 
   return (
     <Box
@@ -220,7 +227,7 @@ export default function BookNotepad({ bookId, bookTitle, token }) {
           <Typography variant="overline" color="primary.main" fontWeight={700} letterSpacing={1.2}>
             YOUR READING SPACE
           </Typography>
-          <Typography variant="h6" fontWeight={750} lineHeight={1.2}>Reading notes</Typography>
+          <Typography variant="h6" fontWeight={750} lineHeight={1.2}>{t('notepad.title')}</Typography>
           <Typography variant="body2" color="text.secondary" noWrap title={bookTitle} sx={{ mt: 0.4 }}>
             {bookTitle}
           </Typography>
@@ -233,7 +240,7 @@ export default function BookNotepad({ bookId, bookTitle, token }) {
           onClick={handleManualSave}
           sx={{ flexShrink: 0, borderRadius: 2, px: { xs: 1.25, sm: 2 } }}
         >
-          Save Note
+          {t('notepad.save')}
         </Button>
       </Stack>
       <Divider />
