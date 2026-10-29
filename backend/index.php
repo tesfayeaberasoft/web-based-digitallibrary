@@ -61,6 +61,10 @@ switch (true) {
         require __DIR__ . '/api/auth/register.php';
         break;
 
+    case preg_match('#^/auth/email-availability$#', $path) && $request_method === 'POST':
+        require __DIR__ . '/api/auth/email-availability.php';
+        break;
+
     case preg_match('#^/auth/google$#', $path) && $request_method === 'POST':
         error_log("Matched: POST /auth/google");
         require __DIR__ . '/api/auth/google.php';
