@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useInstallPrompt } from '../contexts/InstallPromptContext';
 
 export default function InstallCard() {
-  const { canInstall, dismissInstallCard, promptToInstall } = useInstallPrompt();
+  const { canInstall, promptToInstall } = useInstallPrompt();
+  const [isDismissed, setIsDismissed] = useState(false);
 
-  if (!canInstall) {
+  if (!canInstall || isDismissed) {
     return null;
   }
 
@@ -18,7 +19,7 @@ export default function InstallCard() {
         alt=""
         aria-hidden="true"
         className="h-11 w-11 shrink-0 rounded-lg object-cover"
-        src={`${process.env.PUBLIC_URL}/logo192.png`}
+        src={`${process.env.PUBLIC_URL}/digital-library-icon-192x192.png`}
       />
 
       <div className="min-w-0 flex-1">
@@ -40,7 +41,7 @@ export default function InstallCard() {
       <button
         aria-label="Dismiss install card"
         className="absolute right-2 top-2 rounded-md p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-600"
-        onClick={dismissInstallCard}
+        onClick={() => setIsDismissed(true)}
         type="button"
       >
         <span aria-hidden="true" className="text-lg leading-none">

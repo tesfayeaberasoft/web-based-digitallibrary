@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-const DISMISSED_KEY = 'digital-library-install-dismissed';
 const InstallPromptContext = createContext(null);
 
 function isRunningStandalone() {
@@ -12,23 +11,20 @@ function isRunningStandalone() {
 
 export function InstallPromptProvider({ children }) {
   const [installPrompt, setInstallPrompt] = useState(null);
-  const [isDismissed, setIsDismissed] = useState(
-    () => window.sessionStorage.getItem(DISMISSED_KEY) === 'true'
-  );
+  const [isInstalled, setIsInstalled] = useState(isRunningStandalone);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (event) => {
       event.preventDefault();
 
-      if (!isRunningStandalone() && !isDismissed) {
+      if (!isRunningStandalone()) {
         setInstallPrompt(event);
       }
     };
 
     const handleAppInstalled = () => {
-      window.sessionStorage.setItem(DISMISSED_KEY, 'true');
       setInstallPrompt(null);
-      setIsDismissed(true);
+      setIsInstalled(true);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -41,13 +37,7 @@ export function InstallPromptProvider({ children }) {
       );
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
-  }, [isDismissed]);
-
-  const dismissInstallCard = () => {
-    window.sessionStorage.setItem(DISMISSED_KEY, 'true');
-    setInstallPrompt(null);
-    setIsDismissed(true);
-  };
+  }, []);
 
   const promptToInstall = async () => {
     if (!installPrompt) {
@@ -62,8 +52,7 @@ export function InstallPromptProvider({ children }) {
       const { outcome } = await promptEvent.userChoice;
 
       if (outcome === 'accepted') {
-        window.sessionStorage.setItem(DISMISSED_KEY, 'true');
-        setIsDismissed(true);
+        setIsInstalled(true);
       }
     } catch (error) {
       console.error('The app installation prompt failed:', error);
@@ -73,8 +62,7 @@ export function InstallPromptProvider({ children }) {
   return (
     <InstallPromptContext.Provider
       value={{
-        canInstall: Boolean(installPrompt) && !isDismissed && !isRunningStandalone(),
-        dismissInstallCard,
+        canInstall: Boolean(installPrompt) && !isInstalled,
         promptToInstall,
       }}
     >

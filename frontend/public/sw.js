@@ -1,11 +1,11 @@
-const CACHE_NAME = 'digital-library-shell-v2';
+const CACHE_NAME = 'digital-library-shell-v4';
 const APP_SHELL_PATHS = [
   './',
   './index.html',
   './manifest.json',
   './asset-manifest.json',
-  './logo192.png',
-  './logo512.png',
+  './digital-library-icon-192x192.png',
+  './digital-library-icon-512x512.png',
   './favicon.ico',
 ];
 
