@@ -9,9 +9,12 @@ if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) {
     const publicUrl = (process.env.PUBLIC_URL || '').replace(/\/$/, '');
     const serviceWorkerUrl = `${publicUrl}/sw.js`;
 
-    navigator.serviceWorker.register(serviceWorkerUrl).catch((error) => {
-      console.error('Service worker registration failed:', error);
-    });
+    navigator.serviceWorker
+      .register(serviceWorkerUrl)
+      .then((registration) => registration.update())
+      .catch((error) => {
+        console.error('Service worker registration or update failed:', error);
+      });
   });
 }
 
