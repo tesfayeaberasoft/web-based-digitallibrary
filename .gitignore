@@ -46,6 +46,7 @@ temp/
 # Database
 *.sql.backup
 *.db
+backend/backups/*.sql
 
 # PHP
 composer.phar
