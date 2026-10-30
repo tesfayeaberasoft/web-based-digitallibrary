@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useInstallPrompt } from '../contexts/InstallPromptContext';
+import { useTranslation } from 'react-i18next';
 
 export default function InstallCard() {
   const { canInstall, promptToInstall } = useInstallPrompt();
+  const { t } = useTranslation();
   const [isDismissed, setIsDismissed] = useState(false);
 
   if (!canInstall || isDismissed) {
@@ -11,7 +13,7 @@ export default function InstallCard() {
 
   return (
     <aside
-      aria-label="Install Digital Library"
+      aria-label={t('pwa.title')}
       className="fixed bottom-5 right-5 z-[1400] flex w-[min(22rem,calc(100vw-2.5rem))] items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 pr-11 shadow-xl"
       role="dialog"
     >
@@ -24,22 +26,22 @@ export default function InstallCard() {
 
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold leading-5 text-slate-900">
-          Install Library App
+          {t('pwa.title')}
         </p>
         <p className="mt-1 text-xs leading-4 text-slate-600">
-          Install Library App for a better experience.
+          {t('pwa.description')}
         </p>
         <button
           className="mt-3 rounded-md bg-emerald-700 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2"
           onClick={promptToInstall}
           type="button"
         >
-          Install
+          {t('pwa.install')}
         </button>
       </div>
 
       <button
-        aria-label="Dismiss install card"
+        aria-label={t('pwa.dismiss')}
         className="absolute right-2 top-2 rounded-md p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-600"
         onClick={() => setIsDismissed(true)}
         type="button"

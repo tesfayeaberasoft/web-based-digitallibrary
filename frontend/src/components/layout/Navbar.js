@@ -97,7 +97,7 @@ const Navbar = ({ title = "Digital Library", showUserMenu = true, browseHeader =
           <Button
             color="inherit"
             onClick={() => navigate('/')}
-            aria-label="Digital Library home"
+            aria-label={t('navbar.homeLabel')}
             sx={{
               flexGrow: 1,
               justifyContent: 'flex-start',
@@ -144,7 +144,9 @@ const Navbar = ({ title = "Digital Library", showUserMenu = true, browseHeader =
                   whiteSpace: 'nowrap',
                 }}
               >
-                {title === 'Digital Library' ? t('common.digitalLibrary') : title}
+                {title === 'Digital Library'
+                  ? t('common.digitalLibrary')
+                  : t(`pageTitles.${title}`, { defaultValue: title })}
               </Typography>
               <Typography
                 component="span"
@@ -157,7 +159,7 @@ const Navbar = ({ title = "Digital Library", showUserMenu = true, browseHeader =
                   lineHeight: 1.5,
                 }}
               >
-                Discover. Read. Grow.
+                {t('navbar.tagline')}
               </Typography>
             </Box>
           </Button>
@@ -175,10 +177,10 @@ const Navbar = ({ title = "Digital Library", showUserMenu = true, browseHeader =
         {showUserMenu && user && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Typography variant="body2" sx={{ mr: 2, display: { xs: 'none', sm: 'block' } }}>
-              {user.role === 'super-admin' ? 'Super Administrator' :
-               user.role === 'admin' ? 'System Administrator' : 
+              {user.role === 'super-admin' ? t('navbar.superAdmin') :
+               user.role === 'admin' ? t('navbar.systemAdmin') :
                user.role === 'librarian' ? user.full_name : 
-               `Welcome, ${user.full_name}`}
+               t('navbar.welcome', { name: user.full_name })}
             </Typography>
 
             {/* Show notification icon only for regular users, not for librarians/admins */}

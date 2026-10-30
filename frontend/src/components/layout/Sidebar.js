@@ -42,6 +42,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 const drawerWidth = 280;
 
@@ -49,6 +50,7 @@ const Sidebar = ({ open = true }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
   const [openLogoutDialog, setOpenLogoutDialog] = useState(false);
 
   const getMenuItems = () => {
@@ -99,7 +101,10 @@ const Sidebar = ({ open = true }) => {
     }
   };
 
-  const menuItems = getMenuItems();
+  const menuItems = getMenuItems().map((item) => ({
+    ...item,
+    text: t(`navigation.${item.text}`, { defaultValue: item.text }),
+  }));
 
   const handleNavigation = (path) => {
     navigate(path);
@@ -194,10 +199,10 @@ const Sidebar = ({ open = true }) => {
         {/* System Health Status */}
         <Box sx={{ p: 2, backgroundColor: '#f8f9fa', borderRadius: 2 }}>
           <Typography variant="body2" fontWeight={600} gutterBottom>
-            System Health
+            {t('common.systemHealth')}
           </Typography>
           <Chip 
-            label="Healthy" 
+            label={t('common.healthy')}
             size="small" 
             color="success" 
             variant="outlined"
@@ -329,7 +334,7 @@ const Sidebar = ({ open = true }) => {
                 <Logout />
               </ListItemIcon>
               <ListItemText 
-                primary="Logout"
+                primary={t('logout.confirm')}
                 primaryTypographyProps={{
                   fontWeight: 500,
                   fontSize: '0.9rem'
@@ -357,11 +362,11 @@ const Sidebar = ({ open = true }) => {
           }}
         >
           <Logout />
-          Confirm Logout
+          {t('logout.title')}
         </DialogTitle>
         <DialogContent sx={{ mt: 2 }}>
           <Alert severity="warning" sx={{ mb: 2 }}>
-            You will be logged out of your account and redirected to the login page.
+            {t('logout.warning')}
           </Alert>
           
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
@@ -394,7 +399,7 @@ const Sidebar = ({ open = true }) => {
           </Box>
 
           <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            Are you sure you want to logout?
+            {t('logout.question')}
           </Typography>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
@@ -402,7 +407,7 @@ const Sidebar = ({ open = true }) => {
             onClick={handleCloseLogoutDialog}
             variant="outlined"
           >
-            Cancel
+            {t('logout.cancel')}
           </Button>
           <Button 
             onClick={handleConfirmLogout}
@@ -410,7 +415,7 @@ const Sidebar = ({ open = true }) => {
             color="error"
             startIcon={<Logout />}
           >
-            Logout
+            {t('logout.confirm')}
           </Button>
         </DialogActions>
       </Dialog>
