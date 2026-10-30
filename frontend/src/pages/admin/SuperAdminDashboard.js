@@ -27,6 +27,7 @@ import {
   Legend, ResponsiveContainer, AreaChart, Area
 } from 'recharts';
 import DashboardLayout from '../../components/layout/DashboardLayout';
+import InstallCard from '../../components/InstallCard';
 import axios from 'axios';
 
 /* ── palette ── */
@@ -277,6 +278,7 @@ export default function SuperAdminDashboard() {
     <DashboardLayout title="Super Admin Dashboard">
       <Fade in timeout={500}>
         <Box>
+          <InstallCard />
 
           {/* ── HERO ── */}
           <Box sx={{
