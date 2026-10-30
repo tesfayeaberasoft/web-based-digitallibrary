@@ -15,6 +15,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../../components/layout/LanguageSwitcher';
 
 /* ─── Sticky hide-on-scroll helper ─────────────────────────────── */
@@ -136,6 +137,7 @@ const FEATURES = [
 /* ══════════════════════════════════════════════════════════════════ */
 export default function HomePage() {
   const navigate  = useNavigate();
+  const { t } = useTranslation();
   const theme     = useTheme();
   const isMobile  = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -243,19 +245,19 @@ export default function HomePage() {
   }, [searchQuery, showSuggestions]);
 
   const navLinks = [
-    { label: 'Home',       path: '/',          type: 'route'   },
-    { label: 'Browse',     path: '/browse',    type: 'route'   },
-    { label: 'Features',   path: '#features',  type: 'scroll'  },
-    { label: 'Categories', path: '#categories', type: 'scroll' },
-    { label: 'Popular',    path: '#popular',   type: 'scroll'  },
+    { label: t('home.navHome'),       path: '/',          type: 'route'   },
+    { label: t('home.navBrowse'),     path: '/browse',    type: 'route'   },
+    { label: t('home.navFeatures'),   path: '#features',  type: 'scroll'  },
+    { label: t('home.navCategories'), path: '#categories', type: 'scroll' },
+    { label: t('home.navPopular'),    path: '#popular',   type: 'scroll'  },
   ];
 
   /* ── stat cards data (uses live DB) ────────────────────────────── */
   const statCards = [
-    { icon: <MenuBook sx={{ fontSize: 40 }} />,    label: 'Total Books',    value: stats ? stats.total_books.toLocaleString()   : '…', color: C.blue,    bg: '#eff6ff' },
-    { icon: <People sx={{ fontSize: 40 }} />,      label: 'Active Members', value: stats ? stats.total_members.toLocaleString() : '…', color: C.purple,  bg: '#f5f3ff' },
-    { icon: <TrendingUp sx={{ fontSize: 40 }} />,  label: 'Books Borrowed', value: stats ? stats.total_loans.toLocaleString()   : '…', color: C.orange,  bg: '#fff7ed' },
-    { icon: <Star sx={{ fontSize: 40 }} />,        label: 'Avg Rating',     value: stats ? `${stats.avg_rating}★`              : '…', color: C.gold,    bg: '#fffbeb' },
+    { icon: <MenuBook sx={{ fontSize: 40 }} />,    label: t('home.totalBooks'),    value: stats ? stats.total_books.toLocaleString()   : '…', color: C.blue,    bg: '#eff6ff' },
+    { icon: <People sx={{ fontSize: 40 }} />,      label: t('home.activeMembers'), value: stats ? stats.total_members.toLocaleString() : '…', color: C.purple,  bg: '#f5f3ff' },
+    { icon: <TrendingUp sx={{ fontSize: 40 }} />,  label: t('home.booksBorrowed'), value: stats ? stats.total_loans.toLocaleString()   : '…', color: C.orange,  bg: '#fff7ed' },
+    { icon: <Star sx={{ fontSize: 40 }} />,        label: t('home.avgRating'),     value: stats ? `${stats.avg_rating}★`              : '…', color: C.gold,    bg: '#fffbeb' },
   ];
 
   return (
@@ -304,14 +306,14 @@ export default function HomePage() {
                 onClick={() => navigate('/login')}
                 sx={{ display: { xs: 'none', sm: 'flex' }, borderColor: C.primary, color: C.primary, fontWeight: 600, borderRadius: 3, '&:hover': { background: C.light } }}
               >
-                Sign In
+                {t('home.signIn')}
               </Button>
               <Button
                 variant="contained"
                 onClick={() => navigate('/register')}
                 sx={{ background: `linear-gradient(135deg, ${C.primary}, ${C.secondary})`, color: 'white', fontWeight: 700, borderRadius: 3, px: 3, boxShadow: '0 4px 15px rgba(45,106,79,0.35)', '&:hover': { boxShadow: '0 6px 20px rgba(45,106,79,0.45)' } }}
               >
-                {isMobile ? 'Join' : 'Get Started'}
+                {isMobile ? t('home.join') : t('home.getStarted')}
               </Button>
               <IconButton sx={{ display: { md: 'none' } }} onClick={() => setMobileOpen(true)}>
                 <MenuIcon sx={{ color: C.primary }} />
@@ -343,8 +345,8 @@ export default function HomePage() {
           ))}
         </List>
         <Box sx={{ mt: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <Button fullWidth variant="outlined" onClick={() => { setMobileOpen(false); navigate('/login'); }} sx={{ borderColor: C.primary, color: C.primary, fontWeight: 600, borderRadius: 3 }}>Sign In</Button>
-          <Button fullWidth variant="contained" onClick={() => { setMobileOpen(false); navigate('/register'); }} sx={{ background: `linear-gradient(135deg, ${C.primary}, ${C.secondary})`, fontWeight: 700, borderRadius: 3 }}>Get Started</Button>
+          <Button fullWidth variant="outlined" onClick={() => { setMobileOpen(false); navigate('/login'); }} sx={{ borderColor: C.primary, color: C.primary, fontWeight: 600, borderRadius: 3 }}>{t('home.signIn')}</Button>
+          <Button fullWidth variant="contained" onClick={() => { setMobileOpen(false); navigate('/register'); }} sx={{ background: `linear-gradient(135deg, ${C.primary}, ${C.secondary})`, fontWeight: 700, borderRadius: 3 }}>{t('home.getStarted')}</Button>
         </Box>
       </Drawer>
 
@@ -411,19 +413,22 @@ export default function HomePage() {
             <Grid item xs={12} md={6}>
               <Fade in={visible} timeout={800}>
                 <Box>
-                  <Chip label="🚀 Now with Digital Books" sx={{ mb: 3, background: 'rgba(82,183,136,0.2)', color: '#86efac', border: '1px solid rgba(82,183,136,0.3)', fontWeight: 600 }} />
+                  <Chip label={t('home.nowDigitalBooks')} sx={{ mb: 3, background: 'rgba(82,183,136,0.2)', color: '#86efac', border: '1px solid rgba(82,183,136,0.3)', fontWeight: 600 }} />
                   <Typography
                     variant={isMobile ? 'h3' : 'h2'}
                     fontWeight={900}
                     sx={{ color: 'white', lineHeight: 1.15, mb: 3, letterSpacing: '-1px' }}
                   >
-                    Your Gateway to
+                    {t('home.gateway')}
                     <Box component="span" sx={{ display: 'block', background: 'linear-gradient(90deg, #52b788, #95d5b2)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                      Infinite Knowledge
+                      {t('home.knowledge')}
                     </Box>
                   </Typography>
                   <Typography variant={isMobile ? 'body1' : 'h6'} sx={{ color: 'rgba(255,255,255,0.8)', mb: 5, lineHeight: 1.7, maxWidth: 480 }}>
-                    Explore {stats ? stats.total_books.toLocaleString() : '500+'} books across {stats ? stats.total_categories : '12'} categories. Borrow, reserve, and read — all from one beautifully designed platform.
+                    {t('home.description', {
+                      books: stats ? stats.total_books.toLocaleString() : '500+',
+                      categories: stats ? stats.total_categories : '12',
+                    })}
                   </Typography>
 
                   {/* Advanced Search Bar with Autocomplete */}
@@ -466,7 +471,7 @@ export default function HomePage() {
                                   handleSearch(e);
                                 }
                               }}
-                              placeholder="Search by title, author, ISBN, or keyword..."
+                              placeholder={t('home.searchPlaceholder')}
                               autoComplete="off"
                               sx={{ 
                                 border: 'none', 
@@ -506,7 +511,7 @@ export default function HomePage() {
                               transition: 'all 0.2s ease'
                             }}
                           >
-                            Search
+                            {t('home.search')}
                           </Button>
                         </Box>
 
@@ -520,10 +525,10 @@ export default function HomePage() {
                           background: 'rgba(0,0,0,0.1)'
                         }}>
                           {[
-                            { value: 'all', label: 'All Fields', icon: '🔍' },
-                            { value: 'title', label: 'Title', icon: '📖' },
-                            { value: 'author', label: 'Author', icon: '✍️' },
-                            { value: 'isbn', label: 'ISBN', icon: '🔢' }
+                            { value: 'all', label: t('home.allFields'), icon: '🔍' },
+                            { value: 'title', label: t('home.searchTitle'), icon: '📖' },
+                            { value: 'author', label: t('home.searchAuthor'), icon: '✍️' },
+                            { value: 'isbn', label: t('home.searchIsbn'), icon: '🔢' }
                           ].map((type) => (
                             <Chip
                               key={type.value}
@@ -581,7 +586,7 @@ export default function HomePage() {
                           >
                             <Box sx={{ p: 2 }}>
                               <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase', px: 1 }}>
-                                Search Results ({searchSuggestions.length})
+                                {t('home.searchResultsLabel', { count: searchSuggestions.length })}
                               </Typography>
                               <List sx={{ p: 0, mt: 1 }}>
                                 {searchSuggestions.map((book, index) => (
@@ -631,7 +636,7 @@ export default function HomePage() {
                                           {book.title}
                                         </Typography>
                                         <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                                          by {book.author}
+                                          {t('home.byAuthor', { author: book.author })}
                                         </Typography>
                                         {book.isbn && (
                                           <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', fontSize: 10 }}>
@@ -641,7 +646,7 @@ export default function HomePage() {
                                       </Box>
                                       {book.available_copies > 0 ? (
                                         <Chip
-                                          label="Available"
+                                          label={t('home.available')}
                                           size="small"
                                           sx={{
                                             background: `${C.secondary}20`,
@@ -652,7 +657,7 @@ export default function HomePage() {
                                         />
                                       ) : (
                                         <Chip
-                                          label="Unavailable"
+                                          label={t('home.unavailable')}
                                           size="small"
                                           sx={{
                                             background: '#ff000020',
@@ -751,7 +756,7 @@ export default function HomePage() {
                         transition: 'all 0.3s' 
                       }}
                     >
-                      Start Reading Free
+                      {t('home.startReadingFree')}
                     </Button>
                     <Button
                       variant="outlined"
@@ -759,7 +764,7 @@ export default function HomePage() {
                       onClick={() => navigate('/browse')}
                       sx={{ borderColor: 'rgba(255,255,255,0.5)', color: 'white', fontWeight: 600, borderRadius: 3, px: 4, py: 1.5, fontSize: 16, '&:hover': { borderColor: 'white', background: 'rgba(255,255,255,0.1)' } }}
                     >
-                      Browse Books
+                      {t('home.browseBooks')}
                     </Button>
                   </Box>
 
@@ -796,12 +801,12 @@ export default function HomePage() {
                   <Box sx={{ position: 'absolute', top: '40%', left: '15%', background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.25)', borderRadius: 3, p: 2, minWidth: 160 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                       <CheckCircle sx={{ color: '#86efac', fontSize: 18 }} />
-                      <Typography variant="caption" sx={{ color: 'white', fontWeight: 700 }}>New arrival!</Typography>
+                      <Typography variant="caption" sx={{ color: 'white', fontWeight: 700 }}>{t('home.newArrival')}</Typography>
                     </Box>
                     <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)', fontSize: 12 }}>
                       {popularBooks[0]?.title || 'The Great Gatsby'}
                     </Typography>
-                    <Typography variant="caption" sx={{ color: '#86efac' }}>Just added today</Typography>
+                    <Typography variant="caption" sx={{ color: '#86efac' }}>{t('home.justAddedToday')}</Typography>
                   </Box>
                 </Box>
               </Fade>
@@ -876,7 +881,7 @@ export default function HomePage() {
                   letterSpacing: '-0.5px'
                 }}
               >
-                📊 Real-Time Library Stats
+                {t('home.statsTitle')}
               </Typography>
               <Typography 
                 variant="body1" 
@@ -887,7 +892,7 @@ export default function HomePage() {
                   mx: 'auto'
                 }}
               >
-                Live metrics from our growing digital library community
+                {t('home.statsSubtitle')}
               </Typography>
             </Box>
           </Fade>
@@ -1061,10 +1066,10 @@ export default function HomePage() {
               alignItems: 'center'
             }}>
               {[
-                { icon: '🔥', label: 'Trending', value: 'Technology' },
-                { icon: '⚡', label: 'Most Borrowed', value: 'The Great Gatsby' },
-                { icon: '🎯', label: 'Completion Rate', value: '94%' },
-                { icon: '📈', label: 'Growth', value: '+12% This Month' }
+                { icon: '🔥', label: t('home.trending'), value: 'Technology' },
+                { icon: '⚡', label: t('home.mostBorrowed'), value: 'The Great Gatsby' },
+                { icon: '🎯', label: t('home.completionRate'), value: '94%' },
+                { icon: '📈', label: t('home.growth'), value: `+12% ${t('home.thisMonth')}` }
               ].map((metric, i) => (
                 <Grow in={visible} timeout={1300 + i * 100} key={i}>
                   <Box 
@@ -1132,7 +1137,7 @@ export default function HomePage() {
                   fontWeight: 600
                 }}
               >
-                Join our community and start your reading journey today!
+                {t('home.joinCommunity')}
               </Typography>
               <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
                 <Button
@@ -1155,7 +1160,7 @@ export default function HomePage() {
                     transition: 'all 0.3s ease'
                   }}
                 >
-                  Get Started Free
+                  {t('home.getStartedFree')}
                 </Button>
                 <Button
                   variant="outlined"
@@ -1178,7 +1183,7 @@ export default function HomePage() {
                     transition: 'all 0.3s ease'
                   }}
                 >
-                  Explore Features
+                  {t('home.exploreFeatures')}
                 </Button>
               </Box>
             </Box>
@@ -1211,7 +1216,7 @@ export default function HomePage() {
             <Box sx={{ textAlign: 'center', mb: { xs: 6, md: 10 } }}>
               <Box sx={{ mb: 3 }}>
                 <Chip 
-                  label="✨ Why Choose DigiLib?" 
+                label={t('home.whyChoose')}
                   sx={{ 
                     mb: 2, 
                     background: `linear-gradient(135deg, ${C.primary}, ${C.secondary})`,
@@ -1241,7 +1246,7 @@ export default function HomePage() {
                   letterSpacing: '-0.5px'
                 }}
               >
-                Everything You Need to Read & Learn
+                {t('home.whyChooseTitle')}
               </Typography>
               <Typography 
                 variant="h6" 
@@ -1253,14 +1258,23 @@ export default function HomePage() {
                   fontSize: { xs: 16, md: 18 }
                 }}
               >
-                A powerful, modern platform built for students, researchers, and book lovers of all ages with cutting-edge features.
+                {t('home.whyChooseDescription')}
               </Typography>
             </Box>
           </Fade>
 
           {/* Enhanced Feature Cards Grid - 2 per row */}
           <Grid container spacing={{ xs: 3, md: 4 }}>
-            {FEATURES.map((f, i) => (
+            {FEATURES.map((f, i) => {
+              const featureKeys = [
+                ['featureSearchTitle', 'featureSearchDesc'],
+                ['featureReservationsTitle', 'featureReservationsDesc'],
+                ['featureRemindersTitle', 'featureRemindersDesc'],
+                ['featureAnalyticsTitle', 'featureAnalyticsDesc'],
+                ['featureDigitalTitle', 'featureDigitalDesc'],
+                ['featureSecureTitle', 'featureSecureDesc'],
+              ][i];
+              return (
               <Grid item xs={12} sm={6} md={6} key={i}>
                 <Grow in={visible} timeout={500 + i * 150}>
                   <Card
@@ -1371,7 +1385,7 @@ export default function HomePage() {
                           letterSpacing: '-0.3px'
                         }}
                       >
-                        {f.title}
+                        {t(`home.${featureKeys[0]}`)}
                       </Typography>
 
                       {/* Description */}
@@ -1384,7 +1398,7 @@ export default function HomePage() {
                           mb: 2
                         }}
                       >
-                        {f.desc}
+                        {t(`home.${featureKeys[1]}`)}
                       </Typography>
 
                       {/* Learn more link - appears on hover */}
@@ -1403,7 +1417,7 @@ export default function HomePage() {
                           mt: 1
                         }}
                       >
-                        <span>Learn more</span>
+                        <span>{t('home.exploreFeatures')}</span>
                         <ArrowForward sx={{ fontSize: 16 }} />
                       </Box>
                     </CardContent>
@@ -1423,7 +1437,7 @@ export default function HomePage() {
                   </Card>
                 </Grow>
               </Grid>
-            ))}
+            );})}
           </Grid>
 
           {/* Enhanced Image gallery strip with better animations */}
@@ -1685,7 +1699,7 @@ export default function HomePage() {
             <Box sx={{ textAlign: 'center', mb: { xs: 6, md: 10 } }}>
               <Box sx={{ mb: 3 }}>
                 <Chip 
-                  label="📚 Browse by Topic" 
+                  label={t('home.browseByTopic')}
                   sx={{ 
                     mb: 2, 
                     background: `linear-gradient(135deg, ${C.primary}, ${C.secondary})`,
@@ -2074,7 +2088,7 @@ export default function HomePage() {
 
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
           <Box sx={{ textAlign: 'center', mb: { xs: 6, md: 8 } }}>
-            <Chip label="⭐ What Readers Say" sx={{ mb: 2, background: 'rgba(82,183,136,0.2)', color: '#86efac', border: '1px solid rgba(82,183,136,0.3)', fontWeight: 700 }} />
+            <Chip label={t('home.testimonialsLabel')} sx={{ mb: 2, background: 'rgba(82,183,136,0.2)', color: '#86efac', border: '1px solid rgba(82,183,136,0.3)', fontWeight: 700 }} />
             <Typography variant={isMobile ? 'h4' : 'h3'} fontWeight={800} sx={{ color: 'white', mb: 2 }}>
               Loved by Thousands of Readers
             </Typography>
@@ -2149,8 +2163,8 @@ export default function HomePage() {
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', mb: 5, flexWrap: 'wrap', gap: 2 }}>
             <Box>
               <Chip label="🔥 Trending Now" sx={{ mb: 1.5, background: `${C.orange}15`, color: C.orange, fontWeight: 700, border: `1px solid ${C.orange}` }} />
-              <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight={800} sx={{ color: C.dark }}>Most Popular Books</Typography>
-              <Typography color="text.secondary">Top picks from our readers this month</Typography>
+              <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight={800} sx={{ color: C.dark }}>{t('home.popularTitle')}</Typography>
+              <Typography color="text.secondary">{t('home.popularSubtitle')}</Typography>
             </Box>
             <Button 
               endIcon={<ArrowForward />} 
@@ -2487,7 +2501,7 @@ export default function HomePage() {
 
             {/* Quick links */}
             <Grid item xs={6} sm={4} md={2}>
-              <Typography variant="subtitle1" fontWeight={700} sx={{ color: 'white', mb: 2.5, textTransform: 'uppercase', fontSize: 12, letterSpacing: 1.5 }}>Explore</Typography>
+              <Typography variant="subtitle1" fontWeight={700} sx={{ color: 'white', mb: 2.5, textTransform: 'uppercase', fontSize: 12, letterSpacing: 1.5 }}>{t('home.footerExplore')}</Typography>
               {[
                 { label: 'Browse Books', path: '/browse' },
                 { label: 'Categories', action: () => scrollToSection('#categories') },
@@ -2518,7 +2532,7 @@ export default function HomePage() {
 
             {/* Account */}
             <Grid item xs={6} sm={4} md={2}>
-              <Typography variant="subtitle1" fontWeight={700} sx={{ color: 'white', mb: 2.5, textTransform: 'uppercase', fontSize: 12, letterSpacing: 1.5 }}>Account</Typography>
+              <Typography variant="subtitle1" fontWeight={700} sx={{ color: 'white', mb: 2.5, textTransform: 'uppercase', fontSize: 12, letterSpacing: 1.5 }}>{t('home.footerAccount')}</Typography>
               {[
                 { label: 'Sign In', path: '/login' },
                 { label: 'Register', path: '/register' },
@@ -2549,7 +2563,7 @@ export default function HomePage() {
 
             {/* Contact */}
             <Grid item xs={12} sm={4} md={4}>
-              <Typography variant="subtitle1" fontWeight={700} sx={{ color: 'white', mb: 2.5, textTransform: 'uppercase', fontSize: 12, letterSpacing: 1.5 }}>Contact</Typography>
+              <Typography variant="subtitle1" fontWeight={700} sx={{ color: 'white', mb: 2.5, textTransform: 'uppercase', fontSize: 12, letterSpacing: 1.5 }}>{t('home.footerContact')}</Typography>
               {[
                 { icon: <Email sx={{ fontSize: 16 }} />,       text: 'info@digitallibrary.com'          },
                 { icon: <Phone sx={{ fontSize: 16 }} />,       text: '+1 (555) 123-4567'                },
@@ -2568,7 +2582,7 @@ export default function HomePage() {
 
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
             <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.4)' }}>
-              © {new Date().getFullYear()} DigiLib Digital Library Management System. All rights reserved.
+              © {new Date().getFullYear()} DigiLib Digital Library Management System. {t('home.allRightsReserved')}
             </Typography>
             <Box sx={{ display: 'flex', gap: 3 }}>
               {['Privacy Policy', 'Terms of Service', 'Cookie Policy'].map(l => (

@@ -490,7 +490,9 @@ export default function DashboardLayout({ children, title }) {
 
           <MenuBook sx={{ mr: 2, fontSize: 28 }} />
           <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 700, letterSpacing: 0.5 }}>
-            {title || t('common.digitalLibrary')}
+            {title
+              ? t(`pageTitles.${title}`, { defaultValue: title })
+              : t('common.digitalLibrary')}
           </Typography>
 
           <LanguageSwitcher light />
@@ -698,10 +700,10 @@ export default function DashboardLayout({ children, title }) {
               }
             }}
           >
-            <BottomNavigationAction label="Home" icon={<Dashboard />} />
-            <BottomNavigationAction label="Books" icon={<MenuBook />} />
-            <BottomNavigationAction label="History" icon={<History />} />
-            <BottomNavigationAction label="Awards" icon={<EmojiEvents />} />
+            <BottomNavigationAction label={t('dashboard.home')} icon={<Dashboard />} />
+            <BottomNavigationAction label={t('dashboard.books')} icon={<MenuBook />} />
+            <BottomNavigationAction label={t('dashboard.history')} icon={<History />} />
+            <BottomNavigationAction label={t('dashboard.awards')} icon={<EmojiEvents />} />
           </BottomNavigation>
         </Paper>
       )}
@@ -728,11 +730,11 @@ export default function DashboardLayout({ children, title }) {
           fontWeight: 700
         }}>
           <Logout />
-          Confirm Logout
+          {t('logout.title')}
         </DialogTitle>
         <DialogContent sx={{ mt: 3 }}>
           <Alert severity="warning" sx={{ mb: 2, borderRadius: 2 }}>
-            You will be logged out and redirected to the login page.
+            {t('logout.warning')}
           </Alert>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
             <Avatar
@@ -768,7 +770,7 @@ export default function DashboardLayout({ children, title }) {
             </Box>
           </Box>
           <Typography variant="body1" sx={{ fontWeight: 600, color: C.dark }}>
-            Are you sure you want to logout?
+            {t('logout.question')}
           </Typography>
         </DialogContent>
         <DialogActions sx={{ p: 2.5, gap: 1 }}>
@@ -782,7 +784,7 @@ export default function DashboardLayout({ children, title }) {
               px: 3
             }}
           >
-            Cancel
+            {t('logout.cancel')}
           </Button>
           <Button 
             onClick={handleLogoutConfirm}
@@ -800,7 +802,7 @@ export default function DashboardLayout({ children, title }) {
               }
             }}
           >
-            Logout
+            {t('logout.confirm')}
           </Button>
         </DialogActions>
       </Dialog>

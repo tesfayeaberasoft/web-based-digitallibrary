@@ -37,6 +37,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-toastify';
 import { GoogleLogin } from '@react-oauth/google';
+import { useTranslation } from 'react-i18next';
 
 const C = {
   primary: '#2d6a4f',
@@ -49,6 +50,7 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login, googleLogin } = useAuth();
+  const { t } = useTranslation();
   
   const [formData, setFormData] = useState({
     email: '',
@@ -99,7 +101,7 @@ const Login = () => {
     
     if (result.success) {
       setLockoutInfo(null);
-      toast.success('Login successful!');
+      toast.success(t('auth.login.success'));
       
       switch (result.user.role) {
         case 'super-admin':
@@ -115,7 +117,7 @@ const Login = () => {
           navigate(from);
       }
     } else {
-      setError(result.message);
+      setError('auth.login.failed');
       if (result.userLockout) {
         setLockoutInfo({
           remaining: result.remainingAttempts,
@@ -123,7 +125,7 @@ const Login = () => {
           suspended: result.accountSuspended,
         });
       }
-      toast.error(result.message);
+      toast.error(t('auth.login.failed'));
     }
     
     setLoading(false);
@@ -134,7 +136,7 @@ const Login = () => {
     setError('');
     const result = await googleLogin(credentialResponse.credential);
     if (result.success) {
-      toast.success('Signed in with Google!');
+      toast.success(t('auth.login.googleSuccess'));
       switch (result.user.role) {
         case 'super-admin': navigate('/super-admin'); break;
         case 'admin':       navigate('/admin');       break;
@@ -142,15 +144,15 @@ const Login = () => {
         default:            navigate(from);
       }
     } else {
-      setError(result.message || 'Google sign-in failed. Please try again.');
-      toast.error(result.message || 'Google sign-in failed.');
+      setError('auth.login.googleFailed');
+      toast.error(t('auth.login.googleFailed'));
     }
     setLoading(false);
   };
 
   const handleGoogleError = () => {
-    setError('Google sign-in was cancelled or failed. Please try again.');
-    toast.error('Google sign-in failed.');
+    setError('auth.login.googleCancelled');
+    toast.error(t('auth.login.googleFailed'));
   };
 
   const handleQuickAccess = (role) => {
@@ -229,7 +231,7 @@ const Login = () => {
               transition: 'all 0.3s ease'
             }}
           >
-            Home
+            {t('common.home')}
           </Button>
         </Box>
 
@@ -301,17 +303,17 @@ const Login = () => {
                     </Box>
 
                     <Typography variant="h3" fontWeight={900} sx={{ color: 'white', mb: 2, lineHeight: 1.2 }}>
-                      Welcome Back!
+                      {t('auth.login.welcome')}
                     </Typography>
                     <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.9)', mb: 4, lineHeight: 1.7 }}>
-                      Access your digital library and continue your reading journey.
+                      {t('auth.login.intro')}
                     </Typography>
 
                     {/* Features */}
                     {[
-                      { icon: <MenuBook />, title: '10,000+ Books', desc: 'Vast collection across all genres' },
-                      { icon: <TrendingUp />, title: 'Track Progress', desc: 'Monitor your reading goals' },
-                      { icon: <Security />, title: 'Secure Access', desc: '256-bit encryption protected' }
+                      { icon: <MenuBook />, title: t('auth.login.booksCount'), desc: t('auth.login.bookCollection') },
+                      { icon: <TrendingUp />, title: t('auth.login.trackProgress'), desc: t('auth.login.readingGoals') },
+                      { icon: <Security />, title: t('auth.login.secureAccess'), desc: t('auth.login.encryption') }
                     ].map((feature, index) => (
                       <Box key={index} sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                         <Box
@@ -355,28 +357,32 @@ const Login = () => {
                   }}
                 >
                   <Typography variant="h4" fontWeight={800} sx={{ color: C.dark, mb: 1 }}>
-                    Sign In
+                    {t('auth.login.title')}
                   </Typography>
                   <Typography variant="body1" sx={{ color: 'text.secondary', mb: 4 }}>
-                    Enter your credentials to access your account
+                    {t('auth.login.subtitle')}
                   </Typography>
 
                   {error && (
                     <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
-                      {error}
+                      {t(error)}
                     </Alert>
                   )}
 
                   {lockoutInfo && !lockoutInfo.suspended && (
                     <Alert severity="warning" sx={{ mb: 3, borderRadius: 2 }}>
-                      <strong>Warning:</strong> {lockoutInfo.remaining} of {lockoutInfo.max} attempts remaining
+                      <strong>{t('auth.login.warning')}</strong>{' '}
+                      {t('auth.login.attemptsRemaining', {
+                        remaining: lockoutInfo.remaining,
+                        max: lockoutInfo.max,
+                      })}
                     </Alert>
                   )}
 
                   <Box component="form" onSubmit={handleSubmit}>
                     <TextField
                       fullWidth
-                      label="Email Address"
+                      label={t('auth.login.email')}
                       name="email"
                       type="email"
                       value={formData.email}
@@ -394,7 +400,7 @@ const Login = () => {
 
                     <TextField
                       fullWidth
-                      label="Password"
+                      label={t('auth.login.password')}
                       name="password"
                       type={showPassword ? 'text' : 'password'}
                       value={formData.password}
@@ -427,10 +433,10 @@ const Login = () => {
                             sx={{ color: C.secondary, '&.Mui-checked': { color: C.primary } }}
                           />
                         }
-                        label="Remember me"
+                        label={t('auth.login.rememberMe')}
                       />
                       <Link href="#" underline="hover" sx={{ color: C.primary, fontWeight: 600 }}>
-                        Forgot Password?
+                        {t('auth.login.forgotPassword')}
                       </Link>
                     </Box>
 
@@ -458,11 +464,11 @@ const Login = () => {
                         transition: 'all 0.3s ease'
                       }}
                     >
-                      {loading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : 'Sign In'}
+                      {loading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : t('auth.login.submit')}
                     </Button>
 
                     <Divider sx={{ mb: 3 }}>
-                      <Chip label="OR" size="small" />
+                      <Chip label={t('auth.login.or')} size="small" />
                     </Divider>
 
                     <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
@@ -476,12 +482,12 @@ const Login = () => {
                     </Box>
 
                     <Typography variant="body2" align="center" sx={{ color: 'text.secondary' }}>
-                      Don't have an account?{' '}
+                      {t('auth.login.noAccount')}{' '}
                       <Link
                         onClick={() => navigate('/register')}
                         sx={{ color: C.primary, fontWeight: 700, cursor: 'pointer', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
                       >
-                        Sign Up
+                        {t('auth.login.signUp')}
                       </Link>
                     </Typography>
 
@@ -506,7 +512,7 @@ const Login = () => {
                         transition: 'all 180ms ease',
                       }}
                     >
-                      Browse Books
+                      {t('auth.login.browseBooks')}
                     </Button>
                   </Box>
 
@@ -514,7 +520,7 @@ const Login = () => {
                   {process.env.NODE_ENV === 'development' && (
                     <Box sx={{ mt: 4, pt: 3, borderTop: '1px solid #e0e0e0' }}>
                       <Typography variant="caption" sx={{ color: 'text.secondary', mb: 1, display: 'block' }}>
-                        Quick Access (Dev Only):
+                        {t('auth.login.quickAccess')}
                       </Typography>
                       <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                         {['user', 'librarian', 'admin', 'super-admin'].map((role) => (

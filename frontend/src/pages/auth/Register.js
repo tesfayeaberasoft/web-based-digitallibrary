@@ -44,6 +44,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-toastify';
 import { GoogleLogin } from '@react-oauth/google';
+import { useTranslation } from 'react-i18next';
 
 const C = {
   primary: '#2d6a4f',
@@ -52,11 +53,15 @@ const C = {
   dark: '#1a1a2e'
 };
 
-const steps = ['Personal Info', 'Security', 'Confirmation'];
-
 const Register = () => {
   const navigate = useNavigate();
   const { register, googleLogin, checkEmailAvailability } = useAuth();
+  const { t } = useTranslation();
+  const steps = [
+    t('auth.register.stepPersonal'),
+    t('auth.register.stepSecurity'),
+    t('auth.register.stepConfirmation'),
+  ];
   
   const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState({
@@ -101,7 +106,9 @@ const Register = () => {
     } else if (name === 'password' && touched.confirmPassword) {
       setFieldErrors(prev => ({
         ...prev,
-        confirmPassword: value === formData.confirmPassword ? '' : 'Passwords do not match.'
+        confirmPassword: value === formData.confirmPassword
+          ? ''
+          : 'auth.register.validation.passwordMismatch'
       }));
     }
   };
@@ -111,32 +118,34 @@ const Register = () => {
     switch (name) {
       case 'fullName':
         if (trimmed.length < 3 || trimmed.length > 100 || !/^[\p{L}\p{M} ]+$/u.test(trimmed)) {
-          return 'Name must be at least 3 characters and contain letters and spaces only.';
+          return 'auth.register.validation.name';
         }
         return '';
       case 'email':
         if (trimmed.length > 100 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(trimmed)) {
-          return 'Enter a valid email address.';
+          return 'auth.register.validation.email';
         }
         return '';
       case 'phone':
         if (!/^(?:\+251|0)?[79]\d{8}$/.test(trimmed.replace(/[\s()-]/g, ''))) {
-          return 'Enter a valid Ethiopian mobile number, such as 0912345678 or +251912345678.';
+          return 'auth.register.validation.phone';
         }
         return '';
       case 'address':
         if (trimmed.length < 5) {
-          return 'Address must be at least 5 characters.';
+          return 'auth.register.validation.address';
         }
         return '';
       case 'password':
         if (value.length < 8 || !/[A-Z]/.test(value) || !/[a-z]/.test(value)
           || !/[0-9]/.test(value) || !/[^A-Za-z0-9]/.test(value)) {
-          return 'Use at least 8 characters, including uppercase and lowercase letters, a number, and a special character.';
+          return 'auth.register.validation.password';
         }
         return '';
       case 'confirmPassword':
-        return value !== formData.password ? 'Passwords do not match.' : '';
+        return value !== formData.password
+          ? 'auth.register.validation.passwordMismatch'
+          : '';
       default:
         return '';
     }
@@ -146,7 +155,10 @@ const Register = () => {
     const email = formData.email.trim().toLowerCase();
     if (emailAvailability?.email === email) {
       if (!emailAvailability.available) {
-        setFieldErrors(prev => ({ ...prev, email: 'This email address is already registered.' }));
+        setFieldErrors(prev => ({
+          ...prev,
+          email: 'auth.register.validation.emailTaken',
+        }));
         return false;
       }
       return true;
@@ -161,12 +173,15 @@ const Register = () => {
     setEmailCheckLoading(false);
 
     if (!result.success) {
-      setFieldErrors(prev => ({ ...prev, email: result.message }));
+      setFieldErrors(prev => ({
+        ...prev,
+        email: 'auth.register.validation.emailCheckFailed',
+      }));
       return false;
     }
 
     setEmailAvailability({ email, available: result.available });
-    const message = result.available ? '' : 'This email address is already registered.';
+    const message = result.available ? '' : 'auth.register.validation.emailTaken';
     setFieldErrors(prev => ({ ...prev, email: message }));
     return result.available;
   };
@@ -238,10 +253,10 @@ const Register = () => {
     });
     
     if (result.success) {
-      toast.success('Registration successful! Please login.');
+      toast.success(t('auth.register.success'));
       navigate('/login');
     } else {
-      setError(result.message);
+      setError('auth.register.failed');
       if (result.errors) {
         const serverErrors = {
           full_name: 'fullName',
@@ -252,13 +267,20 @@ const Register = () => {
         };
         setFieldErrors(prev => ({
           ...prev,
-          ...Object.entries(result.errors).reduce((mapped, [field, message]) => {
-            if (serverErrors[field]) mapped[serverErrors[field]] = message;
+          ...Object.entries(result.errors).reduce((mapped, [field]) => {
+            if (serverErrors[field]) {
+              const validationKey = field === 'full_name'
+                ? 'name'
+                : field === 'confirm_password'
+                  ? 'passwordMismatch'
+                  : field;
+              mapped[serverErrors[field]] = `auth.register.validation.${validationKey}`;
+            }
             return mapped;
           }, {})
         }));
       }
-      toast.error(result.message);
+      toast.error(t('auth.register.failed'));
     }
     
     setLoading(false);
@@ -269,17 +291,17 @@ const Register = () => {
     setError('');
     const result = await googleLogin(credentialResponse.credential);
     if (result.success) {
-      toast.success('Account created with Google!');
+      toast.success(t('auth.register.googleSuccess'));
       navigate('/dashboard');
     } else {
-      setError(result.message || 'Google sign-up failed. Please try again.');
-      toast.error(result.message || 'Google sign-up failed.');
+      setError('auth.register.googleFailed');
+      toast.error(t('auth.register.googleFailed'));
     }
     setLoading(false);
   };
 
   const handleGoogleError = () => {
-    setError('Google sign-up was cancelled or failed. Please try again.');
+    setError('auth.register.googleCancelled');
   };
 
   const renderStepContent = () => {
@@ -290,15 +312,15 @@ const Register = () => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Full Name"
+                label={t('auth.register.fullName')}
                 name="fullName"
                 value={formData.fullName}
                 onChange={handleChange}
                 onBlur={handleBlur}
                 required
                 error={Boolean(touched.fullName && fieldErrors.fullName)}
-                helperText={touched.fullName ? fieldErrors.fullName : ''}
-                placeholder="John Doe"
+                helperText={touched.fullName && fieldErrors.fullName ? t(fieldErrors.fullName) : ''}
+                placeholder={t('auth.register.fullNamePlaceholder')}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -311,7 +333,7 @@ const Register = () => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Email Address"
+                label={t('auth.register.email')}
                 name="email"
                 type="email"
                 value={formData.email}
@@ -319,8 +341,12 @@ const Register = () => {
                 onBlur={handleBlur}
                 required
                 error={Boolean(touched.email && fieldErrors.email)}
-                helperText={touched.email ? (emailCheckLoading ? 'Checking email availability…' : fieldErrors.email) : ''}
-                placeholder="john@example.com"
+                helperText={touched.email
+                  ? (emailCheckLoading
+                    ? t('auth.register.checkingEmail')
+                    : fieldErrors.email ? t(fieldErrors.email) : '')
+                  : ''}
+                placeholder={t('auth.register.emailPlaceholder')}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -333,15 +359,15 @@ const Register = () => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Phone Number"
+                label={t('auth.register.phone')}
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
                 onBlur={handleBlur}
                 required
                 error={Boolean(touched.phone && fieldErrors.phone)}
-                helperText={touched.phone ? fieldErrors.phone : ''}
-                placeholder="+251 91 234 5678"
+                helperText={touched.phone && fieldErrors.phone ? t(fieldErrors.phone) : ''}
+                placeholder={t('auth.register.phonePlaceholder')}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -354,7 +380,7 @@ const Register = () => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Address"
+                label={t('auth.register.address')}
                 name="address"
                 multiline
                 rows={3}
@@ -363,8 +389,8 @@ const Register = () => {
                 onBlur={handleBlur}
                 required
                 error={Boolean(touched.address && fieldErrors.address)}
-                helperText={touched.address ? fieldErrors.address : ''}
-                placeholder="123 Main St, City, State 12345"
+                helperText={touched.address && fieldErrors.address ? t(fieldErrors.address) : ''}
+                placeholder={t('auth.register.addressPlaceholder')}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 2 }}>
@@ -382,7 +408,7 @@ const Register = () => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Password"
+                label={t('auth.register.password')}
                 name="password"
                 type={showPassword ? 'text' : 'password'}
                 value={formData.password}
@@ -390,7 +416,7 @@ const Register = () => {
                 onBlur={handleBlur}
                 required
                 error={Boolean(touched.password && fieldErrors.password)}
-                helperText={touched.password ? fieldErrors.password : ''}
+                helperText={touched.password && fieldErrors.password ? t(fieldErrors.password) : ''}
                 placeholder="••••••••"
                 InputProps={{
                   startAdornment: (
@@ -414,7 +440,7 @@ const Register = () => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Confirm Password"
+                label={t('auth.register.confirmPassword')}
                 name="confirmPassword"
                 type={showConfirmPassword ? 'text' : 'password'}
                 value={formData.confirmPassword}
@@ -422,7 +448,7 @@ const Register = () => {
                 onBlur={handleBlur}
                 required
                 error={Boolean(touched.confirmPassword && fieldErrors.confirmPassword)}
-                helperText={touched.confirmPassword ? fieldErrors.confirmPassword : ''}
+                helperText={touched.confirmPassword && fieldErrors.confirmPassword ? t(fieldErrors.confirmPassword) : ''}
                 placeholder="••••••••"
                 InputProps={{
                   startAdornment: (
@@ -446,7 +472,7 @@ const Register = () => {
             <Grid item xs={12}>
               <Box sx={{ p: 2, backgroundColor: C.light, borderRadius: 2 }}>
                 <Typography variant="caption" color="text.secondary">
-                  Use at least 8 characters, including uppercase and lowercase letters, a number, and a special character.
+                  {t('auth.register.passwordRequirements')}
                 </Typography>
               </Box>
             </Grid>
@@ -457,33 +483,33 @@ const Register = () => {
           <Box sx={{ textAlign: 'center' }}>
             <CheckCircle sx={{ fontSize: 80, color: C.secondary, mb: 2 }} />
             <Typography variant="h5" fontWeight={700} sx={{ color: C.dark, mb: 1 }}>
-              Ready to Create Account
+              {t('auth.register.ready')}
             </Typography>
             <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-              Please review your information and click "Create Account" to complete registration.
+              {t('auth.register.review')}
             </Typography>
             
             <Box sx={{ textAlign: 'left', backgroundColor: C.light, p: 3, borderRadius: 2, border: `1px solid ${C.secondary}40` }}>
               <Typography variant="h6" sx={{ color: C.dark, mb: 2, fontWeight: 700 }}>
-                Account Summary
+                {t('auth.register.summary')}
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Person sx={{ fontSize: 18, color: C.secondary }} />
-                  <Typography variant="body2"><strong>Name:</strong> {formData.fullName}</Typography>
+                  <Typography variant="body2"><strong>{t('auth.register.name')}</strong> {formData.fullName}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Email sx={{ fontSize: 18, color: C.secondary }} />
-                  <Typography variant="body2"><strong>Email:</strong> {formData.email}</Typography>
+                  <Typography variant="body2"><strong>{t('auth.register.emailLabel')}</strong> {formData.email}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Phone sx={{ fontSize: 18, color: C.secondary }} />
-                  <Typography variant="body2"><strong>Phone:</strong> {formData.phone}</Typography>
+                  <Typography variant="body2"><strong>{t('auth.register.phoneLabel')}</strong> {formData.phone}</Typography>
                 </Box>
                 {formData.address && (
                   <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
                     <Home sx={{ fontSize: 18, color: C.secondary, mt: 0.3 }} />
-                    <Typography variant="body2"><strong>Address:</strong> {formData.address}</Typography>
+                    <Typography variant="body2"><strong>{t('auth.register.addressLabel')}</strong> {formData.address}</Typography>
                   </Box>
                 )}
               </Box>
@@ -556,7 +582,7 @@ const Register = () => {
               transition: 'all 0.3s ease'
             }}
           >
-           Goto Home
+            {t('common.home')}
           </Button>
         </Box>
 
@@ -628,18 +654,18 @@ const Register = () => {
                     </Box>
 
                     <Typography variant="h3" fontWeight={900} sx={{ color: 'white', mb: 2, lineHeight: 1.2 }}>
-                      Join Our Community
+                      {t('auth.register.welcome')}
                     </Typography>
                     <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.9)', mb: 4, lineHeight: 1.7 }}>
-                      Create your account and unlock a world of knowledge at your fingertips.
+                      {t('auth.register.intro')}
                     </Typography>
 
                     {/* Features List */}
                     {[
-                      { icon: <LibraryBooks />, title: 'Instant Access', desc: 'Browse and borrow from 10,000+ books immediately' },
-                      { icon: <EmojiObjects />, title: 'Personalized Recommendations', desc: 'Get book suggestions based on your interests' },
-                      { icon: <Group />, title: 'Community Features', desc: 'Join discussions and share reviews' },
-                      { icon: <Devices />, title: 'Multi-Device Access', desc: 'Read on any device, anytime, anywhere' }
+                      { icon: <LibraryBooks />, title: t('auth.register.featureAccess'), desc: t('auth.register.featureAccessDesc') },
+                      { icon: <EmojiObjects />, title: t('auth.register.featureRecommendations'), desc: t('auth.register.featureRecommendationsDesc') },
+                      { icon: <Group />, title: t('auth.register.featureCommunity'), desc: t('auth.register.featureCommunityDesc') },
+                      { icon: <Devices />, title: t('auth.register.featureDevices'), desc: t('auth.register.featureDevicesDesc') }
                     ].map((feature, index) => (
                       <Box key={index} sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                         <Box
@@ -683,10 +709,10 @@ const Register = () => {
                   }}
                 >
                   <Typography variant="h4" fontWeight={800} sx={{ color: C.dark, mb: 1 }}>
-                    Create Account
+                    {t('auth.register.title')}
                   </Typography>
                   <Typography variant="body1" sx={{ color: 'text.secondary', mb: 3 }}>
-                    Get started with your free account
+                    {t('auth.register.subtitle')}
                   </Typography>
 
                   {/* Google Sign-Up Button */}
@@ -694,7 +720,7 @@ const Register = () => {
                     {loading ? (
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <CircularProgress size={20} />
-                        <Typography variant="body2" color="text.secondary">Connecting to Google...</Typography>
+                        <Typography variant="body2" color="text.secondary">{t('auth.register.connectingGoogle')}</Typography>
                       </Box>
                     ) : (
                       <GoogleLogin
@@ -710,7 +736,7 @@ const Register = () => {
                   </Box>
 
                   <Divider sx={{ mb: 3 }}>
-                    <Chip label="OR" size="small" />
+                    <Chip label={t('auth.register.or')} size="small" />
                   </Divider>
 
                   {/* Stepper */}
@@ -733,7 +759,7 @@ const Register = () => {
 
                   {error && (
                     <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
-                      {error}
+                      {t(error)}
                     </Alert>
                   )}
 
@@ -757,7 +783,7 @@ const Register = () => {
                           }
                         }}
                       >
-                        Back
+                        {t('auth.register.back')}
                       </Button>
                       
                       {activeStep === steps.length - 1 ? (
@@ -780,7 +806,7 @@ const Register = () => {
                             transition: 'all 0.3s ease'
                           }}
                         >
-                          {loading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : 'Create Account'}
+                          {loading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : t('auth.register.submit')}
                         </Button>
                       ) : (
                         <Button
@@ -801,19 +827,19 @@ const Register = () => {
                             transition: 'all 0.3s ease'
                           }}
                         >
-                          Continue
+                          {t('auth.register.continue')}
                         </Button>
                       )}
                     </Box>
                   </Box>
 
                   <Typography variant="body2" align="center" sx={{ mt: 3, color: 'text.secondary' }}>
-                    Already have an account?{' '}
+                    {t('auth.register.existingAccount')}{' '}
                     <Link
                       onClick={() => navigate('/login')}
                       sx={{ color: C.primary, fontWeight: 700, cursor: 'pointer', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
                     >
-                      Sign In
+                      {t('auth.register.signIn')}
                     </Link>
                   </Typography>
 
@@ -838,7 +864,7 @@ const Register = () => {
                       transition: 'all 180ms ease',
                     }}
                   >
-                    Browse Books
+                    {t('auth.register.browseBooks')}
                   </Button>
                 </Box>
               </Grid>
