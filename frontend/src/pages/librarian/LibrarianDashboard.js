@@ -46,6 +46,7 @@ import {
   Person as PersonIcon
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
+import InstallCard from '../../components/InstallCard';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -139,6 +140,7 @@ const LibrarianDashboard = () => {
     <DashboardLayout title="Librarian Panel">
       <Fade in={true} timeout={600}>
         <Box className="librarian-page">
+          <InstallCard />
           {/* Header */}
           <Box sx={{ mb: 4 }}>
             <Typography variant="h4" fontWeight={700} gutterBottom>

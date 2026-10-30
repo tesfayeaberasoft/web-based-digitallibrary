@@ -8,6 +8,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 
 // Import components
 import AuthProvider from './contexts/AuthContext';
+import { InstallPromptProvider } from './contexts/InstallPromptContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
@@ -114,9 +115,10 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider>
-        <Router>
-          <div className="App">
-            <Routes>
+        <InstallPromptProvider>
+          <Router>
+            <div className="App">
+              <Routes>
               {/* Public Routes */}
               <Route path="/" element={<HomePage />} />
               <Route path="/browse" element={<BrowseBooks />} />
@@ -315,21 +317,22 @@ function App() {
 
               {/* Redirect unknown routes */}
               <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
+              </Routes>
 
-            <ToastContainer
-              position="top-right"
-              autoClose={5000}
-              hideProgressBar={false}
-              newestOnTop={false}
-              closeOnClick
-              rtl={false}
-              pauseOnFocusLoss
-              draggable
-              pauseOnHover
-            />
-          </div>
-        </Router>
+              <ToastContainer
+                position="top-right"
+                autoClose={5000}
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+              />
+            </div>
+          </Router>
+        </InstallPromptProvider>
       </AuthProvider>
     </ThemeProvider>
     </GoogleOAuthProvider>

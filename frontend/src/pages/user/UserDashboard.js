@@ -36,6 +36,7 @@ import {
   LibraryBooks
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
+import InstallCard from '../../components/InstallCard';
 import FinesWidget from '../../components/payments/FinesWidget';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -166,6 +167,7 @@ const UserDashboard = () => {
     <DashboardLayout title="Digital Library">
       <Fade in={true} timeout={600}>
         <Box>
+          <InstallCard />
           {/* Welcome Header with Refresh */}
           <Box sx={{ 
             mb: 4, 
