@@ -81,6 +81,7 @@ const Register = () => {
   const [touched, setTouched] = useState({});
   const [emailAvailability, setEmailAvailability] = useState(null);
   const [emailCheckLoading, setEmailCheckLoading] = useState(false);
+  const [emailCheckWarning, setEmailCheckWarning] = useState(false);
   const emailCheckRequest = useRef(0);
 
   React.useEffect(() => {
@@ -103,6 +104,7 @@ const Register = () => {
       emailCheckRequest.current += 1;
       setEmailAvailability(null);
       setEmailCheckLoading(false);
+      setEmailCheckWarning(false);
     } else if (name === 'password' && touched.confirmPassword) {
       setFieldErrors(prev => ({
         ...prev,
@@ -173,13 +175,12 @@ const Register = () => {
     setEmailCheckLoading(false);
 
     if (!result.success) {
-      setFieldErrors(prev => ({
-        ...prev,
-        email: 'auth.register.validation.emailCheckFailed',
-      }));
-      return false;
+      setEmailCheckWarning(true);
+      setFieldErrors(prev => ({ ...prev, email: '' }));
+      return true;
     }
 
+    setEmailCheckWarning(false);
     setEmailAvailability({ email, available: result.available });
     const message = result.available ? '' : 'auth.register.validation.emailTaken';
     setFieldErrors(prev => ({ ...prev, email: message }));
@@ -344,7 +345,11 @@ const Register = () => {
                 helperText={touched.email
                   ? (emailCheckLoading
                     ? t('auth.register.checkingEmail')
-                    : fieldErrors.email ? t(fieldErrors.email) : '')
+                    : fieldErrors.email
+                      ? t(fieldErrors.email)
+                      : emailCheckWarning
+                        ? t('auth.register.validation.emailCheckFailed')
+                        : '')
                   : ''}
                 placeholder={t('auth.register.emailPlaceholder')}
                 InputProps={{

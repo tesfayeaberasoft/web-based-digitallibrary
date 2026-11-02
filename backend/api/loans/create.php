@@ -27,6 +27,9 @@ try {
     
     require_once __DIR__ . '/../../config/database.php';
     $db = Database::getInstance()->getConnection();
+    if (!$db) {
+        throw new RuntimeException('Database connection failed.');
+    }
     
     // Check library policy - borrow limit
     $borrowCheck = checkBorrowLimit($db, $user_id);
@@ -84,6 +87,9 @@ try {
     
     $due_date = date('Y-m-d', strtotime("+$borrow_days days"));
     
+    // Keep the loan and available-copy count consistent if any write fails.
+    $db->beginTransaction();
+
     // Create loan
     $stmt = $db->prepare("
         INSERT INTO book_loans (user_id, book_id, issued_by, loan_date, due_date, status)
@@ -100,8 +106,15 @@ try {
     $loan_id = $db->lastInsertId();
     
     // Update book availability
-    $stmt = $db->prepare("UPDATE books SET available_copies = available_copies - 1 WHERE id = ?");
+    $stmt = $db->prepare("
+        UPDATE books
+        SET available_copies = available_copies - 1
+        WHERE id = ? AND available_copies > 0
+    ");
     $stmt->execute([$data['book_id']]);
+    if ($stmt->rowCount() !== 1) {
+        throw new RuntimeException('No copies are currently available.');
+    }
     
     // Create notification for user (if notifications are enabled)
     $notificationsEnabled = getLibraryPolicySetting($db, 'email_enabled', true);
@@ -113,6 +126,8 @@ try {
         $message = "You have successfully borrowed '{$book['title']}'. Due date: $due_date";
         $stmt->execute([$user_id, $message]);
     }
+
+    $db->commit();
     
     echo json_encode([
         'success' => true,
@@ -124,6 +139,9 @@ try {
     ]);
     
 } catch (Exception $e) {
+    if (isset($db) && $db && $db->inTransaction()) {
+        $db->rollBack();
+    }
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
 }

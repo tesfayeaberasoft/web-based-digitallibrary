@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -16,13 +17,12 @@ import DashboardLayout from '../../components/layout/DashboardLayout';
 import BookNotepad from './BookNotepad';
 import axios from 'axios';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
 
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url
-).toString();
+// Use CDN for PDF worker to avoid build/deployment issues
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
-const API_URL = 'http://localhost:8000/api';
+const API_URL = apiUrl("/api");
 
 export default function BookReader() {
   const { bookId } = useParams();

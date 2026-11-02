@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState } from 'react';
 import {
   Drawer,
@@ -290,7 +291,7 @@ const Sidebar = ({ open = true }) => {
                 }}
               >
                 <Avatar
-                  src={user?.profile_image ? `http://localhost:8000/${user.profile_image}` : undefined}
+                  src={user?.profile_image ? apiUrl(`/${user.profile_image}`) : undefined}
                   sx={{
                     width: 32,
                     height: 32,
@@ -371,7 +372,7 @@ const Sidebar = ({ open = true }) => {
           
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
             <Avatar
-              src={user?.profile_image ? `http://localhost:8000/${user.profile_image}` : undefined}
+              src={user?.profile_image ? apiUrl(`/${user.profile_image}`) : undefined}
               sx={{
                 width: 60,
                 height: 60,

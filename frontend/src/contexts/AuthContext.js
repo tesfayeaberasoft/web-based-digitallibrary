@@ -1,3 +1,4 @@
+import { apiUrl } from '../config/api';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
@@ -43,7 +44,7 @@ const AuthProvider = ({ children }) => {
       if (storedToken && storedUser) {
         try {
           // Verify token is still valid
-          const response = await axios.get('http://localhost:8000/api/auth/verify', {
+          const response = await axios.get(apiUrl("/api/auth/verify"), {
             headers: { Authorization: `Bearer ${storedToken}` }
           });
           
@@ -78,7 +79,7 @@ const AuthProvider = ({ children }) => {
 
   const googleLogin = async (credential) => {
     try {
-      const response = await axios.post('http://localhost:8000/api/auth/google', { credential });
+      const response = await axios.post(apiUrl("/api/auth/google"), { credential });
 
       if (response.data.success) {
         const { token: newToken, user: userData } = response.data.data;
@@ -103,7 +104,7 @@ const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post('http://localhost:8000/api/auth/login', {
+      const response = await axios.post(apiUrl("/api/auth/login"), {
         email,
         password
       });
@@ -147,7 +148,7 @@ const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      const response = await axios.post('http://localhost:8000/api/auth/register', userData);
+      const response = await axios.post(apiUrl("/api/auth/register"), userData);
       
       if (response.data.success) {
         return { success: true, message: 'Registration successful. Please login.' };
@@ -169,7 +170,7 @@ const AuthProvider = ({ children }) => {
 
   const checkEmailAvailability = async (email) => {
     try {
-      const response = await axios.post('http://localhost:8000/api/auth/email-availability', { email });
+      const response = await axios.post(apiUrl("/api/auth/email-availability"), { email });
       return {
         success: true,
         available: response.data.available,

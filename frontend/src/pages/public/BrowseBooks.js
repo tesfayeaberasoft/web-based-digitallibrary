@@ -1,3 +1,4 @@
+import { API_BASE_URL, apiUrl } from '../../config/api';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Box, Container, Typography, Grid, Card, CardContent,
@@ -39,8 +40,6 @@ const C = {
   dark:      '#1b4332',
   accent:    '#95d5b2',
 };
-
-const API_BASE_URL = 'http://localhost:8000';
 
 const gradBtn = (outline = false) => outline ? {
   borderColor: C.secondary, color: C.primary, fontWeight: 700, borderRadius: 2,
@@ -191,7 +190,7 @@ export default function BrowseBooks() {
       }
       try {
         const token = localStorage.getItem('token');
-        const { data } = await axios.get('http://localhost:8000/api/favorites', {
+        const { data } = await axios.get(apiUrl("/api/favorites"), {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (active && data.success) {
@@ -207,7 +206,7 @@ export default function BrowseBooks() {
 
   const fetchCategories = async () => {
     try {
-      const { data } = await axios.get('http://localhost:8000/api/categories');
+      const { data } = await axios.get(apiUrl("/api/categories"));
       if (data.success) setCategories(data.categories);
     } catch { /* silent */ }
   };
@@ -215,7 +214,7 @@ export default function BrowseBooks() {
   const fetchBooks = async () => {
     setLoading(true); setError('');
     try {
-      const { data } = await axios.get('http://localhost:8000/api/books', {
+      const { data } = await axios.get(apiUrl("/api/books"), {
         params: { page, limit: LIMIT, search: searchQuery, category_id: selCategory, availability: avail },
       });
       if (data.success) {
@@ -225,7 +224,10 @@ export default function BrowseBooks() {
       } else {
         setBooks([]); setError('Failed to load books.');
       }
-    } catch { setBooks([]); setError('Failed to load books.'); }
+    } catch (error) {
+      setBooks([]);
+      setError(error.response?.data?.message || 'Failed to load books.');
+    }
     finally { setLoading(false); }
   };
 
@@ -258,8 +260,8 @@ export default function BrowseBooks() {
       const token = localStorage.getItem('token');
       const config = { headers: { Authorization: `Bearer ${token}` } };
       const { data } = isFavorite
-        ? await axios.delete(`http://localhost:8000/api/favorites/${book.id}`, config)
-        : await axios.post('http://localhost:8000/api/favorites', { book_id: book.id }, config);
+        ? await axios.delete(apiUrl(`/api/favorites/${book.id}`), config)
+        : await axios.post(apiUrl("/api/favorites"), { book_id: book.id }, config);
       if (!data.success) throw new Error(data.message || 'Could not update favorites.');
       setFavoriteIds((current) => {
         const next = new Set(current);
@@ -296,13 +298,13 @@ export default function BrowseBooks() {
       const token = localStorage.getItem('token');
       const cfg   = { headers: { Authorization: `Bearer ${token}` } };
       if (selectedBook.available_copies > 0) {
-        const { data } = await axios.post('http://localhost:8000/api/loans', { book_id: selectedBook.id }, cfg);
+        const { data } = await axios.post(apiUrl("/api/loans"), { book_id: selectedBook.id }, cfg);
         if (data.success) {
           setSnackbar({ open:true, msg:`"${selectedBook.title}" borrowed successfully! Due in 14 days.`, sev:'success' });
           fetchBooks();
         } else throw new Error(data.message);
       } else {
-        const { data } = await axios.post('http://localhost:8000/api/reservations', { book_id: selectedBook.id }, cfg);
+        const { data } = await axios.post(apiUrl("/api/reservations"), { book_id: selectedBook.id }, cfg);
         if (data.success) {
           setSnackbar({ open:true, msg:`Reserved! You're #${data.queue_position || 1} in the queue.`, sev:'success' });
         } else throw new Error(data.message);

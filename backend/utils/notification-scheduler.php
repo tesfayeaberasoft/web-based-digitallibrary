@@ -368,6 +368,7 @@ class NotificationScheduler {
         $total_fine = number_format($user['total_fine'], 2);
         $fine_count = $user['fine_count'];
         $oldest_date = date('M j, Y', strtotime($user['oldest_fine_date']));
+        $frontendUrl = defined('APP_BASE_URL') ? APP_BASE_URL : '';
         
         return "
         <!DOCTYPE html>
@@ -395,8 +396,8 @@ class NotificationScheduler {
                     </div>
                     
                     <div style='text-align: center; margin: 30px 0;'>
-                        <a href='http://localhost:3000/user/fines' style='background: #f44336; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; display: inline-block; margin-right: 10px;'>Pay Online</a>
-                        <a href='http://localhost:3000/user/fines' style='background: #4a9b8e; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; display: inline-block;'>View Details</a>
+                        <a href='{$frontendUrl}/user/fines' style='background: #f44336; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; display: inline-block; margin-right: 10px;'>Pay Online</a>
+                        <a href='{$frontendUrl}/user/fines' style='background: #4a9b8e; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; display: inline-block;'>View Details</a>
                     </div>
                 </div>
                 

@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Box, Typography, Card, CardContent, Grid, TextField, Button,
@@ -87,7 +88,7 @@ export default function UserProfile() {
         phone:     user.phone    || '',
         address:   user.address  || '',
       });
-      if (user.profile_image) setImagePreview(`http://localhost:8000/${user.profile_image}`);
+      if (user.profile_image) setImagePreview(apiUrl(`/${user.profile_image}`));
     }
   }, [user]);
 
@@ -112,7 +113,7 @@ export default function UserProfile() {
     setLoading(true); setError(''); setSuccess('');
     try {
       const token = localStorage.getItem('token');
-      const { data } = await axios.put(`http://localhost:8000/api/users/${user.id}`, formData, {
+      const { data } = await axios.put(apiUrl(`/api/users/${user.id}`), formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (data.success) { setSuccess('Profile updated successfully!'); setEditing(false); updateUser({ ...user, ...formData }); }
@@ -126,7 +127,7 @@ export default function UserProfile() {
     setLoading(true); setError(''); setSuccess('');
     try {
       const token = localStorage.getItem('token');
-      const { data } = await axios.put(`http://localhost:8000/api/users/${user.id}/password`, {
+      const { data } = await axios.put(apiUrl(`/api/users/${user.id}/password`), {
         current_password: pwData.current_password, new_password: pwData.new_password,
       }, { headers: { Authorization: `Bearer ${token}` } });
       if (data.success) {
@@ -143,7 +144,7 @@ export default function UserProfile() {
     try {
       const token = localStorage.getItem('token');
       const fd = new FormData(); fd.append('profile_image', file);
-      const { data } = await axios.post(`http://localhost:8000/api/users/${user.id}/profile-image`, fd, {
+      const { data } = await axios.post(apiUrl(`/api/users/${user.id}/profile-image`), fd, {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
       });
       if (data.success) {
@@ -154,7 +155,7 @@ export default function UserProfile() {
       }
     } catch (e) {
       setError(e.response?.data?.message || 'Failed to upload image');
-      setImagePreview(user?.profile_image ? `http://localhost:8000/${user.profile_image}` : null);
+      setImagePreview(user?.profile_image ? apiUrl(`/${user.profile_image}`) : null);
     } finally { setUploading(false); }
   };
 

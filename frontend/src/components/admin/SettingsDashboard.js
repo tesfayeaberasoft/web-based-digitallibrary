@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -71,7 +72,7 @@ const SettingsDashboard = () => {
       const token = localStorage.getItem('token');
       
       // Load system status
-      const statusResponse = await axios.get('http://localhost:8000/api/admin/maintenance', {
+      const statusResponse = await axios.get(apiUrl("/api/admin/maintenance"), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -93,7 +94,7 @@ const SettingsDashboard = () => {
       const token = localStorage.getItem('token');
       
       // Get overdue loans for policy monitoring
-      const overdueResponse = await axios.get('http://localhost:8000/api/fines/calculate-overdue', {
+      const overdueResponse = await axios.get(apiUrl("/api/fines/calculate-overdue"), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -113,7 +114,7 @@ const SettingsDashboard = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post('http://localhost:8000/api/admin/maintenance', {
+      const response = await axios.post(apiUrl("/api/admin/maintenance"), {
         action: action
       }, {
         headers: { 'Authorization': `Bearer ${token}` }

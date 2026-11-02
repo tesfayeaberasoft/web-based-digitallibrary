@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { EditorContent, useEditor, useEditorState } from '@tiptap/react';
@@ -28,7 +29,7 @@ import {
 import './BookNotepad.css';
 import { useTranslation } from 'react-i18next';
 
-const API_URL = 'http://localhost:8000/api';
+const API_URL = apiUrl("/api");
 const EMPTY_DOCUMENT = { type: 'doc', content: [{ type: 'paragraph' }] };
 
 async function saveNote(bookId, token, document) {

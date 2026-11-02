@@ -10,6 +10,7 @@ require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../utils/jwt.php';
 require_once __DIR__ . '/../../utils/Logger.php';
+require_once __DIR__ . '/../../utils/chapa-payment.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     http_response_code(405);
@@ -67,6 +68,9 @@ try {
     // Verify with Chapa API
     $verifyResp = _chapaVerify($txRef, $chapaKey);
     $newStatus  = $verifyResp['status'] ?? 'failed';
+    if ($newStatus === 'success' && !chapaVerifiedPaymentMatches($payment, $verifyResp)) {
+        throw new Exception('Verified payment amount or currency does not match the recorded payment.');
+    }
 
     // Update DB based on verification result
     $updateOk = _updatePaymentStatus($db, $payment, $verifyResp, $newStatus);

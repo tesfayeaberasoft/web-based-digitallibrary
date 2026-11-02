@@ -1,0 +1,20 @@
+Options -Indexes
+RewriteEngine On
+
+# Preserve bearer tokens when Apache forwards rewritten API requests to PHP.
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+# Route API requests through the backend dispatcher.
+RewriteRule ^backend/api(?:/(.*))?$ backend/index.php?__route=$1 [QSA,L,NC]
+
+# eBooks are stored under the web root but must only be served by the
+# authenticated backend content endpoint.
+RewriteRule ^private-storage(?:/|$) - [F,NC,L]
+
+# Let the web server serve built frontend assets and backend uploads directly.
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# React Router handles all other application routes.
+RewriteRule ^ index.html [L]

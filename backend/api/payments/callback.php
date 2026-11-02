@@ -10,12 +10,11 @@
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../utils/Logger.php';
+require_once __DIR__ . '/../../utils/chapa-payment.php';
 
 $raw = file_get_contents('php://input');
 Logger::log('payment_callback', 'Received callback', [
     'ip'      => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
-    'headers' => getallheaders(),
-    'body'    => $raw,
 ]);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -78,9 +77,12 @@ try {
     // Double-verify with Chapa (don't trust callback alone)
     $verifyResp = _chapaVerify($txRef, $chapaKey);
     $newStatus  = $verifyResp['status'] ?? 'failed';
+    if ($newStatus === 'success' && !chapaVerifiedPaymentMatches($payment, $verifyResp)) {
+        throw new Exception('Verified payment amount or currency does not match the recorded payment.');
+    }
 
     // Update payment & fine
-    _processVerification($db, $payment, $verifyResp, $newStatus, $data);
+    _processVerification($db, $payment, $verifyResp, $newStatus, ['tx_ref' => $txRef]);
 
     http_response_code(200);
     exit();
@@ -88,7 +90,6 @@ try {
 } catch (Exception $e) {
     Logger::log('payment_error', 'Callback failed: ' . $e->getMessage(), [
         'tx_ref' => $txRef ?? null,
-        'body'   => $raw ?? null,
     ]);
     // Return 200 to Chapa anyway (idempotent webhook)
     http_response_code(200);

@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import {
   Card,
@@ -46,7 +47,7 @@ const FinesWidget = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        'http://localhost:8000/api/fines/unpaid',
+        apiUrl("/api/fines/unpaid"),
         {
           headers: { Authorization: `Bearer ${token}` }
         }

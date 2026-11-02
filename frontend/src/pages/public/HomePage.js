@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import {
   Box, Typography, Button, Container, Grid, Card, CardContent,
@@ -171,7 +172,7 @@ export default function HomePage() {
 
   useEffect(() => {
     setVisible(true);
-    axios.get('http://localhost:8000/api/public/stats')
+    axios.get(apiUrl("/api/public/stats"))
       .then(r => {
         if (r.data.success) {
           setStats(r.data.data.stats);
@@ -179,8 +180,8 @@ export default function HomePage() {
           setPopularBooks(r.data.data.popular_books || []);
         }
       })
-      .catch(() => {
-        setStats({ total_books: 500, total_members: 1200, total_loans: 8500, avg_rating: 4.8, total_categories: 12 });
+      .catch((error) => {
+        console.error('Unable to load public library statistics:', error);
       });
   }, []);
 
@@ -216,7 +217,7 @@ export default function HomePage() {
 
     setIsSearching(true);
     try {
-      const response = await axios.get('http://localhost:8000/api/books', {
+      const response = await axios.get(apiUrl("/api/books"), {
         params: {
           search: query,
           limit: 5
@@ -426,8 +427,8 @@ export default function HomePage() {
                   </Typography>
                   <Typography variant={isMobile ? 'body1' : 'h6'} sx={{ color: 'rgba(255,255,255,0.8)', mb: 5, lineHeight: 1.7, maxWidth: 480 }}>
                     {t('home.description', {
-                      books: stats ? stats.total_books.toLocaleString() : '500+',
-                      categories: stats ? stats.total_categories : '12',
+                      books: stats ? stats.total_books.toLocaleString() : '—',
+                      categories: stats ? stats.total_categories : '—',
                     })}
                   </Typography>
 
@@ -771,9 +772,9 @@ export default function HomePage() {
                   {/* Trust row */}
                   <Box sx={{ display: 'flex', gap: 3, mt: 5, flexWrap: 'wrap' }}>
                     {[
-                      { v: stats ? stats.total_books.toLocaleString() : '500+', l: 'Books' },
-                      { v: stats ? stats.total_members.toLocaleString() : '1K+', l: 'Members' },
-                      { v: stats ? `${stats.avg_rating}★` : '4.8★', l: 'Rating' },
+                      { v: stats ? stats.total_books.toLocaleString() : '—', l: t('home.books') },
+                      { v: stats ? stats.total_members.toLocaleString() : '—', l: t('home.members') },
+                      { v: stats ? `${stats.avg_rating}★` : '—', l: t('home.rating') },
                     ].map((s, i) => (
                       <Box key={i} sx={{ textAlign: 'center' }}>
                         <Typography variant="h5" fontWeight={800} sx={{ color: '#86efac' }}>{s.v}</Typography>

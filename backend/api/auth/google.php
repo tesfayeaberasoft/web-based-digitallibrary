@@ -19,62 +19,43 @@ if (empty($data->credential)) {
 }
 
 function verifyGoogleToken($idToken) {
-    // Split JWT into 3 parts
-    $parts = explode('.', $idToken);
-    if (count($parts) !== 3) {
-        return ['ok' => false, 'reason' => 'token_parts_' . count($parts)];
+    if (!is_string($idToken) || strlen($idToken) > 8192 || !function_exists('curl_init')) {
+        return ['ok' => false, 'reason' => 'verification_unavailable'];
     }
 
-    // Decode payload segment
-    $seg = $parts[1];
-    $pad = strlen($seg) % 4;
-    if ($pad) $seg .= str_repeat('=', 4 - $pad);
-    $json = base64_decode(strtr($seg, '-_', '+/'));
-    if ($json === false) {
-        return ['ok' => false, 'reason' => 'base64_decode_failed'];
+    $request = curl_init('https://oauth2.googleapis.com/tokeninfo?id_token=' . rawurlencode($idToken));
+    if ($request === false) {
+        return ['ok' => false, 'reason' => 'verification_unavailable'];
     }
-    $payload = json_decode($json, true);
+
+    curl_setopt_array($request, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_CONNECTTIMEOUT => 3,
+        CURLOPT_TIMEOUT => 8,
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYHOST => 2,
+    ]);
+    $response = curl_exec($request);
+    $httpStatus = curl_getinfo($request, CURLINFO_HTTP_CODE);
+    curl_close($request);
+
+    if ($response === false || $httpStatus !== 200) {
+        return ['ok' => false, 'reason' => 'invalid_token'];
+    }
+
+    $payload = json_decode($response, true);
     if (!is_array($payload)) {
-        return ['ok' => false, 'reason' => 'json_decode_failed'];
+        return ['ok' => false, 'reason' => 'invalid_token'];
     }
 
-    // Check issuer
-    $iss = $payload['iss'] ?? '';
-    if (!in_array($iss, ['accounts.google.com', 'https://accounts.google.com'], true)) {
-        return ['ok' => false, 'reason' => 'bad_issuer', 'iss' => $iss];
-    }
-
-    // Check expiry
-    // The token comes directly from Google's popup — it was just issued.
-    // We verify: exp > iat (valid structure) and exp - iat <= 2 hours (reasonable lifetime).
-    // We do NOT compare against server time() to avoid clock skew issues.
-    $exp = (int)($payload['exp'] ?? 0);
-    $iat = (int)($payload['iat'] ?? 0);
-
-    if ($exp === 0) {
-        return ['ok' => false, 'reason' => 'no_exp'];
-    }
-
-    // Token must not be structurally expired (exp must be after iat)
-    if ($exp <= $iat) {
-        return ['ok' => false, 'reason' => 'exp_before_iat', 'exp' => $exp, 'iat' => $iat];
-    }
-
-    // Token lifetime must be reasonable (Google uses 3600s; allow up to 2 hours)
-    $lifetime = $exp - $iat;
-    if ($lifetime > 7200) {
-        return ['ok' => false, 'reason' => 'lifetime_too_long', 'lifetime' => $lifetime];
-    }
-
-    // Check audience
-    $aud = $payload['aud'] ?? '';
-    if ($aud !== GOOGLE_CLIENT_ID_VALUE) {
-        return ['ok' => false, 'reason' => 'aud_mismatch', 'got' => $aud, 'expected' => GOOGLE_CLIENT_ID_VALUE];
-    }
-
-    // Must have email
-    if (empty($payload['email'])) {
-        return ['ok' => false, 'reason' => 'no_email'];
+    if (!in_array($payload['iss'] ?? '', ['accounts.google.com', 'https://accounts.google.com'], true)
+        || ($payload['aud'] ?? '') !== GOOGLE_CLIENT_ID_VALUE
+        || (int)($payload['exp'] ?? 0) <= time()
+        || empty($payload['sub'])
+        || empty($payload['email'])
+        || !filter_var($payload['email_verified'] ?? false, FILTER_VALIDATE_BOOLEAN)
+    ) {
+        return ['ok' => false, 'reason' => 'invalid_claims'];
     }
 
     return ['ok' => true, 'payload' => $payload];
@@ -91,12 +72,11 @@ try {
     $result = verifyGoogleToken($data->credential);
 
     if (!$result['ok']) {
-        // Return the exact failure reason so we can diagnose
+        error_log('Google sign-in rejected: ' . $result['reason']);
         http_response_code(401);
         echo json_encode([
             'success' => false,
-            'message' => 'Google token verification failed: ' . $result['reason'],
-            'debug'   => $result,
+            'message' => 'Google sign-in could not be verified.',
         ]);
         exit();
     }

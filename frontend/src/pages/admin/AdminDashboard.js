@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -163,7 +164,7 @@ const AdminDashboard = () => {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:8000/api/admin/stats', {
+      const response = await axios.get(apiUrl("/api/admin/stats"), {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -203,7 +204,7 @@ const AdminDashboard = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        `http://localhost:8000/api/admin/financial-reports?type=${type}`,
+        apiUrl(`/api/admin/financial-reports?type=${type}`),
         { headers: { Authorization: `Bearer ${token}` } }
       );
 

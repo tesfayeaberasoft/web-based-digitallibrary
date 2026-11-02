@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -65,7 +66,7 @@ const UserFines = () => {
 
       // Fetch unpaid fines
       const finesResponse = await axios.get(
-        'http://localhost:8000/api/fines/unpaid',
+        apiUrl("/api/fines/unpaid"),
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -78,7 +79,7 @@ const UserFines = () => {
 
       // Fetch payment history
       const historyResponse = await axios.get(
-        'http://localhost:8000/api/payments/history?limit=50',
+        apiUrl("/api/payments/history?limit=50"),
         {
           headers: { Authorization: `Bearer ${token}` }
         }

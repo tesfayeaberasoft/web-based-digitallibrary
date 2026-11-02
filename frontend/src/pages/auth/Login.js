@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
@@ -67,7 +68,7 @@ const Login = () => {
   useEffect(() => {
     setVisible(true);
     axios
-      .get('http://localhost:8000/api/auth/login-policy')
+      .get(apiUrl("/api/auth/login-policy"))
       .then((res) => {
         const max = res.data?.data?.user_max_login_attempts;
         if (res.data?.success && max) {

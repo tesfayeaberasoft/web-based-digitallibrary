@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import { 
   Box, 
@@ -71,7 +72,7 @@ const UserDashboard = () => {
     const fetchFavorites = async () => {
       try {
         const token = localStorage.getItem('token');
-        const { data } = await axios.get('http://localhost:8000/api/favorites', {
+        const { data } = await axios.get(apiUrl("/api/favorites"), {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (!data.success) throw new Error(data.message || 'Could not load favorites.');
@@ -118,7 +119,7 @@ const UserDashboard = () => {
       }
 
       const response = await axios.get(
-        `http://localhost:8000/api/users/${userId}/stats`,
+        apiUrl(`/api/users/${userId}/stats`),
         {
           headers: { Authorization: `Bearer ${token}` }
         }

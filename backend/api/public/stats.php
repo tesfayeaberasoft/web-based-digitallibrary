@@ -8,7 +8,15 @@ require_once __DIR__ . '/../../config/database.php';
 
 try {
     $db = Database::getInstance()->getConnection();
-    if (!$db) throw new Exception('DB connection failed');
+    if (!$db) {
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'code' => 'DATABASE_CONNECTION_FAILED',
+            'message' => 'Unable to connect to the library database.',
+        ]);
+        exit;
+    }
 
     // Total books
     $totalBooks = (int)$db->query("SELECT COUNT(*) FROM books WHERE status = 'active'")->fetchColumn();
@@ -27,7 +35,7 @@ try {
 
     // Average book rating
     $avgRating = $db->query("SELECT ROUND(AVG(rating), 1) FROM book_reviews")->fetchColumn();
-    $avgRating = $avgRating ? (float)$avgRating : 4.8;
+    $avgRating = $avgRating !== null ? (float)$avgRating : 0.0;
 
     // Total reviews
     $totalReviews = (int)$db->query("SELECT COUNT(*) FROM book_reviews")->fetchColumn();
@@ -76,24 +84,13 @@ try {
         ],
     ]);
 
-} catch (Exception $e) {
-    // Return fallback data so homepage always renders
+} catch (Throwable $e) {
+    error_log('Public stats query failed: ' . $e->getMessage());
+    http_response_code(500);
     echo json_encode([
-        'success' => true,
-        'data' => [
-            'stats' => [
-                'total_books'      => 500,
-                'total_members'    => 1200,
-                'total_loans'      => 8500,
-                'active_loans'     => 320,
-                'total_categories' => 12,
-                'avg_rating'       => 4.8,
-                'total_reviews'    => 240,
-            ],
-            'popular_books'  => [],
-            'categories'     => [],
-            'recent_books'   => [],
-        ],
+        'success' => false,
+        'code' => 'STATISTICS_QUERY_FAILED',
+        'message' => 'Unable to load library statistics.',
     ]);
 }
 ?>

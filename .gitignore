@@ -12,6 +12,7 @@ frontend/dist/
 .env.development.local
 .env.test.local
 .env.production.local
+/frontend/.env.production
 
 # IDE
 .vscode/
@@ -33,7 +34,9 @@ yarn-error.log*
 # Uploads
 backend/uploads/*
 !backend/uploads/.gitkeep
-private-storage/
+!backend/uploads/.htaccess
+private-storage/*
+!private-storage/.htaccess
 
 # Cache
 .cache/
@@ -50,7 +53,6 @@ backend/backups/*.sql
 
 # PHP
 composer.phar
-composer.lock
 
 # Config files with sensitive data
 backend/config/production.php

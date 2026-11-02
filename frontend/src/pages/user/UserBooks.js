@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import {
   Box, Typography, Card, CardContent, Grid, Chip, Button,
@@ -62,20 +63,48 @@ export default function UserBooks() {
 
   const fetchBooks = async () => {
     setLoading(true); setError('');
-    try {
-      const token = localStorage.getItem('token');
-      const cfg = { headers: { Authorization: `Bearer ${token}` } };
-      const [lRes, rRes] = await Promise.all([
-        axios.get('http://localhost:8000/api/loans?status=active', cfg),
-        axios.get('http://localhost:8000/api/reservations', cfg)
-      ]);
-      setLoans(lRes.data.success ? lRes.data.loans || [] : []);
-      setReservations(rRes.data.success
-        ? (rRes.data.reservations || []).filter(r => r.status === 'pending' || r.status === 'available')
-        : []);
-    } catch (e) {
-      setError(e.response?.data?.message || 'Failed to load books.');
-    } finally { setLoading(false); }
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setError('Please log in to view your books.');
+      setLoading(false);
+      return;
+    }
+    const cfg = { headers: { Authorization: `Bearer ${token}` } };
+    const [loansResult, reservationsResult] = await Promise.allSettled([
+      axios.get(apiUrl("/api/loans?status=active"), cfg),
+      axios.get(apiUrl("/api/reservations"), cfg)
+    ]);
+
+    const errors = [];
+    if (loansResult.status === 'fulfilled' && loansResult.value.data.success) {
+      setLoans(Array.isArray(loansResult.value.data.loans) ? loansResult.value.data.loans : []);
+    } else {
+      setLoans([]);
+      errors.push(
+        loansResult.status === 'rejected'
+          ? loansResult.reason.response?.data?.message || loansResult.reason.message
+          : loansResult.value.data.message || 'Could not load borrowed books.'
+      );
+    }
+
+    if (reservationsResult.status === 'fulfilled' && reservationsResult.value.data.success) {
+      const items = Array.isArray(reservationsResult.value.data.reservations)
+        ? reservationsResult.value.data.reservations
+        : [];
+      setReservations(items.filter((reservation) => (
+        reservation.status === 'pending' || reservation.status === 'available'
+      )));
+    } else {
+      setReservations([]);
+      errors.push(
+        reservationsResult.status === 'rejected'
+          ? reservationsResult.reason.response?.data?.message || reservationsResult.reason.message
+          : reservationsResult.value.data.message || 'Could not load reservations.'
+      );
+    }
+
+    setError(errors.join(' '));
+    setLoading(false);
   };
 
   const daysUntilDue = (d) => Math.ceil((new Date(d) - new Date()) / 86400000);
@@ -86,7 +115,7 @@ export default function UserBooks() {
     setReturnError('');
     try {
       const token = localStorage.getItem('token');
-      const { data } = await axios.put(`http://localhost:8000/api/loans/${selectedLoan.id}/return`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      const { data } = await axios.put(apiUrl(`/api/loans/${selectedLoan.id}/return`), {}, { headers: { Authorization: `Bearer ${token}` } });
       if (data.success) {
         setSuccess(data.fine_amount > 0
           ? `Returned! Fine of $${data.fine_amount} applied for late return.`
@@ -108,7 +137,7 @@ export default function UserBooks() {
     setRenewing(true); setError(''); setSuccess('');
     try {
       const token = localStorage.getItem('token');
-      const { data } = await axios.put(`http://localhost:8000/api/loans/${selectedLoan.id}/renew`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      const { data } = await axios.put(apiUrl(`/api/loans/${selectedLoan.id}/renew`), {}, { headers: { Authorization: `Bearer ${token}` } });
       if (data.success) {
         setSuccess(`"${selectedLoan.book_title}" renewed! New due: ${new Date(data.new_due_date).toLocaleDateString()}. ${data.renewals_remaining} renewal(s) left.`);
         setRenewOpen(false); setSelectedLoan(null); fetchBooks();
@@ -123,7 +152,7 @@ export default function UserBooks() {
     try {
       const token = localStorage.getItem('token');
       const { data } = await axios.delete(
-        `http://localhost:8000/api/reservations/${selectedRes.id}/cancel`,
+        apiUrl(`/api/reservations/${selectedRes.id}/cancel`),
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (data.success) {

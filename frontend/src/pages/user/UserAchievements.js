@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import {
   Box, Typography, Grid, Card, CardContent, Avatar, Chip,
@@ -62,7 +63,7 @@ export default function UserAchievements() {
       const userStr = localStorage.getItem('user');
       if (!token || !userStr) { setError('Please login.'); return; }
       const { id } = JSON.parse(userStr);
-      const { data } = await axios.get(`http://localhost:8000/api/users/${id}/stats`, {
+      const { data } = await axios.get(apiUrl(`/api/users/${id}/stats`), {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (data.success) setStats(data.stats);

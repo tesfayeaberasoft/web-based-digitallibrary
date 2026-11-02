@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -97,7 +98,7 @@ const LibrarianBulkOperations = () => {
       const token = localStorage.getItem('token');
       const config = { headers: { Authorization: `Bearer ${token}` } };
       
-      const response = await axios.get('http://localhost:8000/api/users', config);
+      const response = await axios.get(apiUrl("/api/users"), config);
       if (response.data.success) {
         setUsers(response.data.users.filter(user => user.role === 'user' && user.status === 'active'));
       }
@@ -112,7 +113,7 @@ const LibrarianBulkOperations = () => {
       const token = localStorage.getItem('token');
       const config = { headers: { Authorization: `Bearer ${token}` } };
       
-      const response = await axios.get('http://localhost:8000/api/books?status=active', config);
+      const response = await axios.get(apiUrl("/api/books?status=active"), config);
       if (response.data.success) {
         setBooks(response.data.books.filter(book => book.available_copies > 0));
       }
@@ -127,7 +128,7 @@ const LibrarianBulkOperations = () => {
       const token = localStorage.getItem('token');
       const config = { headers: { Authorization: `Bearer ${token}` } };
       
-      const response = await axios.get('http://localhost:8000/api/loans?status=active', config);
+      const response = await axios.get(apiUrl("/api/loans?status=active"), config);
       if (response.data.success) {
         setActiveLoans(response.data.loans);
         
@@ -242,7 +243,7 @@ const LibrarianBulkOperations = () => {
       const config = { headers: { Authorization: `Bearer ${token}` } };
 
       const response = await axios.post(
-        'http://localhost:8000/api/loans/bulk-issue',
+        apiUrl("/api/loans/bulk-issue"),
         {
           user_id: selectedUser.id,
           book_ids: selectedBooks.map(book => book.id),
@@ -274,7 +275,7 @@ const LibrarianBulkOperations = () => {
       const config = { headers: { Authorization: `Bearer ${token}` } };
 
       const response = await axios.post(
-        'http://localhost:8000/api/loans/bulk-return',
+        apiUrl("/api/loans/bulk-return"),
         {
           loan_ids: selectedLoans
         },

@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -290,7 +291,7 @@ const AdminSettings = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:8000/api/admin/settings', {
+      const response = await axios.get(apiUrl("/api/admin/settings"), {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -359,7 +360,7 @@ const AdminSettings = () => {
   const loadOverview = async () => {
     try {
       const token = localStorage.getItem('token');
-      const statsResponse = await axios.get('http://localhost:8000/api/admin/stats', {
+      const statsResponse = await axios.get(apiUrl("/api/admin/stats"), {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -461,7 +462,7 @@ const AdminSettings = () => {
           const { maxUserBorrowBooks, dueFinesPerDay, maxBookReturnDays, ...basicLibraryInfo } = librarySettings;
           
           // Save basic library info
-          const libraryInfoResponse = await axios.post('http://localhost:8000/api/admin/settings', {
+          const libraryInfoResponse = await axios.post(apiUrl("/api/admin/settings"), {
             category: 'library',
             settings: basicLibraryInfo
           }, {
@@ -472,7 +473,7 @@ const AdminSettings = () => {
           });
           
           // Save library policies separately
-          const libraryPoliciesResponse = await axios.post('http://localhost:8000/api/admin/settings', {
+          const libraryPoliciesResponse = await axios.post(apiUrl("/api/admin/settings"), {
             category: 'library_policies',
             settings: {
               max_user_borrow_books: maxUserBorrowBooks,
@@ -514,7 +515,7 @@ const AdminSettings = () => {
           throw new Error('Invalid settings type');
       }
 
-      const response = await axios.post('http://localhost:8000/api/admin/settings', {
+      const response = await axios.post(apiUrl("/api/admin/settings"), {
         category: category,
         settings: settingsData
       }, {
@@ -544,7 +545,7 @@ const AdminSettings = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post('http://localhost:8000/api/admin/maintenance', {
+      const response = await axios.post(apiUrl("/api/admin/maintenance"), {
         action: 'backup'
       }, {
         headers: {
@@ -570,7 +571,7 @@ const AdminSettings = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post('http://localhost:8000/api/admin/maintenance', {
+      const response = await axios.post(apiUrl("/api/admin/maintenance"), {
         action: action
       }, {
         headers: {
