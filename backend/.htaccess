@@ -2,7 +2,8 @@ Options -Indexes
 
 # CORS Headers for Frontend Access
 <IfModule mod_headers.c>
-    SetEnvIf Origin "^https://web-based-digitallibrary\.vercel\.app$" ORIGIN_ALLOWED=$0
+    # Allow main Vercel domain and all preview deployments
+    SetEnvIf Origin "^https://web-based-digitallibrary.*\.vercel\.app$" ORIGIN_ALLOWED=$0
     SetEnvIf Origin "^https://tdigitallibrarysystem\.free\.nf$" ORIGIN_ALLOWED=$0
     SetEnvIf Origin "^http://localhost:3000$" ORIGIN_ALLOWED=$0
     

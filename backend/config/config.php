@@ -106,11 +106,31 @@ ini_set('log_errors', '1');
 $requestOrigin = $_SERVER['HTTP_ORIGIN'] ?? '';
 $configuredOrigins = getApplicationEnvironment('CORS_ALLOWED_ORIGINS', 'http://localhost:3000');
 $allowedOrigins = array_filter(array_map('trim', explode(',', $configuredOrigins)));
-if ($requestOrigin !== '' && in_array($requestOrigin, $allowedOrigins, true)) {
+
+// Check if origin is allowed (supports wildcards with *)
+$originAllowed = false;
+if ($requestOrigin !== '') {
+    foreach ($allowedOrigins as $allowedOrigin) {
+        // Convert wildcard pattern to regex
+        if (strpos($allowedOrigin, '*') !== false) {
+            $pattern = '/^' . str_replace(['*', '.'], ['.*', '\.'], $allowedOrigin) . '$/';
+            if (preg_match($pattern, $requestOrigin)) {
+                $originAllowed = true;
+                break;
+            }
+        } elseif ($requestOrigin === $allowedOrigin) {
+            $originAllowed = true;
+            break;
+        }
+    }
+}
+
+if ($originAllowed) {
     header('Access-Control-Allow-Origin: ' . $requestOrigin);
     header('Vary: Origin');
     header('Access-Control-Allow-Credentials: true');
 }
+
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization, Range');
 header('Access-Control-Expose-Headers: Accept-Ranges, Content-Range, Content-Length');
