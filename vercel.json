@@ -1,7 +1,9 @@
 {
-  "buildCommand": "cd frontend && npm ci && npm run build",
-  "outputDirectory": "frontend/build",
-  "installCommand": "echo 'Skipping root install'",
+  "buildCommand": "npm ci && npm run build",
+  "outputDirectory": "build",
+  "installCommand": "npm install",
+  "framework": "create-react-app",
+  "rootDirectory": "frontend",
   "routes": [
     {
       "src": "/static/(.*)",
