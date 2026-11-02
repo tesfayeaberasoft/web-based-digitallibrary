@@ -68,7 +68,7 @@ try {
         'isbn' => $book['isbn'],
         'category' => $book['category_name'],
         'library' => 'Digital Library System',
-        'url' => "http://localhost:3000/book/{$book['id']}", // Frontend book detail URL
+        'url' => rtrim(APP_BASE_URL, '/') . "/book/{$book['id']}",
         'generated_at' => date('Y-m-d H:i:s')
     ];
     

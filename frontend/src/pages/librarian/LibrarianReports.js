@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -89,7 +90,7 @@ const LibrarianReports = () => {
         end_date: endDate
       });
       
-      const response = await axios.get('http://localhost:8000/api/librarian/reports', {
+      const response = await axios.get(apiUrl("/api/librarian/reports"), {
         headers: { Authorization: `Bearer ${token}` },
         params: {
           type: reportType,
@@ -166,7 +167,7 @@ const LibrarianReports = () => {
       });
       
       // Call the export API endpoint
-      const response = await fetch(`http://localhost:8000/api/librarian/reports-export?${params}`, {
+      const response = await fetch(apiUrl(`/api/librarian/reports-export?${params}`), {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`

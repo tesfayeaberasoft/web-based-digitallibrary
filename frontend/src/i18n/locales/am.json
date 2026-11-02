@@ -283,6 +283,9 @@
     "title": "የቤተ መጻሕፍት መተግበሪያን ይጫኑ",
     "description": "ለተሻለ ተሞክሮ የቤተ መጻሕፍት መተግበሪያን ይጫኑ።",
     "install": "ጫን",
+    "howToInstall": "እንዴት እንደሚጫን",
+    "manualInstructions": "የአሳሽዎን ምናሌ ይክፈቱና “Install app” ይምረጡ። በmacOS Safari ላይ File → Add to Dock ይምረጡ። በiPhone ወይም iPad ላይ በSafari የShare ቁልፍን ከዚያ “Add to Home Screen” ይምረጡ።",
+    "installFailed": "አሳሹ የመጫኛ መስኮቱን መክፈት አልቻለም። ከአሳሹ ምናሌ መተግበሪያውን ይጫኑ።",
     "close": "ዝጋ",
     "dismiss": "የመጫን ማሳወቂያውን ዝጋ"
   },

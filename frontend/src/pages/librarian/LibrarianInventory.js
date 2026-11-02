@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import QRCode from 'qrcode';
 import {
@@ -53,8 +54,6 @@ import {
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-
-const API_BASE_URL = (process.env.REACT_APP_API_URL || 'http://localhost:8000').replace(/\/+$/, '');
 
 const LibrarianInventory = () => {
   const [books, setBooks] = useState([]);
@@ -133,7 +132,7 @@ const LibrarianInventory = () => {
   const fetchCategories = async () => {
     try {
       console.log('Fetching categories from API...');
-      const response = await axios.get('http://localhost:8000/api/categories');
+      const response = await axios.get(apiUrl("/api/categories"));
       console.log('Categories API response:', response.data);
       
       if (response.data.success) {
@@ -163,17 +162,19 @@ const LibrarianInventory = () => {
         category_id: categoryFilter
       };
       
-      const response = await axios.get('http://localhost:8000/api/books', {
+      const response = await axios.get(apiUrl("/api/books"), {
         headers: { Authorization: `Bearer ${token}` },
         params
       });
       
-      if (response.data.success) {
-        setBooks(response.data.books);
-        setTotalPages(response.data.pagination.pages);
+      if (!response.data.success || !Array.isArray(response.data.books)) {
+        throw new Error(response.data.message || 'The books response was invalid.');
       }
+
+      setBooks(response.data.books);
+      setTotalPages(response.data.pagination?.pages || 1);
     } catch (err) {
-      setError('Failed to load books. Please try again.');
+      setError(err.response?.data?.message || err.message || 'Failed to load books. Please try again.');
       console.error('Error fetching books:', err);
     } finally {
       setLoading(false);
@@ -243,7 +244,7 @@ const LibrarianInventory = () => {
     setMetadataLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const { data } = await axios.get(`${API_BASE_URL}/api/books/metadata`, {
+      const { data } = await axios.get(apiUrl('/api/books/metadata'), {
         params: { isbn: formData.isbn },
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -283,37 +284,54 @@ const LibrarianInventory = () => {
       };
       
       if (editMode) {
-        await axios.put(
-          `http://localhost:8000/api/books/${currentBook.id}`,
+        const { data } = await axios.put(
+          apiUrl(`/api/books/${currentBook.id}`),
           formData,
           config
         );
+        if (!data.success) {
+          throw new Error(data.message || 'Book could not be updated.');
+        }
         if (ebookFile) {
           const uploadData = new FormData();
           uploadData.append('ebook_file', ebookFile);
-          await axios.post(
-            `http://localhost:8000/api/books/${currentBook.id}/ebook`,
+          const uploadResponse = await axios.post(
+            apiUrl(`/api/books/${currentBook.id}/ebook`),
             uploadData,
             config
           );
+          if (!uploadResponse.data.success) {
+            throw new Error(uploadResponse.data.message || 'The eBook file could not be uploaded.');
+          }
         }
         toast.success('Book updated successfully!');
       } else {
         const bookData = new FormData();
         Object.entries(formData).forEach(([key, value]) => bookData.append(key, value));
         if (ebookFile) bookData.append('ebook_file', ebookFile);
-        await axios.post(
-          'http://localhost:8000/api/books',
+        const { data } = await axios.post(
+          apiUrl("/api/books"),
           bookData,
           config
         );
+        if (!data.success || !data.book_id) {
+          throw new Error(data.message || 'The server did not confirm that the book was saved.');
+        }
         toast.success('Book added successfully!');
+        setSearchQuery('');
+        setCategoryFilter('');
+        setPage(1);
+        if (page === 1 && searchQuery === '' && categoryFilter === '') {
+          fetchBooks();
+        }
       }
       
       handleCloseDialog();
-      fetchBooks();
+      if (editMode) {
+        fetchBooks();
+      }
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Operation failed');
+      toast.error(err.response?.data?.message || err.message || 'Operation failed');
     }
   };
 
@@ -333,7 +351,7 @@ const LibrarianInventory = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.delete(
-        `http://localhost:8000/api/books/${bookToDelete.id}`,
+        apiUrl(`/api/books/${bookToDelete.id}`),
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -392,7 +410,7 @@ const LibrarianInventory = () => {
 
       if (bulkAction === 'delete') {
         // Bulk delete using new API
-        await axios.delete('http://localhost:8000/api/books/bulk-delete', {
+        await axios.delete(apiUrl("/api/books/bulk-delete"), {
           ...config,
           data: { book_ids: selectedBooks }
         });
@@ -404,7 +422,7 @@ const LibrarianInventory = () => {
           return;
         }
         await axios.put(
-          'http://localhost:8000/api/books/bulk-update',
+          apiUrl("/api/books/bulk-update"),
           { 
             book_ids: selectedBooks,
             action: 'category',
@@ -420,7 +438,7 @@ const LibrarianInventory = () => {
           return;
         }
         await axios.put(
-          'http://localhost:8000/api/books/bulk-update',
+          apiUrl("/api/books/bulk-update"),
           { 
             book_ids: selectedBooks,
             action: 'status',
@@ -436,7 +454,7 @@ const LibrarianInventory = () => {
           return;
         }
         await axios.put(
-          'http://localhost:8000/api/books/bulk-update',
+          apiUrl("/api/books/bulk-update"),
           { 
             book_ids: selectedBooks,
             action: 'condition',
@@ -544,7 +562,7 @@ const LibrarianInventory = () => {
 
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        'http://localhost:8000/api/books/import',
+        apiUrl("/api/books/import"),
         formData,
         {
           headers: {
@@ -580,7 +598,7 @@ const LibrarianInventory = () => {
         category_id: categoryFilter
       };
 
-      const response = await axios.get('http://localhost:8000/api/books/export', {
+      const response = await axios.get(apiUrl("/api/books/export"), {
         headers: { Authorization: `Bearer ${token}` },
         params,
         responseType: 'blob'

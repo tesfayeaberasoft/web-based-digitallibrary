@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -153,7 +154,7 @@ const AdminAnalytics = () => {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:8000/api/admin/stats', {
+      const response = await axios.get(apiUrl("/api/admin/stats"), {
         headers: { Authorization: `Bearer ${token}` }
       });
       

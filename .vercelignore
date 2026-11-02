@@ -1,0 +1,14 @@
+# Vercel ignore file
+node_modules
+backend
+database
+docs
+private-storage
+.git
+*.md
+*.sql
+*.bat
+.env
+.env.local
+.env.development
+if0_*.sql

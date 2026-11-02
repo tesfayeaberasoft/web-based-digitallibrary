@@ -1,13 +1,8 @@
 -- Digital Library Management System Database Schema
 -- Created for comprehensive library management with all required features
 
-CREATE DATABASE IF NOT EXISTS digital_library
-    CHARACTER SET utf8mb4
-    COLLATE utf8mb4_unicode_ci;
-USE digital_library;
-
 -- Users table with role-based access control
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id VARCHAR(20) UNIQUE NOT NULL,
     full_name VARCHAR(100) NOT NULL,
@@ -28,7 +23,7 @@ CREATE TABLE users (
 );
 
 -- Direct messages are grouped into conversations by sender/receiver pair.
-CREATE TABLE messages (
+CREATE TABLE IF NOT EXISTS messages (
     id INT PRIMARY KEY AUTO_INCREMENT,
     sender_id INT NOT NULL,
     receiver_id INT NOT NULL,
@@ -45,7 +40,7 @@ CREATE TABLE messages (
 );
 
 -- Categories table for book classification
-CREATE TABLE categories (
+CREATE TABLE IF NOT EXISTS categories (
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(100) NOT NULL UNIQUE,
     description TEXT,
@@ -54,7 +49,7 @@ CREATE TABLE categories (
 );
 
 -- Books table with comprehensive book information
-CREATE TABLE books (
+CREATE TABLE IF NOT EXISTS books (
     id INT PRIMARY KEY AUTO_INCREMENT,
     isbn VARCHAR(20) UNIQUE NOT NULL,
     title VARCHAR(255) NOT NULL,
@@ -72,6 +67,7 @@ CREATE TABLE books (
     file_type ENUM('pdf', 'epub', 'physical') DEFAULT 'physical',
     price DECIMAL(10,2) DEFAULT 0.00,
     status ENUM('active', 'inactive', 'maintenance') DEFAULT 'active',
+    condition_status ENUM('new', 'good', 'fair', 'poor', 'damaged') NOT NULL DEFAULT 'good',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
@@ -83,7 +79,7 @@ CREATE TABLE books (
 );
 
 -- Personal rich-text notes, stored as TipTap JSON documents
-CREATE TABLE notes (
+CREATE TABLE IF NOT EXISTS notes (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
     book_id INT NOT NULL,
@@ -97,7 +93,7 @@ CREATE TABLE notes (
 );
 
 -- Book loans/issues tracking
-CREATE TABLE book_loans (
+CREATE TABLE IF NOT EXISTS book_loans (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
     book_id INT NOT NULL,
@@ -123,7 +119,7 @@ CREATE TABLE book_loans (
 );
 
 -- Book reservations with queue system
-CREATE TABLE book_reservations (
+CREATE TABLE IF NOT EXISTS book_reservations (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
     book_id INT NOT NULL,
@@ -143,7 +139,7 @@ CREATE TABLE book_reservations (
 );
 
 -- Fines management
-CREATE TABLE fines (
+CREATE TABLE IF NOT EXISTS fines (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
     loan_id INT,
@@ -151,7 +147,10 @@ CREATE TABLE fines (
     amount DECIMAL(10,2) NOT NULL,
     description TEXT,
     status ENUM('pending', 'paid', 'waived', 'partial') DEFAULT 'pending',
+    payment_status ENUM('unpaid', 'paid', 'partial') DEFAULT 'unpaid',
     paid_amount DECIMAL(10,2) DEFAULT 0.00,
+    paid_at DATETIME NULL,
+    payment_id INT NULL,
     payment_date TIMESTAMP NULL,
     payment_method VARCHAR(50),
     transaction_id VARCHAR(100),
@@ -164,8 +163,56 @@ CREATE TABLE fines (
     INDEX idx_payment_date (payment_date)
 );
 
+-- Chapa fine payments
+CREATE TABLE IF NOT EXISTS payments (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    tx_ref VARCHAR(100) UNIQUE NOT NULL,
+    user_id INT NOT NULL,
+    fine_id INT NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    currency VARCHAR(3) DEFAULT 'ETB',
+    status ENUM('pending', 'success', 'failed', 'cancelled') DEFAULT 'pending',
+    chapa_reference VARCHAR(100) NULL,
+    checkout_url TEXT NULL,
+    verified_at DATETIME NULL,
+    chapa_response JSON NULL,
+    customer_email VARCHAR(255) NULL,
+    customer_phone VARCHAR(20) NULL,
+    customer_name VARCHAR(255) NULL,
+    payment_method VARCHAR(50) NULL,
+    callback_attempts INT DEFAULT 0,
+    last_callback_at DATETIME NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (fine_id) REFERENCES fines(id) ON DELETE CASCADE,
+    INDEX idx_payments_user_id (user_id),
+    INDEX idx_payments_fine_id (fine_id),
+    INDEX idx_payments_status (status),
+    INDEX idx_payments_created_at (created_at)
+);
+
+CREATE TABLE IF NOT EXISTS payment_logs (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    payment_id INT NOT NULL,
+    tx_ref VARCHAR(100) NOT NULL,
+    event_type ENUM('initialization', 'callback', 'verification', 'status_change', 'error') NOT NULL,
+    status_before VARCHAR(50) NULL,
+    status_after VARCHAR(50) NULL,
+    request_data JSON NULL,
+    response_data JSON NULL,
+    error_message TEXT NULL,
+    ip_address VARCHAR(45) NULL,
+    user_agent TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (payment_id) REFERENCES payments(id) ON DELETE CASCADE,
+    INDEX idx_payment_logs_tx_ref (tx_ref),
+    INDEX idx_payment_logs_event_type (event_type),
+    INDEX idx_payment_logs_created_at (created_at)
+);
+
 -- Notifications system
-CREATE TABLE notifications (
+CREATE TABLE IF NOT EXISTS notifications (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
     type ENUM('due_reminder', 'overdue_alert', 'reservation_available', 'fine_notice', 'general', 'payment_success') NOT NULL,
@@ -183,7 +230,7 @@ CREATE TABLE notifications (
 );
 
 -- Per-user notification preferences
-CREATE TABLE notification_settings (
+CREATE TABLE IF NOT EXISTS notification_settings (
     user_id INT PRIMARY KEY,
     email_enabled TINYINT(1) NOT NULL DEFAULT 1,
     sms_enabled TINYINT(1) NOT NULL DEFAULT 0,
@@ -199,7 +246,7 @@ CREATE TABLE notification_settings (
 );
 
 -- Delivery history for in-app, email, and SMS notifications
-CREATE TABLE notification_logs (
+CREATE TABLE IF NOT EXISTS notification_logs (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NULL,
     type VARCHAR(30) NOT NULL,
@@ -218,7 +265,7 @@ CREATE TABLE notification_logs (
 );
 
 -- Book reviews and ratings
-CREATE TABLE book_reviews (
+CREATE TABLE IF NOT EXISTS book_reviews (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
     book_id INT NOT NULL,
@@ -235,7 +282,7 @@ CREATE TABLE book_reviews (
 );
 
 -- User favorites / wishlist
-CREATE TABLE user_favorites (
+CREATE TABLE IF NOT EXISTS user_favorites (
     user_id INT NOT NULL,
     book_id INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -246,7 +293,7 @@ CREATE TABLE user_favorites (
 );
 
 -- Reading history and progress tracking
-CREATE TABLE reading_history (
+CREATE TABLE IF NOT EXISTS reading_history (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
     book_id INT NOT NULL,
@@ -266,7 +313,7 @@ CREATE TABLE reading_history (
 );
 
 -- User achievements and gamification
-CREATE TABLE achievements (
+CREATE TABLE IF NOT EXISTS achievements (
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(100) NOT NULL,
     description TEXT,
@@ -277,7 +324,7 @@ CREATE TABLE achievements (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE user_achievements (
+CREATE TABLE IF NOT EXISTS user_achievements (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
     achievement_id INT NOT NULL,
@@ -288,7 +335,7 @@ CREATE TABLE user_achievements (
 );
 
 -- Reading goals
-CREATE TABLE reading_goals (
+CREATE TABLE IF NOT EXISTS reading_goals (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
     goal_type ENUM('yearly', 'monthly', 'weekly') NOT NULL,
@@ -305,7 +352,7 @@ CREATE TABLE reading_goals (
 );
 
 -- System settings
-CREATE TABLE system_settings (
+CREATE TABLE IF NOT EXISTS system_settings (
     id INT PRIMARY KEY AUTO_INCREMENT,
     setting_key VARCHAR(100) UNIQUE NOT NULL,
     setting_value TEXT,
@@ -316,7 +363,7 @@ CREATE TABLE system_settings (
 );
 
 -- Audit logs for security and accountability
-CREATE TABLE audit_logs (
+CREATE TABLE IF NOT EXISTS audit_logs (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT,
     action VARCHAR(100) NOT NULL,
@@ -334,7 +381,7 @@ CREATE TABLE audit_logs (
 );
 
 -- Payment transactions (Chapa integration)
-CREATE TABLE payment_transactions (
+CREATE TABLE IF NOT EXISTS payment_transactions (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
     transaction_reference VARCHAR(100) UNIQUE NOT NULL,
@@ -356,7 +403,7 @@ CREATE TABLE payment_transactions (
 );
 
 -- Library branches (for multi-library support)
-CREATE TABLE library_branches (
+CREATE TABLE IF NOT EXISTS library_branches (
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(100) NOT NULL,
     address TEXT,
@@ -369,7 +416,7 @@ CREATE TABLE library_branches (
 );
 
 -- Book copies per branch
-CREATE TABLE book_branch_inventory (
+CREATE TABLE IF NOT EXISTS book_branch_inventory (
     id INT PRIMARY KEY AUTO_INCREMENT,
     book_id INT NOT NULL,
     branch_id INT NOT NULL,

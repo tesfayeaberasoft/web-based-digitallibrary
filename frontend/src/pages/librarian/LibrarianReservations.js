@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -202,7 +203,7 @@ const LibrarianReservations = () => {
       const token = localStorage.getItem('token');
       const config = { headers: { Authorization: `Bearer ${token}` } };
       
-      const response = await axios.get('http://localhost:8000/api/reservations/queue-management', config);
+      const response = await axios.get(apiUrl("/api/reservations/queue-management"), config);
       if (response.data.success) {
         setQueueData(response.data.queue_data);
         
@@ -260,7 +261,7 @@ const LibrarianReservations = () => {
       const newOrder = newReservations.map(r => r.id);
       
       const response = await axios.put(
-        'http://localhost:8000/api/reservations/reorder-queue',
+        apiUrl("/api/reservations/reorder-queue"),
         {
           book_id: bookId,
           reservation_order: newOrder
@@ -291,7 +292,7 @@ const LibrarianReservations = () => {
       const config = { headers: { Authorization: `Bearer ${token}` } };
 
       const response = await axios.delete(
-        `http://localhost:8000/api/reservations/${cancelDialog.reservation.id}/cancel`,
+        apiUrl(`/api/reservations/${cancelDialog.reservation.id}/cancel`),
         config
       );
 

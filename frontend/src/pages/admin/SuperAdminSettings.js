@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -78,7 +79,7 @@ import {
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import axios from 'axios';
 
-const API = 'http://localhost:8000/api';
+const API = apiUrl("/api");
 const RED = '#d32f2f';
 const GRADIENT = 'linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%)';
 

@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import {
   Box, AppBar, Toolbar, Typography, IconButton, Avatar, Badge, Menu, MenuItem,
@@ -372,7 +373,7 @@ export default function DashboardLayout({ children, title }) {
             >
               <ListItemIcon sx={{ minWidth: 40 }}>
                 <Avatar
-                  src={user?.profile_image ? `http://localhost:8000/${user.profile_image}` : undefined}
+                  src={user?.profile_image ? apiUrl(`/${user.profile_image}`) : undefined}
                   sx={{
                     width: 36,
                     height: 36,
@@ -428,7 +429,7 @@ export default function DashboardLayout({ children, title }) {
                 }}
               >
                 <Avatar
-                  src={user?.profile_image ? `http://localhost:8000/${user.profile_image}` : undefined}
+                  src={user?.profile_image ? apiUrl(`/${user.profile_image}`) : undefined}
                   sx={{
                     width: 36,
                     height: 36,
@@ -537,7 +538,7 @@ export default function DashboardLayout({ children, title }) {
               onClick={handleProfileMenuOpen}
             >
               <Avatar 
-                src={user?.profile_image ? `http://localhost:8000/${user.profile_image}` : undefined}
+                src={user?.profile_image ? apiUrl(`/${user.profile_image}`) : undefined}
                 sx={{ 
                   width: 36, 
                   height: 36, 
@@ -738,7 +739,7 @@ export default function DashboardLayout({ children, title }) {
           </Alert>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
             <Avatar
-              src={user?.profile_image ? `http://localhost:8000/${user.profile_image}` : undefined}
+              src={user?.profile_image ? apiUrl(`/${user.profile_image}`) : undefined}
               sx={{
                 width: 64,
                 height: 64,

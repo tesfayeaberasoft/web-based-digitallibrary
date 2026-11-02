@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
@@ -17,7 +18,7 @@ import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8000/api';
+const API_URL = apiUrl("/api");
 
 export default function UserFavorites() {
   const navigate = useNavigate();

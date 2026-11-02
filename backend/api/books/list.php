@@ -18,7 +18,9 @@ try {
     $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
     $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : DEFAULT_PAGE_SIZE;
     $search = isset($_GET['search']) ? $_GET['search'] : '';
-    $category = isset($_GET['category']) ? $_GET['category'] : '';
+    $category = isset($_GET['category_id'])
+        ? $_GET['category_id']
+        : (isset($_GET['category']) ? $_GET['category'] : '');
     $status = isset($_GET['status']) ? $_GET['status'] : '';
     $availability = isset($_GET['availability']) ? $_GET['availability'] : '';
 
@@ -101,12 +103,13 @@ try {
         ]
     ]);
 
-} catch (Exception $e) {
+} catch (Throwable $e) {
+    error_log('Book list query failed: ' . $e->getMessage());
     http_response_code(500);
     echo json_encode([
         'success' => false,
+        'code' => 'BOOK_LIST_QUERY_FAILED',
         'message' => 'An error occurred while fetching books',
-        'error' => $e->getMessage()
     ]);
 }
 ?>

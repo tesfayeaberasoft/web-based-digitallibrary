@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -148,7 +149,7 @@ const AdminLibrarians = () => {
         ...(statusFilter && { status: statusFilter })
       });
 
-      const response = await axios.get(`http://localhost:8000/api/users/list?${params}`, {
+      const response = await axios.get(apiUrl(`/api/users/list?${params}`), {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -168,7 +169,7 @@ const AdminLibrarians = () => {
     setDetailsLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`http://localhost:8000/api/users/${librarianId}`, {
+      const response = await axios.get(apiUrl(`/api/users/${librarianId}`), {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -259,7 +260,7 @@ const AdminLibrarians = () => {
   const handleCreateLibrarian = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post('http://localhost:8000/api/users/create', formData, {
+      const response = await axios.post(apiUrl("/api/users/create"), formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -283,7 +284,7 @@ const AdminLibrarians = () => {
       const token = localStorage.getItem('token');
       console.log('Updating librarian:', selectedLibrarian.id, 'with data:', formData);
       
-      const response = await axios.put(`http://localhost:8000/api/users/${selectedLibrarian.id}`, formData, {
+      const response = await axios.put(apiUrl(`/api/users/${selectedLibrarian.id}`), formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -317,7 +318,7 @@ const AdminLibrarians = () => {
         requestBody.reason = suspendReason.trim();
       }
       
-      const response = await axios.put(`http://localhost:8000/api/users/${librarian.id}/suspend`, 
+      const response = await axios.put(apiUrl(`/api/users/${librarian.id}/suspend`),
         requestBody, 
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -347,7 +348,7 @@ const AdminLibrarians = () => {
       const token = localStorage.getItem('token');
       console.log('Deleting librarian:', selectedLibrarian.id, selectedLibrarian.full_name);
       
-      const response = await axios.delete(`http://localhost:8000/api/users/${selectedLibrarian.id}`, {
+      const response = await axios.delete(apiUrl(`/api/users/${selectedLibrarian.id}`), {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -398,7 +399,7 @@ const AdminLibrarians = () => {
         demotionData.promotion_reason = `Demoted from librarian: ${demotionReason.trim()}`;
       }
       
-      const response = await axios.put(`http://localhost:8000/api/users/${selectedLibrarian.id}`, 
+      const response = await axios.put(apiUrl(`/api/users/${selectedLibrarian.id}`),
         demotionData, 
         { headers: { Authorization: `Bearer ${token}` } }
       );

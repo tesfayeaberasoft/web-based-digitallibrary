@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
@@ -75,7 +76,7 @@ import {
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import axios from 'axios';
 
-const API = 'http://localhost:8000/api/super-admin/analytics';
+const API = apiUrl("/api/super-admin/analytics");
 const RED = '#d32f2f';
 const CHART_COLORS = ['#d32f2f', '#f44336', '#ff7043', '#ff9800', '#ffc107', '#4a9b8e', '#2196f3', '#9c27b0', '#607d8b'];
 

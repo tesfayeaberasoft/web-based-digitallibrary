@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -87,7 +88,7 @@ const LibrarianBarcode = () => {
       if (scanMode === 'lookup') {
         // General lookup
         const response = await axios.get(
-          `http://localhost:8000/api/barcode/lookup?code=${encodeURIComponent(barcode)}`,
+          apiUrl(`/api/barcode/lookup?code=${encodeURIComponent(barcode)}`),
           config
         );
         
@@ -99,7 +100,7 @@ const LibrarianBarcode = () => {
         if (issueStep === 0) {
           // Scanning user barcode
           const response = await axios.get(
-            `http://localhost:8000/api/barcode/lookup?code=${encodeURIComponent(barcode)}&type=user`,
+            apiUrl(`/api/barcode/lookup?code=${encodeURIComponent(barcode)}&type=user`),
             config
           );
           
@@ -115,7 +116,7 @@ const LibrarianBarcode = () => {
         } else if (issueStep === 1) {
           // Scanning book barcode
           const response = await axios.get(
-            `http://localhost:8000/api/barcode/lookup?code=${encodeURIComponent(barcode)}&type=book`,
+            apiUrl(`/api/barcode/lookup?code=${encodeURIComponent(barcode)}&type=book`),
             config
           );
           
@@ -130,7 +131,7 @@ const LibrarianBarcode = () => {
       } else if (scanMode === 'return') {
         // Book return - scan book barcode
         const response = await axios.get(
-          `http://localhost:8000/api/barcode/lookup?code=${encodeURIComponent(barcode)}&type=book`,
+          apiUrl(`/api/barcode/lookup?code=${encodeURIComponent(barcode)}&type=book`),
           config
         );
         
@@ -165,7 +166,7 @@ const LibrarianBarcode = () => {
       };
 
       const response = await axios.post(
-        'http://localhost:8000/api/barcode/quick-issue',
+        apiUrl("/api/barcode/quick-issue"),
         {
           user_barcode: issueData.user.user_id,
           book_barcode: issueData.book.isbn,
@@ -198,7 +199,7 @@ const LibrarianBarcode = () => {
       };
 
       const response = await axios.post(
-        'http://localhost:8000/api/barcode/quick-return',
+        apiUrl("/api/barcode/quick-return"),
         {
           book_barcode: returnData.barcode
         },

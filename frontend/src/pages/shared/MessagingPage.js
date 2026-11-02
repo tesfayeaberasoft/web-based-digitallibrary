@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import {
@@ -30,7 +31,7 @@ import DashboardLayout from '../../components/layout/DashboardLayout';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 
-const API_URL = 'http://localhost:8000/api';
+const API_URL = apiUrl("/api");
 const POLL_INTERVAL = 5000;
 const SUPPORT_FAQS = [
   {

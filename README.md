@@ -249,7 +249,7 @@ Based on **Digital Library Management System Requirements Specification V4**:
 - ⏳ Multilingual Support (Planned)
 
 ### E. Strategy Features 🚧
-- ⏳ PWA/Offline Mode (Planned)
+- ✅ Installable PWA app shell (cached shell; live library data requires a connection)
 - ⏳ Self-Check-In/Out (Structure ready)
 - ⏳ Bulk Import (Planned)
 - ⏳ Waitlist Priority (Structure ready)
@@ -269,6 +269,9 @@ Based on **Digital Library Management System Requirements Specification V4**:
 - ✅ Audit logging
 
 ## 🚀 Deployment
+
+For the InfinityFree shared-hosting setup, see
+[docs/deploy-infinityfree.md](docs/deploy-infinityfree.md).
 
 The system can be deployed on:
 - Traditional servers (Apache/Nginx)

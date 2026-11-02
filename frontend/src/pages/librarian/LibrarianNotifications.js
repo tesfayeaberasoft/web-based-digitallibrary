@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -159,7 +160,7 @@ const LibrarianNotifications = () => {
 
   const fetchDashboardStats = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/notifications/logs?limit=1', {
+      const response = await fetch(apiUrl("/api/notifications/logs?limit=1"), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -183,7 +184,7 @@ const LibrarianNotifications = () => {
         ...logsFilters
       });
 
-      const response = await fetch(`http://localhost:8000/api/notifications/logs?${params}`, {
+      const response = await fetch(apiUrl(`/api/notifications/logs?${params}`), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -210,7 +211,7 @@ const LibrarianNotifications = () => {
 
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8000/api/notifications/send-manual', {
+      const response = await fetch(apiUrl("/api/notifications/send-manual"), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -243,7 +244,7 @@ const LibrarianNotifications = () => {
     setIsSchedulerRunning(true);
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8000/api/notifications/run-scheduler', {
+      const response = await fetch(apiUrl("/api/notifications/run-scheduler"), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`

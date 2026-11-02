@@ -283,6 +283,9 @@
     "title": "Install Library App",
     "description": "Install Library App for a better experience.",
     "install": "Install",
+    "howToInstall": "How to install",
+    "manualInstructions": "Open your browser menu and choose “Install app”. On macOS Safari, use File → Add to Dock. On iPhone or iPad, use Safari’s Share button, then choose “Add to Home Screen”.",
+    "installFailed": "The browser could not open its install dialog. Use the browser menu to install the app.",
     "close": "Close",
     "dismiss": "Close install banner"
   },

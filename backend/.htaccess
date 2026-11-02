@@ -1,0 +1,20 @@
+Options -Indexes
+RewriteEngine On
+
+# Preserve bearer tokens for PHP configurations using CGI/FastCGI.
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+# Route API requests through the dispatcher. This must come before rules that
+# deny access to backend implementation directories.
+RewriteRule ^api(?:/(.*))?$ index.php?__route=$1 [QSA,L,NC]
+
+# Backend implementation files must not be directly accessible.
+RewriteRule ^(?:config|utils|migrations|backups|logs|vendor)(?:/|$) - [F,NC,L]
+
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+<FilesMatch "^(?:composer\.(?:json|lock)|router\.php|setup-database\.php|run-migration\.php|run_payment_migration\.php|check_chapa_config\.php)$">
+    Require all denied
+</FilesMatch>
