@@ -113,7 +113,7 @@ if ($requestOrigin !== '') {
     foreach ($allowedOrigins as $allowedOrigin) {
         // Convert wildcard pattern to regex
         if (strpos($allowedOrigin, '*') !== false) {
-            $pattern = '/^' . str_replace(['*', '.'], ['.*', '\.'], $allowedOrigin) . '$/';
+            $pattern = '/^' . str_replace('\\*', '.*', preg_quote($allowedOrigin, '/')) . '$/';
             if (preg_match($pattern, $requestOrigin)) {
                 $originAllowed = true;
                 break;

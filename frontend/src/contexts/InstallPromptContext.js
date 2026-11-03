@@ -4,9 +4,14 @@ const InstallPromptContext = createContext(null);
 let deferredInstallPrompt = null;
 const promptListeners = new Set();
 const installedListeners = new Set();
+const installCardPaths = new Set(['/dashboard', '/admin', '/super-admin', '/librarian']);
 
 if (typeof window !== 'undefined') {
   window.addEventListener('beforeinstallprompt', (event) => {
+    if (!installCardPaths.has(window.location.pathname)) {
+      return;
+    }
+
     event.preventDefault();
     deferredInstallPrompt = event;
     promptListeners.forEach((listener) => listener(event));

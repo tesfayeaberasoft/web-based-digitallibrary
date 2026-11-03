@@ -721,7 +721,7 @@ const Register = () => {
                   </Typography>
 
                   {/* Google Sign-Up Button */}
-                  <Box sx={{ mb: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                  <Box sx={{ mb: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', maxWidth: 400, mx: 'auto', gap: 1 }}>
                     {loading ? (
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <CircularProgress size={20} />
@@ -733,7 +733,6 @@ const Register = () => {
                         onError={handleGoogleError}
                         theme="outline"
                         size="large"
-                        width="100%"
                         text="signup_with"
                         shape="rectangular"
                       />

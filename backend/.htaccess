@@ -1,25 +1,6 @@
 Options -Indexes
 
-# CORS Headers for Frontend Access
-<IfModule mod_headers.c>
-    # Allow main Vercel domain and all preview deployments
-    SetEnvIf Origin "^https://web-based-digitallibrary.*\.vercel\.app$" ORIGIN_ALLOWED=$0
-    SetEnvIf Origin "^https://tdigitallibrarysystem\.free\.nf$" ORIGIN_ALLOWED=$0
-    SetEnvIf Origin "^http://localhost:3000$" ORIGIN_ALLOWED=$0
-    
-    Header always set Access-Control-Allow-Origin "%{ORIGIN_ALLOWED}e" env=ORIGIN_ALLOWED
-    Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
-    Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With, Range"
-    Header always set Access-Control-Allow-Credentials "true"
-    Header always set Access-Control-Expose-Headers "Accept-Ranges, Content-Range, Content-Length"
-    Header always set Vary "Origin"
-</IfModule>
-
 RewriteEngine On
-
-# Handle preflight OPTIONS requests
-RewriteCond %{REQUEST_METHOD} OPTIONS
-RewriteRule ^(.*)$ $1 [R=200,L]
 
 # Preserve bearer tokens for PHP configurations using CGI/FastCGI.
 RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]

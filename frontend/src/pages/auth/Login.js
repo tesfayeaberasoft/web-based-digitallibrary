@@ -472,13 +472,12 @@ const Login = () => {
                       <Chip label={t('auth.login.or')} size="small" />
                     </Divider>
 
-                    <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%', maxWidth: 400, mx: 'auto', mb: 3 }}>
                       <GoogleLogin
                         onSuccess={handleGoogleSuccess}
                         onError={handleGoogleError}
                         useOneTap
                         size="large"
-                        width="100%"
                       />
                     </Box>
 

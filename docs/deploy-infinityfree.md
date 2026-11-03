@@ -95,10 +95,20 @@ that setting.
    DB_NAME=the_database_name_from_the_control_panel
    DB_USER=the_database_username_from_the_control_panel
    DB_PASS=the_database_password_from_the_control_panel
-   CORS_ALLOWED_ORIGINS=https://your-site.example
+   CORS_ALLOWED_ORIGINS=https://your-vercel-app.vercel.app,https://your-site.example
    CHAPA_CALLBACK_URL=https://your-site.example/backend/api/payments/callback
    CHAPA_RETURN_URL=https://your-site.example/payment/return
    ```
+
+   For a Vercel frontend, include its exact production origin, for example
+   `https://web-based-digitallibrary.vercel.app`. Do not put
+   `CORS_ALLOWED_ORIGINS=` inside the value, and do not wrap origins in
+   backticks.
+
+   The root `htdocs/.htaccess` adds CORS headers for the production frontend
+   origin, including API preflight responses. Update that exact origin if the
+   Vercel production domain changes. `htdocs/backend/.htaccess` is for API
+   routing and access protection.
 
 4. Keep `.env` inaccessible over HTTP. The supplied `backend/.htaccess` blocks
    dotfiles and backend implementation directories. Verify this after upload

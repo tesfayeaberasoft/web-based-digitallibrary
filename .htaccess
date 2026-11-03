@@ -1,4 +1,16 @@
 Options -Indexes
+
+<IfModule mod_headers.c>
+Header onsuccess unset Access-Control-Allow-Origin
+Header always unset Access-Control-Allow-Origin
+Header always set Access-Control-Allow-Origin "https://web-based-digitallibrary-rtw7.vercel.app"
+Header always set Access-Control-Allow-Credentials "true"
+Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+Header always set Access-Control-Allow-Headers "Content-Type, Authorization, Range"
+Header always set Access-Control-Expose-Headers "Accept-Ranges, Content-Range, Content-Length"
+Header always merge Vary "Origin"
+</IfModule>
+
 RewriteEngine On
 
 # Preserve bearer tokens when Apache forwards rewritten API requests to PHP.
