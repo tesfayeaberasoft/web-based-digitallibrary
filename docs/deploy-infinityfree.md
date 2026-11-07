@@ -78,10 +78,13 @@ that setting.
    composer install --no-dev --prefer-dist --optimize-autoloader
    ```
 
-2. Upload the contents of `backend/` into `htdocs/backend/`, including
-   `.htaccess` and the generated `vendor/` directory. PHPMailer is required
-   by the notification service. Do **not** upload local logs, private storage,
-   database dumps, or any local `.env` file.
+2. Upload the contents of `backend/` into `htdocs/backend/`, including the
+   generated `vendor/` directory. PHPMailer is required by the notification
+   service. The repository does not include `backend/.htaccess`; Apache
+   deployments must configure equivalent API routing, Authorization-header
+   forwarding, and access protection for backend implementation files before
+   deployment. Do **not** upload local logs, private storage, database dumps,
+   or any local `.env` file.
 3. In `htdocs/backend/`, create a server-side `.env` file using
    `backend/.env.example` as a checklist. Enter the database details from the
    control panel and create fresh production secrets. `JWT_SECRET` must be a
@@ -107,13 +110,14 @@ that setting.
 
    The root `htdocs/.htaccess` adds CORS headers for the production frontend
    origin, including API preflight responses. Update that exact origin if the
-   Vercel production domain changes. `htdocs/backend/.htaccess` is for API
-   routing and access protection.
+   Vercel production domain changes. The repository does not supply
+   `htdocs/backend/.htaccess`; configure equivalent API routing and access
+   protection separately before deploying to Apache.
 
-4. Keep `.env` inaccessible over HTTP. The supplied `backend/.htaccess` blocks
-   dotfiles and backend implementation directories. Verify this after upload
-   by requesting `https://your-site.example/backend/.env`; it must not return
-   environment contents.
+4. Keep `.env` inaccessible over HTTP using the host's server configuration.
+   Verify this after upload by requesting
+   `https://your-site.example/backend/.env`; it must not return environment
+   contents.
 5. Upload the repository-root `private-storage/.htaccess` into
    `htdocs/private-storage/.htaccess`. The app stores ebook files under
    `htdocs/private-storage/ebooks/` and streams them only through its
@@ -144,9 +148,9 @@ that setting.
 
 1. Visit `https://your-site.example/` and confirm the React app loads.
 2. Visit `https://your-site.example/backend/api/public/stats`; it should return
-   JSON rather than a 404 or the React page. Upload both the root `.htaccess`
-   and `backend/.htaccess` after any routing changes; those rules pass the API
-   path explicitly to the PHP dispatcher.
+   JSON rather than a 404 or the React page. The root `.htaccess` is included;
+   the backend Apache rules are not. Ensure equivalent API routing and access
+   protection are configured on the server after any routing changes.
 3. Test registration, login, book browsing, file uploads, and all dashboard
    roles.
 4. Test Google sign-in and Chapa only after configuring their production

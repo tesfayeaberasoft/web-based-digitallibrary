@@ -82,6 +82,10 @@ backend/api/
 └── [ ] loans/list.php → htdocs/backend/api/loans/
 ```
 
+**Apache note:** `backend/.htaccess` is not included in this repository.
+Configure equivalent API routing, Authorization-header forwarding, and access
+protection for backend implementation files on the server before deployment.
+
 ### Files That Should NOT Be Uploaded:
 
 ❌ Do NOT upload:
@@ -212,7 +216,7 @@ htdocs/
 │   ├── js/
 │   └── media/
 └── backend/
-    ├── .htaccess ✓
+    ├── .htaccess (server-created; not included in repository)
     ├── .env ✓
     ├── api/
     │   ├── books/
@@ -518,7 +522,8 @@ In Lighthouse PWA report, should PASS:
 
 **Quick Fix:**
 1. Verify `.htaccess` in root (`htdocs/.htaccess`)
-2. Verify `.htaccess` in backend (`htdocs/backend/.htaccess`)
+2. Verify the server-created backend Apache rules
+   (`htdocs/backend/.htaccess`); they are not included in the repository.
 3. Check Apache `mod_rewrite` is enabled
 4. Verify file paths are correct
 

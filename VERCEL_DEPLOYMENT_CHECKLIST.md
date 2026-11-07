@@ -127,22 +127,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 7. Save the file
 
-**Option B: Update .htaccess (Alternative)**
-
-Add to `backend/.htaccess`:
-
-```apache
-# CORS Headers
-Header always set Access-Control-Allow-Origin "https://digital-library-abc123.vercel.app"
-Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
-Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
-Header always set Access-Control-Allow-Credentials "true"
-
-# Handle preflight
-RewriteEngine On
-RewriteCond %{REQUEST_METHOD} OPTIONS
-RewriteRule ^(.*)$ $1 [R=200,L]
-```
+The repository does not include `backend/.htaccess`. Configure CORS in the PHP
+backend as shown above; Apache deployments also need server rules for API
+routing, Authorization-header forwarding, and backend-file access protection.
 
 ---
 
