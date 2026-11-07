@@ -44,17 +44,6 @@ A comprehensive, full-stack digital library management system with role-based ac
 - **Responsive Design** - Mobile-friendly interface matching provided mockups
 - **Material-UI** - Modern, accessible components with custom theming
 
-## 🖥️ Demo
-
-### Default Login Credentials
-
-| Role | Email | Password |
-|------|-------|----------|
-| Super Admin | superadmin@digitallibrary.com | password |
-| Admin | admin@digitallibrary.com | password |
-| Librarian | sarah@library.com | password |
-| User | john.doe@example.com | password |
-
 ## 🛠️ Technology Stack
 
 ### Frontend
@@ -268,18 +257,6 @@ Based on **Digital Library Management System Requirements Specification V4**:
 - ✅ Input validation
 - ✅ Audit logging
 
-## 🚀 Deployment
-
-For the InfinityFree shared-hosting setup, see
-[docs/deploy-infinityfree.md](docs/deploy-infinityfree.md).
-
-The system can be deployed on:
-- Traditional servers (Apache/Nginx)
-- Docker containers
-- Cloud platforms (AWS, Heroku, DigitalOcean)
-
-See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
-
 ## 🤝 Contributing
 
 Contributions are welcome! Please follow these steps:
@@ -307,7 +284,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-For support, email tesfayeaberasoft@example.com or open an issue on GitHub.
+For support, email tesfayeaberalingane@gmail.com or open an issue on GitHub.
 
 ---
 
