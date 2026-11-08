@@ -1,0 +1,32 @@
+Options -Indexes
+
+<IfModule mod_headers.c>
+Header onsuccess unset Access-Control-Allow-Origin
+Header always unset Access-Control-Allow-Origin
+Header always set Access-Control-Allow-Origin "https://web-based-digitallibrary-rtw7.vercel.app"
+Header always set Access-Control-Allow-Credentials "true"
+Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+Header always set Access-Control-Allow-Headers "Content-Type, Authorization, Range"
+Header always set Access-Control-Expose-Headers "Accept-Ranges, Content-Range, Content-Length"
+Header always merge Vary "Origin"
+</IfModule>
+
+RewriteEngine On
+
+# Preserve bearer tokens when Apache forwards rewritten API requests to PHP.
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+# Route API requests through the backend dispatcher.
+RewriteRule ^backend/api(?:/(.*))?$ backend/index.php?__route=$1 [QSA,L,NC]
+
+# eBooks are stored under the web root but must only be served by the
+# authenticated backend content endpoint.
+RewriteRule ^private-storage(?:/|$) - [F,NC,L]
+
+# Let the web server serve built frontend assets and backend uploads directly.
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# React Router handles all other application routes.
+RewriteRule ^ index.html [L]

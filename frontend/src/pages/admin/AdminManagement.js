@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
@@ -76,7 +77,7 @@ import DashboardLayout from '../../components/layout/DashboardLayout';
 import { useAuth } from '../../contexts/AuthContext';
 import axios from 'axios';
 
-const API = 'http://localhost:8000/api';
+const API = apiUrl("/api");
 const GRADIENT = 'linear-gradient(45deg, #d32f2f 30%, #f44336 90%)';
 
 const AdminManagement = () => {

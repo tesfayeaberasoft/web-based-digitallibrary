@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState } from 'react';
 import {
   AppBar,
@@ -203,7 +204,7 @@ const Navbar = ({ title = "Digital Library", showUserMenu = true, browseHeader =
             >
               <Avatar 
                 sx={{ width: 32, height: 32, bgcolor: 'rgba(255,255,255,0.2)' }}
-                src={user.profile_image ? `http://localhost:8000/${user.profile_image}` : undefined}
+                src={user.profile_image ? apiUrl(`/${user.profile_image}`) : undefined}
               >
                 {user.full_name?.charAt(0)}
               </Avatar>

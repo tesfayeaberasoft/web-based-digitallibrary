@@ -1,6 +1,27 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 const InstallPromptContext = createContext(null);
+let deferredInstallPrompt = null;
+const promptListeners = new Set();
+const installedListeners = new Set();
+const installCardPaths = new Set(['/dashboard', '/admin', '/super-admin', '/librarian']);
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeinstallprompt', (event) => {
+    if (!installCardPaths.has(window.location.pathname)) {
+      return;
+    }
+
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    promptListeners.forEach((listener) => listener(event));
+  });
+
+  window.addEventListener('appinstalled', () => {
+    deferredInstallPrompt = null;
+    installedListeners.forEach((listener) => listener());
+  });
+}
 
 function isRunningStandalone() {
   return (
@@ -10,13 +31,11 @@ function isRunningStandalone() {
 }
 
 export function InstallPromptProvider({ children }) {
-  const [installPrompt, setInstallPrompt] = useState(null);
+  const [installPrompt, setInstallPrompt] = useState(deferredInstallPrompt);
   const [isInstalled, setIsInstalled] = useState(isRunningStandalone);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (event) => {
-      event.preventDefault();
-
       if (!isRunningStandalone()) {
         setInstallPrompt(event);
       }
@@ -27,15 +46,15 @@ export function InstallPromptProvider({ children }) {
       setIsInstalled(true);
     };
 
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    window.addEventListener('appinstalled', handleAppInstalled);
+    promptListeners.add(handleBeforeInstallPrompt);
+    installedListeners.add(handleAppInstalled);
+    if (deferredInstallPrompt) {
+      handleBeforeInstallPrompt(deferredInstallPrompt);
+    }
 
     return () => {
-      window.removeEventListener(
-        'beforeinstallprompt',
-        handleBeforeInstallPrompt
-      );
-      window.removeEventListener('appinstalled', handleAppInstalled);
+      promptListeners.delete(handleBeforeInstallPrompt);
+      installedListeners.delete(handleAppInstalled);
     };
   }, []);
 
@@ -45,24 +64,23 @@ export function InstallPromptProvider({ children }) {
     }
 
     const promptEvent = installPrompt;
+    deferredInstallPrompt = null;
     setInstallPrompt(null);
 
-    try {
-      await promptEvent.prompt();
-      const { outcome } = await promptEvent.userChoice;
+    await promptEvent.prompt();
+    const { outcome } = await promptEvent.userChoice;
 
-      if (outcome === 'accepted') {
-        setIsInstalled(true);
-      }
-    } catch (error) {
-      console.error('The app installation prompt failed:', error);
+    if (outcome === 'accepted') {
+      setIsInstalled(true);
     }
+    return outcome;
   };
 
   return (
     <InstallPromptContext.Provider
       value={{
         canInstall: Boolean(installPrompt) && !isInstalled,
+        isInstalled,
         promptToInstall,
       }}
     >

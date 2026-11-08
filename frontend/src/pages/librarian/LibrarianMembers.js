@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -106,7 +107,7 @@ const LibrarianMembers = () => {
         status: statusFilter !== 'all' ? statusFilter : undefined
       };
       
-      const response = await axios.get('http://localhost:8000/api/users', {
+      const response = await axios.get(apiUrl("/api/users"), {
         headers: { Authorization: `Bearer ${token}` },
         params
       });
@@ -127,7 +128,7 @@ const LibrarianMembers = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        `http://localhost:8000/api/users/${userId}/stats`,
+        apiUrl(`/api/users/${userId}/stats`),
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (response.data.success) {
@@ -143,7 +144,7 @@ const LibrarianMembers = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        `http://localhost:8000/api/loans?user_id=${userId}&limit=20`,
+        apiUrl(`/api/loans?user_id=${userId}&limit=20`),
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (response.data.success) {
@@ -161,7 +162,7 @@ const LibrarianMembers = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        `http://localhost:8000/api/fines?user_id=${userId}&limit=20`,
+        apiUrl(`/api/fines?user_id=${userId}&limit=20`),
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (response.data.success) {
@@ -233,7 +234,7 @@ const LibrarianMembers = () => {
       };
       
       await axios.put(
-        `http://localhost:8000/api/users/${selectedUser.id}`,
+        apiUrl(`/api/users/${selectedUser.id}`),
         updateData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -437,7 +438,7 @@ const LibrarianMembers = () => {
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                 <Avatar 
                                   sx={{ bgcolor: '#4a9b8e', width: 40, height: 40 }}
-                                  src={user.profile_image ? `http://localhost:8000/${user.profile_image}` : undefined}
+                                  src={user.profile_image ? apiUrl(`/${user.profile_image}`) : undefined}
                                 >
                                   {user.full_name?.charAt(0)}
                                 </Avatar>
@@ -565,7 +566,7 @@ const LibrarianMembers = () => {
                         height: 60, 
                         bgcolor: statusAction === 'suspend' ? '#f44336' : '#4caf50'
                       }}
-                      src={selectedUser.profile_image ? `http://localhost:8000/${selectedUser.profile_image}` : undefined}
+                      src={selectedUser.profile_image ? apiUrl(`/${selectedUser.profile_image}`) : undefined}
                     >
                       <Typography variant="h5">
                         {selectedUser.full_name?.charAt(0)}
@@ -700,7 +701,7 @@ const LibrarianMembers = () => {
                     borderBottom: '1px solid #e0e0e0'
                   }}>
                     <Avatar
-                      src={selectedUser.profile_image ? `http://localhost:8000/${selectedUser.profile_image}` : undefined}
+                      src={selectedUser.profile_image ? apiUrl(`/${selectedUser.profile_image}`) : undefined}
                       sx={{ width: 72, height: 72, bgcolor: '#4a9b8e', fontSize: '2rem', fontWeight: 700 }}
                     >
                       {selectedUser.full_name?.charAt(0)}

@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
@@ -67,7 +68,7 @@ const Login = () => {
   useEffect(() => {
     setVisible(true);
     axios
-      .get('http://localhost:8000/api/auth/login-policy')
+      .get(apiUrl("/api/auth/login-policy"))
       .then((res) => {
         const max = res.data?.data?.user_max_login_attempts;
         if (res.data?.success && max) {
@@ -471,13 +472,12 @@ const Login = () => {
                       <Chip label={t('auth.login.or')} size="small" />
                     </Divider>
 
-                    <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%', maxWidth: 400, mx: 'auto', mb: 3 }}>
                       <GoogleLogin
                         onSuccess={handleGoogleSuccess}
                         onError={handleGoogleError}
                         useOneTap
                         size="large"
-                        width="100%"
                       />
                     </Box>
 

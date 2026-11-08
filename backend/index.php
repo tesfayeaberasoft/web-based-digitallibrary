@@ -5,13 +5,7 @@
 
 require_once __DIR__ . '/config/config.php';
 require_once __DIR__ . '/config/database.php';
-
-// Handle CORS
-header('Access-Control-Allow-Origin: http://localhost:3000');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, Range');
-header('Access-Control-Expose-Headers: Accept-Ranges, Content-Range, Content-Length');
-header('Access-Control-Allow-Credentials: true');
+require_once __DIR__ . '/utils/request-routing.php';
 
 // Handle OPTIONS preflight requests
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -23,18 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 $request_uri = $_SERVER['REQUEST_URI'];
 $request_method = $_SERVER['REQUEST_METHOD'];
 
-// Remove query string and get path
-$path = parse_url($request_uri, PHP_URL_PATH);
-
-// Remove /api prefix if present
-if (strpos($path, '/api') === 0) {
-    $path = substr($path, 4);
-}
-
-// Ensure path starts with /
-if ($path === '' || $path[0] !== '/') {
-    $path = '/' . $path;
-}
+$path = resolveApiRoutePath($request_uri, $_GET['__route'] ?? null);
 
 // Log for debugging (remove in production)
 error_log("Request: $request_method $path");
@@ -504,17 +487,12 @@ switch (true) {
         break;
     
     default:
-        header('HTTP/1.1 404 Not Found');
+        http_response_code(404);
         header('Content-Type: application/json');
         error_log("404 Not Found: $request_method $path");
         echo json_encode([
             'success' => false,
-            'message' => 'Endpoint not found',
-            'debug' => [
-                'path' => $path,
-                'method' => $request_method,
-                'uri' => $request_uri
-            ]
+            'message' => 'Endpoint not found'
         ]);
         break;
 }

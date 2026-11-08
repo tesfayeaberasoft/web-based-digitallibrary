@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -128,7 +129,7 @@ export default function SuperAdminDashboard() {
   const loadData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const { data } = await axios.get('http://localhost:8000/api/super-admin/dashboard', {
+      const { data } = await axios.get(apiUrl("/api/super-admin/dashboard"), {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (data.success) {
@@ -159,7 +160,7 @@ export default function SuperAdminDashboard() {
   const loadSettings = async () => {
     try {
       const token = localStorage.getItem('token');
-      const { data } = await axios.get('http://localhost:8000/api/super-admin/system-management', { headers: { Authorization: `Bearer ${token}` } });
+      const { data } = await axios.get(apiUrl("/api/super-admin/system-management"), { headers: { Authorization: `Bearer ${token}` } });
       if (data.success) setSettings(data.data);
     } catch { /* keep defaults */ }
   };
@@ -168,7 +169,7 @@ export default function SuperAdminDashboard() {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const { data } = await axios.put('http://localhost:8000/api/super-admin/system-management', settings, { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } });
+      const { data } = await axios.put(apiUrl("/api/super-admin/system-management"), settings, { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } });
       if (data.success) { setSuccess('Settings saved!'); setOpenDialog(''); }
       else throw new Error(data.message);
     } catch (e) { setError(e.response?.data?.message || 'Failed to save settings'); }
@@ -181,7 +182,7 @@ export default function SuperAdminDashboard() {
     setSuccess('');
     try {
       const token = localStorage.getItem('token');
-      const { data } = await axios.post('http://localhost:8000/api/super-admin/system-management', { action, data: extra }, { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } });
+      const { data } = await axios.post(apiUrl("/api/super-admin/system-management"), { action, data: extra }, { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } });
       if (data.success) {
         const label = data.backup_file || data.export_file;
         
@@ -227,7 +228,7 @@ export default function SuperAdminDashboard() {
     setSelectedBackup(null); setRestoreConfirm('');
     try {
       const token = localStorage.getItem('token');
-      const { data } = await axios.get('http://localhost:8000/api/super-admin/system-management', { headers: { Authorization: `Bearer ${token}` } });
+      const { data } = await axios.get(apiUrl("/api/super-admin/system-management"), { headers: { Authorization: `Bearer ${token}` } });
       if (data.backups) setBackups(data.backups);
     } catch { /* silent */ }
     setOpenDialog('restore_backup');
@@ -239,7 +240,7 @@ export default function SuperAdminDashboard() {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const { data } = await axios.post('http://localhost:8000/api/super-admin/system-management', { action:'restore_backup', data:{ backup_file:selectedBackup.name, confirmation:'RESTORE' } }, { headers: { Authorization:`Bearer ${token}`, 'Content-Type':'application/json' } });
+      const { data } = await axios.post(apiUrl("/api/super-admin/system-management"), { action:'restore_backup', data:{ backup_file:selectedBackup.name, confirmation:'RESTORE' } }, { headers: { Authorization:`Bearer ${token}`, 'Content-Type':'application/json' } });
       if (data.success) { setSuccess('Database restored!'); setOpenDialog(''); setSelectedBackup(null); setRestoreConfirm(''); await loadData(); }
       else throw new Error(data.message);
     } catch (e) { setError(e.response?.data?.message || 'Restore failed'); }

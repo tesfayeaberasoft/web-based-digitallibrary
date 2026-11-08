@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import {
   Box, Typography, Grid, Switch, Button, Alert, Divider,
@@ -73,7 +74,7 @@ export default function UserNotificationSettings() {
   const fetchSettings = async () => {
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:8000/api/notifications/settings', {
+      const res = await fetch(apiUrl("/api/notifications/settings"), {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       if (res.ok) {
@@ -87,7 +88,7 @@ export default function UserNotificationSettings() {
   const saveSettings = async () => {
     setSaving(true);
     try {
-      const res = await fetch('http://localhost:8000/api/notifications/settings', {
+      const res = await fetch(apiUrl("/api/notifications/settings"), {
         method: 'PUT',
         headers: { 'Content-Type':'application/json', Authorization:`Bearer ${localStorage.getItem('token')}` },
         body: JSON.stringify(settings)

@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -53,7 +54,7 @@ const PaymentReturn = () => {
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       const response = await axios.get(
-        `http://localhost:8000/api/payments/verify?tx_ref=${txRef}`,
+        apiUrl(`/api/payments/verify?tx_ref=${txRef}`),
         {
           headers: { Authorization: `Bearer ${token}` }
         }

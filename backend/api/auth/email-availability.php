@@ -43,6 +43,7 @@ try {
     http_response_code(500);
     echo json_encode([
         'success' => false,
+        'code' => 'EMAIL_AVAILABILITY_QUERY_FAILED',
         'message' => 'Unable to verify this email address. Please try again.'
     ]);
 }

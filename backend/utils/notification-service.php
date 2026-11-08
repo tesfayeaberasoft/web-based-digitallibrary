@@ -68,7 +68,7 @@ class NotificationService {
             );
             
             // Enable verbose debug output (disable in production)
-            if ($_ENV['APP_DEBUG'] ?? false) {
+            if (defined('APP_ENV') && APP_ENV === 'development') {
                 $this->mailer->SMTPDebug = SMTP::DEBUG_SERVER;
             }
             
@@ -400,6 +400,7 @@ class NotificationService {
         
         $color = $colors[$urgency] ?? $colors['medium'];
         $icon = $days_until_due >= 0 ? '📚' : '⚠️';
+        $frontendUrl = defined('APP_BASE_URL') ? APP_BASE_URL : '';
         
         return "
         <!DOCTYPE html>
@@ -436,7 +437,7 @@ class NotificationService {
                     
                     <!-- Action Button -->
                     <div style='text-align: center; margin: 30px 0;'>
-                        <a href='http://localhost:3000/user/books' style='background: {$color['primary']}; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.1);'>View My Books</a>
+                        <a href='{$frontendUrl}/user/books' style='background: {$color['primary']}; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.1);'>View My Books</a>
                     </div>
                     
                     <!-- Important Notice -->
@@ -467,6 +468,7 @@ class NotificationService {
     private function generateReservationEmailTemplate($reservation) {
         $book_info = "{$reservation['book_title']} by {$reservation['book_author']}";
         $pickup_deadline = date('M j, Y', strtotime('+3 days'));
+        $frontendUrl = defined('APP_BASE_URL') ? APP_BASE_URL : '';
         
         return "
         <!DOCTYPE html>
@@ -499,7 +501,7 @@ class NotificationService {
                     </div>
                     
                     <div style='text-align: center; margin: 30px 0;'>
-                        <a href='http://localhost:3000/user/reservations' style='background: #4a9b8e; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; display: inline-block;'>View My Reservations</a>
+                        <a href='{$frontendUrl}/user/reservations' style='background: #4a9b8e; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; display: inline-block;'>View My Reservations</a>
                     </div>
                 </div>
                 

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<browserconfig>
+  <msapplication>
+    <tile>
+      <square150x150logo src="digital-library-icon-192x192.png"/>
+      <square310x310logo src="digital-library-icon-512x512.png"/>
+      <TileColor>#2d6b61</TileColor>
+    </tile>
+  </msapplication>
+</browserconfig>

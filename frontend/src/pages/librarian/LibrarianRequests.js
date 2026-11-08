@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -69,13 +70,13 @@ const LibrarianRequests = () => {
       
       if (tabValue === 0) {
         // Fetch active loans
-        const response = await axios.get('http://localhost:8000/api/loans?status=active', config);
+        const response = await axios.get(apiUrl("/api/loans?status=active"), config);
         if (response.data.success) {
           setLoans(response.data.loans);
         }
       } else if (tabValue === 1) {
         // Fetch pending reservations
-        const response = await axios.get('http://localhost:8000/api/reservations?status=pending', config);
+        const response = await axios.get(apiUrl("/api/reservations?status=pending"), config);
         if (response.data.success) {
           setReservations(response.data.reservations);
         }
@@ -109,7 +110,7 @@ const LibrarianRequests = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.post(
-        'http://localhost:8000/api/loans',
+        apiUrl("/api/loans"),
         issueFormData,
         {
           headers: { Authorization: `Bearer ${token}` }
@@ -137,7 +138,7 @@ const LibrarianRequests = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.put(
-        `http://localhost:8000/api/loans/${selectedLoan.id}/return`,
+        apiUrl(`/api/loans/${selectedLoan.id}/return`),
         {},
         {
           headers: { Authorization: `Bearer ${token}` }

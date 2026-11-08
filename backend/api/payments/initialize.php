@@ -137,10 +137,11 @@ try {
     $nameParts = explode(' ', trim($userName), 2);
     $txRef     = 'FINE-' . $userId . '-' . $fineId . '-' . time() . '-' . bin2hex(random_bytes(4));
 
-    $callbackUrl = defined('CHAPA_CALLBACK_URL') ? CHAPA_CALLBACK_URL : getenv('CHAPA_CALLBACK_URL');
-    $returnUrl   = (defined('CHAPA_RETURN_URL')  ? CHAPA_RETURN_URL  : getenv('CHAPA_RETURN_URL')) ?: 'http://localhost:3000/payment/return';
-
-    if (!$callbackUrl) $callbackUrl = 'http://localhost:8000/api/payments/callback';
+    $callbackUrl = defined('CHAPA_CALLBACK_URL') ? CHAPA_CALLBACK_URL : '';
+    $returnUrl   = defined('CHAPA_RETURN_URL') ? CHAPA_RETURN_URL : '';
+    if ($callbackUrl === '' || $returnUrl === '') {
+        throw new Exception('Payment callback and return URLs are not configured.');
+    }
 
     $payload = [
         'amount'       => number_format($amount, 2, '.', ''),

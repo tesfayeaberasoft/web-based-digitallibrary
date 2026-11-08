@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
@@ -18,7 +19,7 @@ import {
 import { format } from 'date-fns';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8000/api';
+const API_URL = apiUrl("/api");
 
 export default function BookReviewsDialog({ open, book, isAuthenticated, onClose, onUpdated }) {
   const [reviews, setReviews] = useState([]);

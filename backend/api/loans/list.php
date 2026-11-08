@@ -31,7 +31,11 @@ try {
     }
     
     // Filter by status
-    if (isset($_GET['status'])) {
+    if (isset($_GET['status']) && $_GET['status'] === 'active') {
+        // Renewed loans are still checked out and belong in the user's active books.
+        // Include active, renewed, and loans that are overdue but not yet returned
+        $where[] = "(l.status IN ('active', 'renewed') OR (l.status = 'active' AND l.due_date < CURDATE()))";
+    } elseif (isset($_GET['status'])) {
         $where[] = "l.status = ?";
         $params[] = $_GET['status'];
     }
@@ -57,29 +61,39 @@ try {
     $stmt->execute($params);
     $total = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     
-    // Get loans
+    // Get loans with all relevant information
     $stmt = $db->prepare("
         SELECT 
             l.*,
             b.title as book_title,
             b.author as book_author,
             b.isbn,
+            b.cover_image,
             u.full_name as user_name,
             u.email as user_email,
+            u.user_id as user_student_id,
             issuer.full_name as issued_by_name,
             returner.full_name as returned_to_name,
             DATEDIFF(l.due_date, CURDATE()) as days_until_due,
             CASE 
+                WHEN l.return_date IS NOT NULL THEN l.status
                 WHEN l.status = 'active' AND l.due_date < CURDATE() THEN 'overdue'
+                WHEN l.status = 'renewed' AND l.due_date < CURDATE() THEN 'overdue'
                 ELSE l.status
             END as display_status
         FROM book_loans l
-        JOIN books b ON l.book_id = b.id
-        JOIN users u ON l.user_id = u.id
+        INNER JOIN books b ON l.book_id = b.id
+        INNER JOIN users u ON l.user_id = u.id
         LEFT JOIN users issuer ON l.issued_by = issuer.id
         LEFT JOIN users returner ON l.returned_to = returner.id
         $where_clause
-        ORDER BY l.loan_date DESC
+        ORDER BY 
+            CASE 
+                WHEN l.due_date < CURDATE() AND l.return_date IS NULL THEN 0
+                WHEN DATEDIFF(l.due_date, CURDATE()) <= 3 AND l.return_date IS NULL THEN 1
+                ELSE 2
+            END,
+            l.loan_date DESC
         LIMIT ? OFFSET ?
     ");
     

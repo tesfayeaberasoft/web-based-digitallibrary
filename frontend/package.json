@@ -43,14 +43,16 @@
   },
   "scripts": {
     "start": "craco start",
-    "build": "craco build",
+    "build": "cross-env GENERATE_SOURCEMAP=false craco build",
+    "build:dev": "craco build",
     "test": "craco test",
     "eject": "react-scripts eject",
-    "postinstall": "powershell -Command \"Copy-Item 'node_modules/pdfjs-dist/build/pdf.worker.min.mjs' 'public/pdf.worker.min.mjs' -Force\""
+    "postinstall": "node -e \"const fs=require('fs');const src='node_modules/pdfjs-dist/build/pdf.worker.min.mjs';const dst='public/pdf.worker.min.mjs';try{if(fs.existsSync(src))fs.copyFileSync(src,dst);}catch(e){}\""
   },
   "devDependencies": {
     "@craco/craco": "^7.1.0",
     "copy-webpack-plugin": "^14.0.0",
+    "cross-env": "^10.1.0",
     "tailwindcss": "^3.4.19"
   },
   "overrides": {

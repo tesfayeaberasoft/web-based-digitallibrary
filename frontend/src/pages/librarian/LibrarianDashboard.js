@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import { 
   Box, 
@@ -74,7 +75,7 @@ const LibrarianDashboard = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        'http://localhost:8000/api/librarian/stats',
+        apiUrl("/api/librarian/stats"),
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -99,7 +100,7 @@ const LibrarianDashboard = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        `http://localhost:8000/api/librarian/student-search?query=${encodeURIComponent(searchQuery)}`,
+        apiUrl(`/api/librarian/student-search?query=${encodeURIComponent(searchQuery)}`),
         { headers: { Authorization: `Bearer ${token}` } }
       );
       

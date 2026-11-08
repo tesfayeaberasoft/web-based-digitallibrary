@@ -3,19 +3,34 @@
  * JWT Utility Functions
  * Simple JWT implementation for authentication
  */
+require_once __DIR__ . '/../config/config.php';
 
-// JWT Secret Key - In production, use environment variable
-if (!defined('JWT_SECRET')) {
-    define('JWT_SECRET', 'your-secret-key-change-in-production-2024');
-}
 if (!defined('JWT_ALGORITHM')) {
     define('JWT_ALGORITHM', 'HS256');
+}
+
+function jwtSecretIsConfigured() {
+    if (!defined('JWT_SECRET') || JWT_SECRET === '') {
+        return false;
+    }
+
+    if (defined('APP_ENV') && APP_ENV === 'development') {
+        return true;
+    }
+
+    return strlen(JWT_SECRET) >= 32
+        && strpos(JWT_SECRET, 'your-') !== 0
+        && strpos(JWT_SECRET, 'change-me') === false;
 }
 
 /**
  * Generate JWT Token
  */
 function generateJWT($payload) {
+    if (!jwtSecretIsConfigured()) {
+        throw new RuntimeException('JWT authentication is not configured securely.');
+    }
+
     $header = json_encode(['typ' => 'JWT', 'alg' => JWT_ALGORITHM]);
     $payload['iat'] = time();
     $payload['exp'] = time() + (24 * 60 * 60); // 24 hours
@@ -34,6 +49,10 @@ function generateJWT($payload) {
  * Verify JWT Token
  */
 function verifyJWT($token) {
+    if (!jwtSecretIsConfigured()) {
+        return false;
+    }
+
     $parts = explode('.', $token);
     
     if (count($parts) !== 3) {
@@ -43,15 +62,24 @@ function verifyJWT($token) {
     list($headerEncoded, $payloadEncoded, $signatureEncoded) = $parts;
     
     $signature = base64url_decode($signatureEncoded);
+    if ($signature === false) {
+        return false;
+    }
+
     $expectedSignature = hash_hmac('sha256', $headerEncoded . "." . $payloadEncoded, JWT_SECRET, true);
     
     if (!hash_equals($signature, $expectedSignature)) {
         return false;
     }
     
-    $payload = json_decode(base64url_decode($payloadEncoded), true);
+    $payloadJson = base64url_decode($payloadEncoded);
+    if ($payloadJson === false) {
+        return false;
+    }
+
+    $payload = json_decode($payloadJson, true);
     
-    if (!$payload || $payload['exp'] < time()) {
+    if (!is_array($payload) || !isset($payload['exp']) || (int)$payload['exp'] <= time()) {
         return false;
     }
     
@@ -62,21 +90,46 @@ function verifyJWT($token) {
  * Require Authentication - Use this in protected endpoints
  */
 function requireAuth() {
-    // Handle both web server and CLI environments
-    if (function_exists('getallheaders')) {
+    if (!jwtSecretIsConfigured()) {
+        http_response_code(503);
+        echo json_encode(['success' => false, 'message' => 'Authentication is not configured.']);
+        exit;
+    }
+
+    $authHeader = $_SERVER['HTTP_AUTHORIZATION']
+        ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION']
+        ?? '';
+
+    if ($authHeader === '' && function_exists('getallheaders')) {
         $headers = getallheaders();
-    } else {
-        // Fallback for CLI or environments where getallheaders() is not available
-        $headers = [];
-        foreach ($_SERVER as $key => $value) {
-            if (strpos($key, 'HTTP_') === 0) {
-                $header = str_replace('_', '-', substr($key, 5));
-                $headers[$header] = $value;
+        foreach ($headers as $name => $value) {
+            if (strcasecmp($name, 'Authorization') === 0) {
+                $authHeader = $value;
+                break;
             }
         }
     }
-    
-    $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+
+    if ($authHeader === '' && function_exists('apache_request_headers')) {
+        $headers = apache_request_headers();
+        foreach ($headers as $name => $value) {
+            if (strcasecmp($name, 'Authorization') === 0) {
+                $authHeader = $value;
+                break;
+            }
+        }
+    }
+
+    if ($authHeader === '') {
+        foreach ($_SERVER as $key => $value) {
+            if (strcasecmp($key, 'HTTP_AUTHORIZATION') === 0
+                || strcasecmp($key, 'REDIRECT_HTTP_AUTHORIZATION') === 0
+            ) {
+                $authHeader = $value;
+                break;
+            }
+        }
+    }
     
     if (!$authHeader || !preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
         http_response_code(401);
@@ -107,28 +160,55 @@ function base64url_encode($data) {
  * Base64 URL Decode
  */
 function base64url_decode($data) {
-    return base64_decode(str_pad(strtr($data, '-_', '+/'), strlen($data) % 4, '=', STR_PAD_RIGHT));
+    if (!is_string($data) || strlen($data) % 4 === 1) {
+        return false;
+    }
+
+    $padded = str_pad(strtr($data, '-_', '+/'), strlen($data) + (4 - strlen($data) % 4) % 4, '=', STR_PAD_RIGHT);
+    return base64_decode($padded, true);
 }
 
 /**
  * Get current user from token (optional auth)
  */
 function getCurrentUser() {
-    // Handle both web server and CLI environments
-    if (function_exists('getallheaders')) {
+    if (!jwtSecretIsConfigured()) {
+        return null;
+    }
+    $authHeader = $_SERVER['HTTP_AUTHORIZATION']
+        ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION']
+        ?? '';
+
+    if ($authHeader === '' && function_exists('getallheaders')) {
         $headers = getallheaders();
-    } else {
-        // Fallback for CLI or environments where getallheaders() is not available
-        $headers = [];
-        foreach ($_SERVER as $key => $value) {
-            if (strpos($key, 'HTTP_') === 0) {
-                $header = str_replace('_', '-', substr($key, 5));
-                $headers[$header] = $value;
+        foreach ($headers as $name => $value) {
+            if (strcasecmp($name, 'Authorization') === 0) {
+                $authHeader = $value;
+                break;
             }
         }
     }
-    
-    $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+
+    if ($authHeader === '' && function_exists('apache_request_headers')) {
+        $headers = apache_request_headers();
+        foreach ($headers as $name => $value) {
+            if (strcasecmp($name, 'Authorization') === 0) {
+                $authHeader = $value;
+                break;
+            }
+        }
+    }
+
+    if ($authHeader === '') {
+        foreach ($_SERVER as $key => $value) {
+            if (strcasecmp($key, 'HTTP_AUTHORIZATION') === 0
+                || strcasecmp($key, 'REDIRECT_HTTP_AUTHORIZATION') === 0
+            ) {
+                $authHeader = $value;
+                break;
+            }
+        }
+    }
     
     if (!$authHeader || !preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
         return null;

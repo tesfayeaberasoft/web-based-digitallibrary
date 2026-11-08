@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -62,7 +63,7 @@ const NotificationsPage = () => {
         status: tabValue === 1 ? 'read' : tabValue === 2 ? 'unread' : undefined
       };
       
-      const response = await axios.get('http://localhost:8000/api/notifications', {
+      const response = await axios.get(apiUrl("/api/notifications"), {
         headers: { Authorization: `Bearer ${token}` },
         params
       });
@@ -88,7 +89,7 @@ const NotificationsPage = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.put(
-        `http://localhost:8000/api/notifications/${notificationId}/read`,
+        apiUrl(`/api/notifications/${notificationId}/read`),
         {},
         {
           headers: { Authorization: `Bearer ${token}` }
@@ -104,7 +105,7 @@ const NotificationsPage = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.put(
-        'http://localhost:8000/api/notifications/mark-all-read',
+        apiUrl("/api/notifications/mark-all-read"),
         {},
         {
           headers: { Authorization: `Bearer ${token}` }

@@ -44,17 +44,6 @@ A comprehensive, full-stack digital library management system with role-based ac
 - **Responsive Design** - Mobile-friendly interface matching provided mockups
 - **Material-UI** - Modern, accessible components with custom theming
 
-## 🖥️ Demo
-
-### Default Login Credentials
-
-| Role | Email | Password |
-|------|-------|----------|
-| Super Admin | superadmin@digitallibrary.com | password |
-| Admin | admin@digitallibrary.com | password |
-| Librarian | sarah@library.com | password |
-| User | john.doe@example.com | password |
-
 ## 🛠️ Technology Stack
 
 ### Frontend
@@ -249,7 +238,7 @@ Based on **Digital Library Management System Requirements Specification V4**:
 - ⏳ Multilingual Support (Planned)
 
 ### E. Strategy Features 🚧
-- ⏳ PWA/Offline Mode (Planned)
+- ✅ Installable PWA app shell (cached shell; live library data requires a connection)
 - ⏳ Self-Check-In/Out (Structure ready)
 - ⏳ Bulk Import (Planned)
 - ⏳ Waitlist Priority (Structure ready)
@@ -267,15 +256,6 @@ Based on **Digital Library Management System Requirements Specification V4**:
 - ✅ CORS configuration
 - ✅ Input validation
 - ✅ Audit logging
-
-## 🚀 Deployment
-
-The system can be deployed on:
-- Traditional servers (Apache/Nginx)
-- Docker containers
-- Cloud platforms (AWS, Heroku, DigitalOcean)
-
-See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
 
 ## 🤝 Contributing
 
@@ -304,7 +284,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-For support, email tesfayeaberasoft@example.com or open an issue on GitHub.
+For support, email tesfayeaberalingane@gmail.com or open an issue on GitHub.
 
 ---
 

@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import {
   Box, Typography, Card, CardContent, Table, TableBody, TableCell,
@@ -37,7 +38,7 @@ export default function UserHistory() {
     try {
       const token = localStorage.getItem('token');
       const params = { page, limit: LIMIT, status: statusFilter === 'all' ? undefined : statusFilter };
-      const { data } = await axios.get('http://localhost:8000/api/loans', {
+      const { data } = await axios.get(apiUrl("/api/loans"), {
         headers: { Authorization: `Bearer ${token}` }, params
       });
       if (data.success) {

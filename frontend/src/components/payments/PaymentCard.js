@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config/api';
 import React, { useState } from 'react';
 import {
   Card,
@@ -47,7 +48,7 @@ const PaymentCard = ({ fine, onPaymentInitiated, onPaymentComplete }) => {
       const token = localStorage.getItem('token');
       
       const response = await axios.post(
-        'http://localhost:8000/api/payments/initialize',
+        apiUrl("/api/payments/initialize"),
         {
           fine_id: fine.id,
           amount: fine.balance,
@@ -111,7 +112,7 @@ const PaymentCard = ({ fine, onPaymentInitiated, onPaymentComplete }) => {
       const token = localStorage.getItem('token');
       
       const response = await axios.get(
-        `http://localhost:8000/api/payments/verify?tx_ref=${txRef}`,
+        apiUrl(`/api/payments/verify?tx_ref=${txRef}`),
         {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -201,7 +202,7 @@ const PaymentCard = ({ fine, onPaymentInitiated, onPaymentComplete }) => {
         {fine.book && (
           <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
             <Avatar
-              src={fine.book.cover_image ? `http://localhost:8000/${fine.book.cover_image}` : undefined}
+              src={fine.book.cover_image ? apiUrl(`/${fine.book.cover_image}`) : undefined}
               sx={{
                 width: 60,
                 height: 80,
