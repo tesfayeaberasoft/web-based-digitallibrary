@@ -51,30 +51,7 @@ const IMG = {
   cozy:       'https://images.unsplash.com/photo-1519682337058-a94d519337bc?w=900&q=85',   // Cozy reading
 };
 
-/* ─── Testimonials (static — can be replaced with DB data) ─────── */
-const TESTIMONIALS = [
-  {
-    name:   'Sarah Johnson',
-    role:   'University Student',
-    avatar: 'https://i.pravatar.cc/100?img=47',
-    rating: 5,
-    text:   'This digital library transformed how I study. I can access thousands of books anytime, anywhere. The reservation system is incredibly smooth!',
-  },
-  {
-    name:   'Dr. Michael Chen',
-    role:   'Research Professor',
-    avatar: 'https://i.pravatar.cc/100?img=12',
-    rating: 5,
-    text:   'Outstanding collection of academic resources. The search functionality and category filtering saved me countless hours of research time.',
-  },
-  {
-    name:   'Amina Tesfaye',
-    role:   'High School Teacher',
-    avatar: 'https://i.pravatar.cc/100?img=32',
-    rating: 5,
-    text:   'My students love using this platform. The reading goals and achievements feature keeps them motivated and engaged with books every day.',
-  },
-];
+/* ─── Testimonials will be loaded from database ─────── */
 
 /* ─── Features with green color scheme ────────────────────────── */
 const FEATURES = [
@@ -154,6 +131,10 @@ export default function HomePage() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [searchType, setSearchType] = useState('all'); // 'all', 'title', 'author', 'isbn'
   const [isSearching, setIsSearching] = useState(false);
+  const [testimonials, setTestimonials] = useState([]);
+  const [testimonialStats, setTestimonialStats] = useState(null);
+  const [selectedTestimonial, setSelectedTestimonial] = useState(null);
+  const [testimonialsLoading, setTestimonialsLoading] = useState(true);
 
   // Parallax scroll effect and scroll-to-top button
   useEffect(() => {
@@ -171,6 +152,8 @@ export default function HomePage() {
 
   useEffect(() => {
     setVisible(true);
+    
+    // Fetch stats
     axios.get('http://localhost:8000/api/public/stats')
       .then(r => {
         if (r.data.success) {
@@ -181,6 +164,57 @@ export default function HomePage() {
       })
       .catch(() => {
         setStats({ total_books: 500, total_members: 1200, total_loans: 8500, avg_rating: 4.8, total_categories: 12 });
+      });
+
+    // Fetch testimonials
+    axios.get('http://localhost:8000/api/public/testimonials')
+      .then(r => {
+        if (r.data.success) {
+          setTestimonials(r.data.testimonials.slice(0, 6)); // Show top 6
+          setTestimonialStats(r.data.stats);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load testimonials:', err);
+        // Fallback to static testimonials if API fails
+        setTestimonials([
+          {
+            full_name: 'Sarah Johnson',
+            user_role: 'University Student',
+            avatar: 'https://ui-avatars.com/api/?name=Sarah+Johnson&background=random&size=200',
+            rating: 5,
+            review_text: 'This digital library transformed how I study. I can access thousands of books anytime, anywhere. The reservation system is incredibly smooth!',
+            books_read_count: 15,
+            book_title: 'Advanced Mathematics'
+          },
+          {
+            full_name: 'Dr. Michael Chen',
+            user_role: 'Research Professor',
+            avatar: 'https://ui-avatars.com/api/?name=Michael+Chen&background=random&size=200',
+            rating: 5,
+            review_text: 'Outstanding collection of academic resources. The search functionality and category filtering saved me countless hours of research time.',
+            books_read_count: 42,
+            book_title: 'Quantum Physics'
+          },
+          {
+            full_name: 'Amina Tesfaye',
+            user_role: 'High School Teacher',
+            avatar: 'https://ui-avatars.com/api/?name=Amina+Tesfaye&background=random&size=200',
+            rating: 5,
+            review_text: 'My students love using this platform. The reading goals and achievements feature keeps them motivated and engaged with books every day.',
+            books_read_count: 28,
+            book_title: 'World Literature'
+          },
+        ]);
+        setTestimonialStats({
+          total_reviewers: 234,
+          avg_rating: 4.8,
+          total_reviews: 486,
+          satisfaction_percentage: 94.5
+        });
+      })
+      .finally(() => {
+        setTestimonialsLoading(false);
       });
   }, []);
 
@@ -2080,76 +2114,341 @@ export default function HomePage() {
       </Box>
 
       {/* ══════════════════════════════════════════════════════════
-          4. TESTIMONIALS / SOCIAL PROOF
+          4. TESTIMONIALS / SOCIAL PROOF - Enhanced with Real Database Data
       ══════════════════════════════════════════════════════════ */}
-      <Box sx={{ py: { xs: 8, md: 12 }, background: `linear-gradient(135deg, ${C.dark} 0%, #16213e 100%)`, position: 'relative', overflow: 'hidden' }}>
-        {/* Decorative background */}
-        <Box sx={{ position: 'absolute', inset: 0, backgroundImage: `url(${IMG.hero})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.05 }} />
+      <Box sx={{ py: { xs: 10, md: 14 }, background: `linear-gradient(135deg, ${C.dark} 0%, #16213e 50%, #0f1419 100%)`, position: 'relative', overflow: 'hidden' }}>
+        {/* Animated background gradient orbs */}
+        <Box sx={{ position: 'absolute', width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(82,183,136,0.15) 0%, transparent 70%)', top: -200, right: -200, animation: 'float 20s ease-in-out infinite', '@keyframes float': { '0%, 100%': { transform: 'translate(0, 0) scale(1)' }, '50%': { transform: 'translate(30px, 30px) scale(1.1)' } } }} />
+        <Box sx={{ position: 'absolute', width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,58,237,0.12) 0%, transparent 70%)', bottom: -100, left: -100, animation: 'float 15s ease-in-out infinite 2s' }} />
+        
+        {/* Decorative background pattern */}
+        <Box sx={{ position: 'absolute', inset: 0, backgroundImage: `url(${IMG.hero})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.03 }} />
 
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
-          <Box sx={{ textAlign: 'center', mb: { xs: 6, md: 8 } }}>
-            <Chip label={t('home.testimonialsLabel')} sx={{ mb: 2, background: 'rgba(82,183,136,0.2)', color: '#86efac', border: '1px solid rgba(82,183,136,0.3)', fontWeight: 700 }} />
-            <Typography variant={isMobile ? 'h4' : 'h3'} fontWeight={800} sx={{ color: 'white', mb: 2 }}>
-              Loved by Thousands of Readers
-            </Typography>
-            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5, mb: 2 }}>
-              {[1,2,3,4,5].map(s => <Star key={s} sx={{ color: '#fbbf24', fontSize: 28 }} />)}
-            </Box>
-            <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-              Rated {stats?.avg_rating || 4.8} out of 5 from our readers
-            </Typography>
-          </Box>
-
-          <Grid container spacing={3}>
-            {TESTIMONIALS.map((t, i) => (
-              <Grid item xs={12} md={4} key={i}>
-                <Grow in={visible} timeout={500 + i * 200}>
-                  <Card
-                    elevation={0}
-                    sx={{
-                      height: '100%', borderRadius: 4,
-                      background: 'rgba(255,255,255,0.06)',
-                      backdropFilter: 'blur(20px)',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      transition: 'all 0.3s',
-                      '&:hover': { background: 'rgba(255,255,255,0.1)', transform: 'translateY(-4px)', borderColor: 'rgba(82,183,136,0.4)' },
-                    }}
-                  >
-                    <CardContent sx={{ p: 3.5 }}>
-                      {/* Quote icon */}
-                      <Typography variant="h2" sx={{ color: C.secondary, opacity: 0.4, lineHeight: 1, mb: 1.5, fontFamily: 'serif' }}>"</Typography>
-                      <Rating value={t.rating} readOnly size="small" sx={{ mb: 2, '& .MuiRating-iconFilled': { color: '#fbbf24' } }} />
-                      <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.85)', lineHeight: 1.8, mb: 3, fontStyle: 'italic' }}>
-                        {t.text}
-                      </Typography>
-                      <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)', mb: 2.5 }} />
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Avatar src={t.avatar} sx={{ width: 48, height: 48, border: `2px solid ${C.secondary}` }} />
-                        <Box>
-                          <Typography variant="subtitle2" fontWeight={700} sx={{ color: 'white' }}>{t.name}</Typography>
-                          <Typography variant="caption" sx={{ color: C.secondary }}>{t.role}</Typography>
-                        </Box>
-                      </Box>
-                    </CardContent>
-                  </Card>
-                </Grow>
-              </Grid>
-            ))}
-          </Grid>
-
-          {/* Trust badges */}
-          <Box sx={{ mt: 8, display: 'flex', flexWrap: 'wrap', gap: 3, justifyContent: 'center', alignItems: 'center' }}>
-            {[
-              { icon: <Security sx={{ fontSize: 20 }} />,    label: 'SSL Secured'       },
-              { icon: <Schedule sx={{ fontSize: 20 }} />,    label: '24/7 Access'       },
-              { icon: <EmojiEvents sx={{ fontSize: 20 }} />, label: 'Award Winning'     },
-              { icon: <People sx={{ fontSize: 20 }} />,      label: '1000+ Members'     },
-              { icon: <Smartphone sx={{ fontSize: 20 }} />,  label: 'Mobile Friendly'   },
-            ].map((b, i) => (
-              <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 3, py: 1.5, borderRadius: 10, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.8)' }}>
-                {React.cloneElement(b.icon, { sx: { fontSize: 18, color: C.secondary } })}
-                <Typography variant="body2" fontWeight={600}>{b.label}</Typography>
+          {/* Header Section */}
+          <Fade in={visible} timeout={800}>
+            <Box sx={{ textAlign: 'center', mb: { xs: 6, md: 8 } }}>
+              <Chip 
+                label={testimonialsLoading ? "Loading..." : `${testimonialStats?.total_reviewers || 0}+ Verified Reviews`}
+                icon={<CheckCircle sx={{ fontSize: 18, color: '#86efac !important' }} />}
+                sx={{ 
+                  mb: 3, 
+                  background: 'linear-gradient(135deg, rgba(82,183,136,0.25), rgba(82,183,136,0.15))', 
+                  color: '#86efac', 
+                  border: '1px solid rgba(82,183,136,0.4)', 
+                  fontWeight: 700,
+                  fontSize: 14,
+                  px: 2,
+                  py: 2.5,
+                  '& .MuiChip-icon': { color: '#86efac' }
+                }} 
+              />
+              
+              <Typography variant={isMobile ? 'h3' : 'h2'} fontWeight={900} sx={{ 
+                color: 'white', 
+                mb: 2,
+                background: 'linear-gradient(135deg, #ffffff 0%, #86efac 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                letterSpacing: '-1px'
+              }}>
+                Loved by Thousands of Readers
+              </Typography>
+              
+              {/* Star Rating Display */}
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2, mb: 3, flexWrap: 'wrap' }}>
+                <Box sx={{ display: 'flex', gap: 0.5 }}>
+                  {[1,2,3,4,5].map(s => (
+                    <Star key={s} sx={{ color: '#fbbf24', fontSize: 32, filter: 'drop-shadow(0 2px 4px rgba(251,191,36,0.3))' }} />
+                  ))}
+                </Box>
+                <Box sx={{ 
+                  px: 3, 
+                  py: 1, 
+                  borderRadius: 10, 
+                  background: 'linear-gradient(135deg, rgba(251,191,36,0.2), rgba(251,191,36,0.1))',
+                  border: '1px solid rgba(251,191,36,0.3)'
+                }}>
+                  <Typography variant="h5" fontWeight={800} sx={{ color: '#fbbf24' }}>
+                    {testimonialStats?.avg_rating || stats?.avg_rating || 4.8}/5.0
+                  </Typography>
+                </Box>
               </Box>
+              
+              <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.7)', maxWidth: 600, mx: 'auto', lineHeight: 1.7 }}>
+                {testimonialStats?.satisfaction_percentage || 94}% of our readers rate their experience as excellent
+              </Typography>
+            </Box>
+          </Fade>
+
+          {/* Statistics Cards */}
+          {testimonialStats && (
+            <Fade in={visible} timeout={1000}>
+              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mb: 6, flexWrap: 'wrap' }}>
+                {[
+                  { label: 'Total Reviews', value: testimonialStats.total_reviews?.toLocaleString() || '0', icon: Star, color: '#fbbf24', bg: 'rgba(251,191,36,0.15)' },
+                  { label: 'Happy Readers', value: testimonialStats.total_reviewers?.toLocaleString() || '0', icon: People, color: C.secondary, bg: 'rgba(82,183,136,0.15)' },
+                  { label: '5-Star Ratings', value: testimonialStats.five_star_count?.toLocaleString() || '0', icon: EmojiEvents, color: '#db2777', bg: 'rgba(219,39,119,0.15)' },
+                ].map((stat, i) => (
+                  <Grow key={i} in={visible} timeout={800 + i * 200}>
+                    <Box sx={{ 
+                      px: 4, 
+                      py: 2.5, 
+                      borderRadius: 3, 
+                      background: stat.bg,
+                      backdropFilter: 'blur(10px)',
+                      border: `1px solid ${stat.color}40`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 2,
+                      minWidth: { xs: '100%', sm: 'auto' },
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        transform: 'translateY(-4px)',
+                        boxShadow: `0 8px 20px ${stat.color}30`
+                      }
+                    }}>
+                      <Box sx={{ 
+                        width: 50, 
+                        height: 50, 
+                        borderRadius: 2, 
+                        background: `${stat.color}20`, 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center' 
+                      }}>
+                        {React.createElement(stat.icon, { sx: { color: stat.color, fontSize: 28 } })}
+                      </Box>
+                      <Box>
+                        <Typography variant="h5" fontWeight={900} sx={{ color: 'white', lineHeight: 1 }}>
+                          {stat.value}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)', fontWeight: 600, textTransform: 'uppercase' }}>
+                          {stat.label}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Grow>
+                ))}
+              </Box>
+            </Fade>
+          )}
+
+          {/* Testimonials Grid */}
+          {testimonialsLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+              <CircularProgress sx={{ color: C.secondary }} size={60} />
+            </Box>
+          ) : (
+            <Grid container spacing={3}>
+              {testimonials.slice(0, 6).map((testimonial, i) => (
+                <Grid item xs={12} sm={6} lg={4} key={testimonial.id || i}>
+                  <Grow in={visible} timeout={600 + i * 150}>
+                    <Card
+                      elevation={0}
+                      onClick={() => setSelectedTestimonial(testimonial)}
+                      sx={{
+                        height: '100%', 
+                        borderRadius: 4,
+                        background: 'rgba(255,255,255,0.05)',
+                        backdropFilter: 'blur(20px)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        cursor: 'pointer',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                        '&:hover': { 
+                          background: 'rgba(255,255,255,0.1)', 
+                          transform: 'translateY(-8px) scale(1.02)',
+                          borderColor: `${C.secondary}60`,
+                          boxShadow: `0 20px 40px rgba(82,183,136,0.2)`
+                        },
+                        '&::before': {
+                          content: '""',
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: '4px',
+                          background: `linear-gradient(90deg, ${C.secondary}, ${C.purple}, ${C.pink})`,
+                          opacity: 0,
+                          transition: 'opacity 0.3s ease'
+                        },
+                        '&:hover::before': {
+                          opacity: 1
+                        }
+                      }}
+                    >
+                      <CardContent sx={{ p: 4 }}>
+                        {/* Quote Icon */}
+                        <Box sx={{ 
+                          width: 50, 
+                          height: 50, 
+                          borderRadius: 2, 
+                          background: `linear-gradient(135deg, ${C.secondary}30, ${C.purple}20)`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          mb: 3
+                        }}>
+                          <Typography variant="h3" sx={{ color: C.secondary, fontFamily: 'Georgia, serif', lineHeight: 1 }}>
+                            "
+                          </Typography>
+                        </Box>
+                        
+                        {/* Rating */}
+                        <Rating 
+                          value={testimonial.rating} 
+                          readOnly 
+                          size="small" 
+                          sx={{ 
+                            mb: 2, 
+                            '& .MuiRating-iconFilled': { color: '#fbbf24' },
+                            '& .MuiRating-icon': { fontSize: 20 }
+                          }} 
+                        />
+                        
+                        {/* Review Text */}
+                        <Typography 
+                          variant="body1" 
+                          sx={{ 
+                            color: 'rgba(255,255,255,0.9)', 
+                            lineHeight: 1.8, 
+                            mb: 3, 
+                            fontStyle: 'italic',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 4,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                            minHeight: 110
+                          }}
+                        >
+                          {testimonial.review_text}
+                        </Typography>
+                        
+                        <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)', mb: 3 }} />
+                        
+                        {/* User Info */}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                          <Avatar 
+                            src={testimonial.avatar} 
+                            sx={{ 
+                              width: 56, 
+                              height: 56, 
+                              border: `3px solid ${C.secondary}`,
+                              boxShadow: `0 4px 12px ${C.secondary}40`
+                            }} 
+                          />
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography variant="subtitle1" fontWeight={700} sx={{ color: 'white', mb: 0.5 }}>
+                              {testimonial.full_name}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: C.secondary, fontWeight: 600, display: 'block', mb: 0.5 }}>
+                              {testimonial.user_role}
+                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Chip 
+                                label={`${testimonial.books_read_count} books read`}
+                                size="small"
+                                icon={<MenuBook sx={{ fontSize: 14 }} />}
+                                sx={{ 
+                                  height: 22,
+                                  fontSize: 11,
+                                  background: 'rgba(82,183,136,0.2)',
+                                  color: '#86efac',
+                                  border: '1px solid rgba(82,183,136,0.3)',
+                                  fontWeight: 600,
+                                  '& .MuiChip-icon': { color: '#86efac', fontSize: 14 }
+                                }}
+                              />
+                            </Box>
+                          </Box>
+                        </Box>
+
+                        {/* Book Tag */}
+                        {testimonial.book_title && (
+                          <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)', display: 'block', mb: 0.5 }}>
+                              About
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>
+                              {testimonial.book_title}
+                            </Typography>
+                          </Box>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </Grow>
+                </Grid>
+              ))}
+            </Grid>
+          )}
+
+          {/* View All Reviews Button */}
+          {testimonials.length > 0 && (
+            <Fade in={visible} timeout={1200}>
+              <Box sx={{ textAlign: 'center', mt: 6 }}>
+                <Button
+                  variant="outlined"
+                  size="large"
+                  endIcon={<ArrowForward />}
+                  onClick={() => navigate('/browse')}
+                  sx={{
+                    borderColor: C.secondary,
+                    color: C.secondary,
+                    fontWeight: 700,
+                    fontSize: 16,
+                    px: 5,
+                    py: 1.5,
+                    borderRadius: 3,
+                    borderWidth: 2,
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      borderWidth: 2,
+                      borderColor: C.secondary,
+                      background: `${C.secondary}15`,
+                      transform: 'translateY(-2px)',
+                      boxShadow: `0 8px 20px ${C.secondary}40`
+                    }
+                  }}
+                >
+                  Browse Our Collection & Read Reviews
+                </Button>
+              </Box>
+            </Fade>
+          )}
+
+          {/* Trust Badges */}
+          <Box sx={{ mt: 10, display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center', alignItems: 'center' }}>
+            {[
+              { icon: <Security sx={{ fontSize: 20 }} />, label: 'SSL Secured', color: '#10b981' },
+              { icon: <Schedule sx={{ fontSize: 20 }} />, label: '24/7 Access', color: '#3b82f6' },
+              { icon: <EmojiEvents sx={{ fontSize: 20 }} />, label: 'Award Winning', color: '#fbbf24' },
+              { icon: <People sx={{ fontSize: 20 }} />, label: `${stats?.total_members || '1200'}+ Members`, color: '#8b5cf6' },
+              { icon: <Smartphone sx={{ fontSize: 20 }} />, label: 'Mobile Friendly', color: '#ec4899' },
+            ].map((badge, i) => (
+              <Grow key={i} in={visible} timeout={800 + i * 100}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 1.5, 
+                  px: 3, 
+                  py: 1.5, 
+                  borderRadius: 10, 
+                  background: `${badge.color}15`,
+                  border: `1px solid ${badge.color}30`,
+                  color: 'rgba(255,255,255,0.9)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    background: `${badge.color}25`,
+                    transform: 'translateY(-2px)',
+                    borderColor: `${badge.color}50`
+                  }
+                }}>
+                  {React.cloneElement(badge.icon, { sx: { fontSize: 20, color: badge.color } })}
+                  <Typography variant="body2" fontWeight={600}>{badge.label}</Typography>
+                </Box>
+              </Grow>
             ))}
           </Box>
         </Container>

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Alert,
@@ -15,12 +15,11 @@ import { ReactReader } from 'react-reader';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import BookNotepad from './BookNotepad';
 import axios from 'axios';
-import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
+import 'react-pdf/dist/esm/Page/TextLayer.css';
 
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url
-).toString();
+// Configure PDF.js worker - point to the copied worker file
+pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
 const API_URL = 'http://localhost:8000/api';
 
@@ -28,6 +27,10 @@ export default function BookReader() {
   const { bookId } = useParams();
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
+  const pdfFile = useMemo(() => ({
+    url: `${API_URL}/books/${bookId}/content`,
+    httpHeaders: { Authorization: `Bearer ${token}` }
+  }), [bookId, token]);
   const [book, setBook] = useState(null);
   const [epubUrl, setEpubUrl] = useState('');
   const [location, setLocation] = useState(null);
@@ -143,15 +146,15 @@ export default function BookReader() {
           </Button>
         </Stack>
         <Document
-          file={{
-            url: `${API_URL}/books/${bookId}/content`,
-            httpHeaders: { Authorization: `Bearer ${token}` }
+          file={pdfFile}
+          onLoadSuccess={(pdf) => {
+            setPageCount(pdf.numPages);
+            setPageNumber((page) => Math.min(page, pdf.numPages));
           }}
-          onLoadSuccess={({ numPages }) => {
-            setPageCount(numPages);
-            setPageNumber((page) => Math.min(page, numPages));
+          onLoadError={(loadError) => {
+            console.error('PDF load error:', loadError);
+            setError(loadError.message || 'Unable to render this PDF.');
           }}
-          onLoadError={(loadError) => setError(loadError.message || 'Unable to render this PDF.')}
           loading={<CircularProgress />}
           error={<Alert severity="error">Unable to render this PDF. Please try again.</Alert>}
         >
