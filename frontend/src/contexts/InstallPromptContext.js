@@ -1,17 +1,22 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 const InstallPromptContext = createContext(null);
+
+// Module-level singletons — capture the event before React even mounts.
 let deferredInstallPrompt = null;
 const promptListeners = new Set();
 const installedListeners = new Set();
-const installCardPaths = new Set(['/dashboard', '/admin', '/super-admin', '/librarian']);
 
 if (typeof window !== 'undefined') {
+  // ── KEY FIX ────────────────────────────────────────────────────────────
+  // The browser fires `beforeinstallprompt` ONCE, typically at initial page
+  // load (e.g. on '/' or '/login'). The old code had a path-guard here that
+  // discarded the event when the user hadn't navigated to a dashboard yet,
+  // so deferredInstallPrompt was always null and canInstall was always false.
+  //
+  // Fix: capture the event unconditionally. The InstallCard component itself
+  // controls where it renders — we don't need to guard here.
   window.addEventListener('beforeinstallprompt', (event) => {
-    if (!installCardPaths.has(window.location.pathname)) {
-      return;
-    }
-
     event.preventDefault();
     deferredInstallPrompt = event;
     promptListeners.forEach((listener) => listener(event));
@@ -48,6 +53,8 @@ export function InstallPromptProvider({ children }) {
 
     promptListeners.add(handleBeforeInstallPrompt);
     installedListeners.add(handleAppInstalled);
+
+    // Sync with any event already captured before this provider mounted
     if (deferredInstallPrompt) {
       handleBeforeInstallPrompt(deferredInstallPrompt);
     }
@@ -59,9 +66,7 @@ export function InstallPromptProvider({ children }) {
   }, []);
 
   const promptToInstall = async () => {
-    if (!installPrompt) {
-      return;
-    }
+    if (!installPrompt) return;
 
     const promptEvent = installPrompt;
     deferredInstallPrompt = null;
@@ -69,7 +74,6 @@ export function InstallPromptProvider({ children }) {
 
     await promptEvent.prompt();
     const { outcome } = await promptEvent.userChoice;
-
     if (outcome === 'accepted') {
       setIsInstalled(true);
     }
@@ -91,10 +95,8 @@ export function InstallPromptProvider({ children }) {
 
 export function useInstallPrompt() {
   const context = useContext(InstallPromptContext);
-
   if (!context) {
     throw new Error('useInstallPrompt must be used within InstallPromptProvider');
   }
-
   return context;
 }

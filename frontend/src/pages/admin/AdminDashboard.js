@@ -56,7 +56,6 @@ import {
   Close as CloseIcon
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import InstallCard from '../../components/InstallCard';
 import axios from 'axios';
 
 const StatCard = ({ title, value, change, icon, color, bgColor, subtitle, onClick, delay = 0 }) => (
@@ -275,7 +274,6 @@ const AdminDashboard = () => {
   return (
     <DashboardLayout title="Admin Panel">
       <Box>
-        <InstallCard />
         {/* Header Section */}
         <Fade in timeout={300}>
           <Box sx={{ mb: 4 }}>

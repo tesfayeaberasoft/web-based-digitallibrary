@@ -4,16 +4,22 @@ import './i18n';
 import './index.css';
 import App from './App';
 
-if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) {
+// Register service worker in ALL environments (dev + prod).
+// Chrome requires an active service worker before it will fire
+// `beforeinstallprompt` — without it, PWA install never becomes available.
+if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     const publicUrl = (process.env.PUBLIC_URL || '').replace(/\/$/, '');
     const serviceWorkerUrl = `${publicUrl}/sw.js`;
 
     navigator.serviceWorker
       .register(serviceWorkerUrl)
-      .then((registration) => registration.update())
+      .then((registration) => {
+        console.log('[App] Service worker registered:', registration.scope);
+        return registration.update();
+      })
       .catch((error) => {
-        console.error('Service worker registration or update failed:', error);
+        console.error('[App] Service worker registration failed:', error);
       });
   });
 }

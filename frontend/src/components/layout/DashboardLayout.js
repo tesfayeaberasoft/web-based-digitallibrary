@@ -19,6 +19,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from './LanguageSwitcher';
+import InstallCard from '../InstallCard';
 
 // Green theme palette
 const C = {
@@ -807,6 +808,9 @@ export default function DashboardLayout({ children, title }) {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* PWA Install Card — shown on every authenticated page */}
+      <InstallCard />
     </Box>
   );
 }
