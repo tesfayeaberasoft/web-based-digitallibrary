@@ -19,8 +19,8 @@ import axios from 'axios';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
-// Use CDN for PDF worker to avoid build/deployment issues
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+// Use local worker file served from /public to avoid dynamic-import issues with CRA webpack
+pdfjs.GlobalWorkerOptions.workerSrc = `${process.env.PUBLIC_URL}/pdf.worker.min.mjs`;
 
 const API_URL = apiUrl("/api");
 
@@ -41,7 +41,6 @@ export default function BookReader() {
   useEffect(() => {
     const container = readerContainerRef.current;
     if (!container) return undefined;
-
     const updatePageWidth = () => {
       setPageWidth(Math.max(240, Math.min(container.clientWidth - 32, 800)));
     };
@@ -54,7 +53,6 @@ export default function BookReader() {
   useEffect(() => {
     let active = true;
     let objectUrl = '';
-
     const loadBook = async () => {
       setLoading(true);
       setError('');
@@ -64,9 +62,7 @@ export default function BookReader() {
         if (!data.success || !data.book?.has_digital_content) {
           throw new Error('This book has no digital content available.');
         }
-
         if (active) setBook(data.book);
-
         if (data.book.file_type === 'epub') {
           const content = await axios.get(`${API_URL}/books/${bookId}/content`, {
             ...config,
@@ -91,7 +87,6 @@ export default function BookReader() {
         if (active) setLoading(false);
       }
     };
-
     loadBook();
     return () => {
       active = false;
@@ -105,7 +100,6 @@ export default function BookReader() {
     }
     if (error) return <Alert severity="error">{error}</Alert>;
     if (!book) return null;
-
     if (book.file_type === 'epub') {
       return epubUrl ? (
         <Box sx={{ height: '75vh', minHeight: 500 }}>
@@ -118,7 +112,6 @@ export default function BookReader() {
         </Box>
       ) : <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}><CircularProgress /></Box>;
     }
-
     return (
       <Stack spacing={2} alignItems="center">
         <Stack direction="row" spacing={1} alignItems="center">
@@ -151,7 +144,10 @@ export default function BookReader() {
             setPageCount(numPages);
             setPageNumber((page) => Math.min(page, numPages));
           }}
-          onLoadError={(loadError) => setError(loadError.message || 'Unable to render this PDF.')}
+          onLoadError={(loadError) => {
+            console.error('PDF load error:', loadError);
+            setError(loadError.message || 'Unable to render this PDF.');
+          }}
           loading={<CircularProgress />}
           error={<Alert severity="error">Unable to render this PDF. Please try again.</Alert>}
         >
