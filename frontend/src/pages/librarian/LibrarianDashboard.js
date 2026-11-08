@@ -144,7 +144,7 @@ const LibrarianDashboard = () => {
           {/* Persistent PWA install card — session-scoped dismiss */}
           <PersistentInstallCard />
           {/* Header */}
-          <Box sx={{ mb: 4 }}>
+          <Box sx={{ mb: 4, textAlign: 'center' }}>
             <Typography variant="h4" fontWeight={700} gutterBottom>
               📊 Librarian Overview
             </Typography>
@@ -160,7 +160,22 @@ const LibrarianDashboard = () => {
           )}
           
           {/* Main Stats Cards */}
-          <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid
+            container
+            spacing={3}
+            sx={{
+              mb: 4,
+              m: 0,
+              width: '100%',
+              minWidth: 0,
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: 'minmax(0, 1fr)',
+                sm: 'repeat(2, minmax(0, 1fr))',
+                md: 'repeat(4, minmax(0, 1fr))'
+              }
+            }}
+          >
             {/* Total Books */}
             <Grid item xs={12} sm={6} md={3}>
               <Grow in={true} timeout={600}>

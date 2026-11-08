@@ -194,7 +194,7 @@ export default function UserBooks() {
     return (
       <Grow in timeout={500 + idx * 150}>
         <Card elevation={0} sx={{
-          height: '100%', border: `2px solid ${color}40`, borderRadius: 3,
+          height: '100%', width: '100%', minWidth: 0, border: `2px solid ${color}40`, borderRadius: 3,
           bgcolor: bg, transition: 'all 0.3s ease',
           '&:hover': { transform: 'translateY(-6px)', boxShadow: `0 16px 32px ${color}25`, borderColor: color }
         }}>
@@ -286,7 +286,7 @@ export default function UserBooks() {
     return (
       <Grow in timeout={500 + idx * 150}>
         <Card elevation={0} sx={{
-          height: '100%', border: `2px solid ${color}40`, borderRadius: 3,
+          height: '100%', width: '100%', minWidth: 0, border: `2px solid ${color}40`, borderRadius: 3,
           bgcolor: ready ? C.lighter : '#fffbeb', transition: 'all 0.3s ease',
           '&:hover': { transform: 'translateY(-6px)', boxShadow: `0 16px 32px ${color}25`, borderColor: color }
         }}>
@@ -349,16 +349,18 @@ export default function UserBooks() {
       <Fade in timeout={500}>
         <Box>
           {/* header */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, flexWrap: 'wrap', gap: 2 }}>
-            <Box>
+          <Box sx={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 4 }}>
+            {/* Centered Text */}
+            <Box sx={{ textAlign: 'center' }}>
               <Typography variant="h4" fontWeight={800} sx={{
                 background: `linear-gradient(135deg, ${C.primary}, ${C.secondary})`,
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', mb: 0.5
               }}>My Books</Typography>
               <Typography variant="body1" color="text.secondary">Manage your borrowed books and reservations</Typography>
             </Box>
+            {/* Refresh Button - Positioned Absolutely */}
             <Button variant="outlined" startIcon={<Refresh />} onClick={fetchBooks}
-              sx={{ ...gradBtn(true), px: 3 }}>Refresh</Button>
+              sx={{ ...gradBtn(true), px: 3, position: 'absolute', right: 0 }}>Refresh</Button>
           </Box>
 
           {/* alerts */}
@@ -366,16 +368,28 @@ export default function UserBooks() {
           {success && <Alert severity="success" onClose={() => setSuccess('')} sx={{ mb: 3, borderRadius: 2, border:`1px solid ${C.secondary}`, bgcolor: C.lighter }}>{success}</Alert>}
 
           {/* summary pills */}
-          <Grid container spacing={2} sx={{ mb: 4 }}>
+          <Box sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: 'repeat(2, minmax(0, 1fr))',
+              md: 'repeat(4, minmax(0, 1fr))'
+            },
+            gap: 2,
+            width: '100%',
+            minWidth: 0,
+            mb: 4
+          }}>
             {[
               { label: 'Borrowed',     value: loans.length,        color: C.primary,  icon: <BookIcon/> },
               { label: 'Reservations', value: reservations.length, color: '#f59e0b',  icon: <BookmarkIcon/> },
               { label: 'Overdue',      value: loans.filter(l => daysUntilDue(l.due_date) < 0).length, color: '#ef4444', icon: <WarningIcon/> },
               { label: 'Due Soon',     value: loans.filter(l => { const d = daysUntilDue(l.due_date); return d >= 0 && d <= 3; }).length, color: '#f59e0b', icon: <ScheduleIcon/> },
             ].map((s, i) => (
-              <Grid item xs={6} sm={3} key={i}>
+              <Box key={i} sx={{ minWidth: 0 }}>
                 <Grow in timeout={400 + i * 100}>
                   <Paper elevation={0} sx={{
+                    width: '100%',
+                    height: '100%',
                     p: 2, borderRadius: 3, textAlign: 'center',
                     border: `2px solid ${s.color}30`, bgcolor: `${s.color}08`,
                     transition: 'all 0.3s ease',
@@ -386,14 +400,16 @@ export default function UserBooks() {
                     <Typography variant="caption" color="text.secondary" fontWeight={600}>{s.label}</Typography>
                   </Paper>
                 </Grow>
-              </Grid>
+              </Box>
             ))}
-          </Grid>
+          </Box>
 
           {/* tabs */}
           <Paper elevation={0} sx={{ mb: 4, borderRadius: 3, overflow: 'hidden', border: `2px solid ${C.light}` }}>
-            <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{
-              '& .MuiTab-root': { fontWeight: 700, py: 2, minHeight: 60, fontSize: '0.95rem' },
+            <Tabs value={tab} onChange={(_, v) => setTab(v)} centered sx={{
+              width: '100%',
+              '& .MuiTabs-flexContainer': { justifyContent: 'center' },
+              '& .MuiTab-root': { fontWeight: 700, py: 2, px: 3, minWidth: { xs: 150, sm: 220 }, flexGrow: 0, minHeight: 60, fontSize: '0.95rem' },
               '& .Mui-selected': { color: `${C.primary} !important` },
               '& .MuiTabs-indicator': { bgcolor: C.primary, height: 3 }
             }}>
@@ -426,26 +442,40 @@ export default function UserBooks() {
                   ? <EmptyState icon={<BookIcon sx={{ fontSize: 52, color: 'white' }} />}
                       title="No borrowed books" sub="Visit the library to borrow your first book! 📚"
                       btnLabel="Browse Books" btnHref="/user/browse" color={C.primary} />
-                  : <Grid container spacing={3}>
+                  : <Box sx={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
+                      gap: 3,
+                      width: '100%',
+                      minWidth: 0,
+                      alignItems: 'stretch'
+                    }}>
                       {loans.map((l, i) => (
-                        <Grid item xs={12} sm={6} lg={4} key={l.id}>
+                        <Box key={l.id} sx={{ minWidth: 0, display: 'flex' }}>
                           <LoanCard loan={l} idx={i} />
-                        </Grid>
+                        </Box>
                       ))}
-                    </Grid>
+                    </Box>
               )}
               {tab === 1 && (
                 reservations.length === 0
                   ? <EmptyState icon={<BookmarkIcon sx={{ fontSize: 52, color: 'white' }} />}
                       title="No reservations" sub="Reserve books that are currently unavailable! 🔔"
                       btnLabel="Browse Books" btnHref="/user/browse" color="#f59e0b" />
-                  : <Grid container spacing={3}>
+                  : <Box sx={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
+                      gap: 3,
+                      width: '100%',
+                      minWidth: 0,
+                      alignItems: 'stretch'
+                    }}>
                       {reservations.map((r, i) => (
-                        <Grid item xs={12} sm={6} lg={4} key={r.id}>
+                        <Box key={r.id} sx={{ minWidth: 0, display: 'flex' }}>
                           <ReservationCard res={r} idx={i} />
-                        </Grid>
+                        </Box>
                       ))}
-                    </Grid>
+                    </Box>
               )}
             </>
           )}

@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
-  Grid,
   Card,
   CardContent,
   Button,
@@ -149,8 +148,9 @@ const UserFines = () => {
         <Box>
           {/* Header Section */}
           <Box sx={{ mb: 4 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Box>
+            <Box sx={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 2 }}>
+              {/* Centered Text */}
+              <Box sx={{ textAlign: 'center' }}>
                 <Typography variant="h4" fontWeight={900} sx={{ color: C.dark, mb: 0.5 }}>
                   Fines & Payments
                 </Typography>
@@ -158,11 +158,14 @@ const UserFines = () => {
                   Manage your library fines and payment history
                 </Typography>
               </Box>
+              {/* Refresh Button - Positioned Absolutely */}
               <Tooltip title="Refresh data">
                 <IconButton
                   onClick={handleRefresh}
                   disabled={refreshing}
                   sx={{
+                    position: 'absolute',
+                    right: 0,
                     bgcolor: C.lighter,
                     border: `2px solid ${C.light}`,
                     '&:hover': { bgcolor: C.light }
@@ -198,12 +201,23 @@ const UserFines = () => {
 
           {/* Summary Cards */}
           {summary && (
-            <Grid container spacing={3} sx={{ mb: 4 }}>
+            <Box sx={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))',
+              gap: 3,
+              width: '100%',
+              minWidth: 0,
+              mb: 4,
+              alignItems: 'stretch'
+            }}>
               {/* Total Balance Card */}
-              <Grid item xs={12} md={4}>
+              <Box sx={{ minWidth: 0, display: 'flex' }}>
                 <Grow in={true} timeout={600}>
                   <Card
                     sx={{
+                      width: '100%',
+                      minWidth: 0,
+                      height: '100%',
                       background: unpaidFines.length > 0 ? 'linear-gradient(135deg, #f44336 0%, #e57373 100%)' : C.gradient,
                       color: 'white',
                       borderRadius: 3,
@@ -235,13 +249,16 @@ const UserFines = () => {
                     </CardContent>
                   </Card>
                 </Grow>
-              </Grid>
+              </Box>
 
               {/* Unpaid Fines Card */}
-              <Grid item xs={12} md={4}>
+              <Box sx={{ minWidth: 0, display: 'flex' }}>
                 <Grow in={true} timeout={800}>
                   <Card
                     sx={{
+                      width: '100%',
+                      minWidth: 0,
+                      height: '100%',
                       borderRadius: 3,
                       border: `2px solid ${C.light}`,
                       transition: 'all 0.3s ease',
@@ -266,13 +283,16 @@ const UserFines = () => {
                     </CardContent>
                   </Card>
                 </Grow>
-              </Grid>
+              </Box>
 
               {/* Borrowing Status Card */}
-              <Grid item xs={12} md={4}>
+              <Box sx={{ minWidth: 0, display: 'flex' }}>
                 <Grow in={true} timeout={1000}>
                   <Card
                     sx={{
+                      width: '100%',
+                      minWidth: 0,
+                      height: '100%',
                       borderRadius: 3,
                       border: `2px solid ${summary.can_borrow ? '#4caf50' : '#f44336'}20`,
                       bgcolor: summary.can_borrow ? '#e8f5e9' : '#ffebee',
@@ -309,8 +329,8 @@ const UserFines = () => {
                     </CardContent>
                   </Card>
                 </Grow>
-              </Grid>
-            </Grid>
+              </Box>
+            </Box>
           )}
 
           {/* Borrowing Restriction Warning */}
@@ -320,12 +340,13 @@ const UserFines = () => {
               icon={<WarningIcon />}
               sx={{
                 mb: 3,
+                width: '100%',
                 borderRadius: 2,
                 border: `2px solid #ff9800`,
                 '& .MuiAlert-message': { width: '100%' }
               }}
             >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
                 <Box>
                   <Typography variant="body1" fontWeight={700} sx={{ mb: 0.5 }}>
                     Borrowing Restricted
@@ -344,11 +365,16 @@ const UserFines = () => {
             <Tabs
               value={activeTab}
               onChange={(e, newValue) => setActiveTab(newValue)}
+              centered
               sx={{
+                width: '100%',
+                '& .MuiTabs-flexContainer': { justifyContent: 'center' },
                 '& .MuiTab-root': {
                   textTransform: 'none',
                   fontWeight: 600,
                   fontSize: '1rem',
+                  minWidth: { xs: 150, sm: 220 },
+                  flexGrow: 0,
                   minHeight: 64
                 },
                 '& .Mui-selected': {
@@ -408,17 +434,24 @@ const UserFines = () => {
                   </Typography>
                 </Paper>
               ) : (
-                <Grid container spacing={3}>
+                <Box sx={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
+                  gap: 3,
+                  width: '100%',
+                  minWidth: 0,
+                  alignItems: 'stretch'
+                }}>
                   {unpaidFines.map((fine) => (
-                    <Grid item xs={12} md={6} lg={4} key={fine.id}>
+                    <Box key={fine.id} sx={{ minWidth: 0, display: 'flex' }}>
                       <PaymentCard
                         fine={fine}
                         onPaymentInitiated={handlePaymentInitiated}
                         onPaymentComplete={handlePaymentComplete}
                       />
-                    </Grid>
+                    </Box>
                   ))}
-                </Grid>
+                </Box>
               )}
             </Box>
           )}
@@ -444,11 +477,26 @@ const UserFines = () => {
                   </Typography>
                 </Paper>
               ) : (
-                <Grid container spacing={2}>
+                <Box sx={{
+                  display: 'grid',
+                  gridTemplateColumns: {
+                    xs: 'minmax(0, 1fr)',
+                    md: 'repeat(2, minmax(0, 1fr))'
+                  },
+                  gap: 2.5,
+                  width: '100%',
+                  minWidth: 0,
+                  alignItems: 'stretch'
+                }}>
                   {paymentHistory.map((payment) => (
-                    <Grid item xs={12} key={payment.id}>
+                    <Box key={payment.id} sx={{
+                      minWidth: 0,
+                      '&:last-child:nth-child(odd)': { gridColumn: { md: '1 / -1' } }
+                    }}>
                       <Card
                         sx={{
+                          width: '100%',
+                          minWidth: 0,
                           borderRadius: 2,
                           border: `2px solid ${C.light}`,
                           transition: 'all 0.3s ease',
@@ -459,24 +507,34 @@ const UserFines = () => {
                         }}
                       >
                         <CardContent>
-                          <Grid container spacing={2} alignItems="center">
-                            <Grid item xs={12} sm={6} md={3}>
+                          <Box sx={{
+                            display: 'grid',
+                            gridTemplateColumns: {
+                              xs: 'minmax(0, 1fr)',
+                              sm: 'repeat(2, minmax(0, 1fr))'
+                            },
+                            gap: 2,
+                            alignItems: 'center',
+                            width: '100%',
+                            minWidth: 0
+                          }}>
+                            <Box sx={{ minWidth: 0 }}>
                               <Typography variant="caption" color="text.secondary" display="block">
                                 Transaction Date
                               </Typography>
                               <Typography variant="body1" fontWeight={600}>
                                 {new Date(payment.created_at).toLocaleDateString()}
                               </Typography>
-                            </Grid>
-                            <Grid item xs={12} sm={6} md={2}>
+                            </Box>
+                            <Box sx={{ minWidth: 0 }}>
                               <Typography variant="caption" color="text.secondary" display="block">
                                 Amount
                               </Typography>
                               <Typography variant="h6" fontWeight={700} sx={{ color: C.primary }}>
                                 {payment.amount.toFixed(2)} {payment.currency}
                               </Typography>
-                            </Grid>
-                            <Grid item xs={12} sm={6} md={2}>
+                            </Box>
+                            <Box sx={{ minWidth: 0 }}>
                               <Typography variant="caption" color="text.secondary" display="block">
                                 Status
                               </Typography>
@@ -490,16 +548,21 @@ const UserFines = () => {
                                   textTransform: 'uppercase'
                                 }}
                               />
-                            </Grid>
-                            <Grid item xs={12} sm={6} md={3}>
+                            </Box>
+                            <Box sx={{ minWidth: 0, overflowWrap: 'anywhere' }}>
                               <Typography variant="caption" color="text.secondary" display="block">
                                 Book
                               </Typography>
                               <Typography variant="body2" fontWeight={600}>
                                 {payment.book?.title || 'N/A'}
                               </Typography>
-                            </Grid>
-                            <Grid item xs={12} md={2} sx={{ textAlign: 'right' }}>
+                            </Box>
+                            <Box sx={{
+                              display: 'flex',
+                              justifyContent: { xs: 'flex-start', sm: 'flex-end' },
+                              minWidth: 0,
+                              gridColumn: { sm: '1 / -1' }
+                            }}>
                               <Tooltip title="View receipt">
                                 <IconButton size="small" sx={{ color: C.primary }}>
                                   <ReceiptIcon />
@@ -510,13 +573,13 @@ const UserFines = () => {
                                   <InfoIcon />
                                 </IconButton>
                               </Tooltip>
-                            </Grid>
-                          </Grid>
+                            </Box>
+                          </Box>
                         </CardContent>
                       </Card>
-                    </Grid>
+                    </Box>
                   ))}
-                </Grid>
+                </Box>
               )}
             </Box>
           )}

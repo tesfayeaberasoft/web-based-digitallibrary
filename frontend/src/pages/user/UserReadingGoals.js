@@ -127,16 +127,18 @@ export default function UserReadingGoals() {
       <Fade in timeout={500}>
         <Box>
           {/* header */}
-          <Box sx={{ display:'flex', justifyContent:'space-between', alignItems:'center', mb:4, flexWrap:'wrap', gap:2 }}>
-            <Box>
+          <Box sx={{ position:'relative', display:'flex', justifyContent:'center', alignItems:'center', mb:4 }}>
+            {/* Centered Text */}
+            <Box sx={{ textAlign: 'center' }}>
               <Typography variant="h4" fontWeight={800} sx={{
                 background:`linear-gradient(135deg,${C.primary},${C.secondary})`,
                 WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', mb:0.5
               }}>Reading Goals</Typography>
               <Typography variant="body1" color="text.secondary">Set targets and track your reading journey</Typography>
             </Box>
+            {/* New Goal Button - Positioned Absolutely */}
             <Button variant="contained" startIcon={<AddIcon />} onClick={openAdd}
-              sx={{ ...gradBtn(), px:3, py:1.3 }}>New Goal</Button>
+              sx={{ ...gradBtn(), px:3.5, py:1.5, minHeight:46, fontSize:'0.95rem', position:'absolute', right:0 }}>New Goal</Button>
           </Box>
 
           {success && <Alert severity="success" onClose={() => setSuccess('')}
@@ -146,16 +148,27 @@ export default function UserReadingGoals() {
 
           {/* summary pills */}
           {goals.length > 0 && (
-            <Grid container spacing={2.5} sx={{ mb:4 }}>
+            <Box sx={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))',
+              gap: 2.5,
+              width: '100%',
+              minWidth: 0,
+              mb: 4,
+              alignItems: 'stretch'
+            }}>
               {[
                 { label:'Total Goals',  value:goals.length,   icon:<FlagOutlined/>,   grad:`linear-gradient(135deg,${C.primary},${C.secondary})` },
                 { label:'Completed',    value:completed,      icon:<CheckIcon/>,      grad:`linear-gradient(135deg,${C.secondary},${C.accent})` },
                 { label:'Total Target', value:totalTarget,    icon:<TrendingIcon/>,   grad:'linear-gradient(135deg,#8b5cf6,#a78bfa)' },
                 { label:'Books Read',   value:totalDone,      icon:<TrophyIcon/>,     grad:'linear-gradient(135deg,#f59e0b,#fbbf24)' },
               ].map((s, i) => (
-                <Grid item xs={6} sm={3} key={i}>
+                <Box key={i} sx={{ minWidth: 0, display: 'flex' }}>
                   <Grow in timeout={300 + i * 100}>
                     <Paper elevation={0} sx={{
+                      width: '100%',
+                      minWidth: 0,
+                      height: '100%',
                       p:2.5, borderRadius:3, textAlign:'center',
                       border:`2px solid transparent`,
                       background:`linear-gradient(white,white) padding-box, ${s.grad} border-box`,
@@ -171,9 +184,9 @@ export default function UserReadingGoals() {
                       <Typography variant="caption" color="text.secondary" fontWeight={600}>{s.label}</Typography>
                     </Paper>
                   </Grow>
-                </Grid>
+                </Box>
               ))}
-            </Grid>
+            </Box>
           )}
 
           {loading ? (
@@ -196,17 +209,24 @@ export default function UserReadingGoals() {
               </Box>
             </Fade>
           ) : (
-            <Grid container spacing={3}>
+            <Box sx={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
+              gap: 3,
+              width: '100%',
+              minWidth: 0,
+              alignItems: 'stretch'
+            }}>
               {goals.map((goal, idx) => {
                 const p           = pct(goal);
                 const dl          = daysLeft(goal.end_date);
                 const { label, color, icon } = cardStatus(goal);
                 const { grad }    = TYPE_COLOR[goal.goal_type] || TYPE_COLOR.monthly;
                 return (
-                  <Grid item xs={12} sm={6} lg={4} key={goal.id}>
+                  <Box key={goal.id} sx={{ minWidth: 0, display: 'flex' }}>
                     <Grow in timeout={400 + idx * 150}>
                       <Card elevation={0} sx={{
-                        height:'100%', border:`2px solid ${color}35`, borderRadius:3,
+                        height:'100%', width:'100%', minWidth:0, border:`2px solid ${color}35`, borderRadius:3,
                         bgcolor: p >= 100 ? C.lighter : 'white',
                         transition:'all 0.3s ease',
                         '&:hover':{ transform:'translateY(-7px)', boxShadow:`0 18px 36px ${color}20`, borderColor:color }
@@ -296,10 +316,10 @@ export default function UserReadingGoals() {
                         </CardContent>
                       </Card>
                     </Grow>
-                  </Grid>
+                  </Box>
                 );
               })}
-            </Grid>
+            </Box>
           )}
 
           {/* Add/Edit Dialog */}

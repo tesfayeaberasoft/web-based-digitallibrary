@@ -280,8 +280,9 @@ const AdminDashboard = () => {
         {/* Header Section */}
         <Fade in timeout={300}>
           <Box sx={{ mb: 4 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Box>
+            <Box sx={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 2 }}>
+              {/* Centered Header */}
+              <Box sx={{ textAlign: 'center' }}>
                 <Typography variant="h3" fontWeight={700} gutterBottom sx={{ 
                   background: 'linear-gradient(45deg, #4a9b8e 30%, #2c5f5a 90%)',
                   backgroundClip: 'text',
@@ -295,7 +296,8 @@ const AdminDashboard = () => {
                 </Typography>
               </Box>
               
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              {/* Right Side Controls - Positioned Absolutely */}
+              <Box sx={{ position: 'absolute', right: 0, display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Chip 
                   icon={<ScheduleIcon />}
                   label={`Updated: ${lastUpdate.toLocaleTimeString()}`}
@@ -320,7 +322,23 @@ const AdminDashboard = () => {
         </Fade>
 
         {/* Key Performance Indicators */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid
+          container
+          spacing={3}
+          sx={{
+            mb: 4,
+            m: 0,
+            width: '100%',
+            minWidth: 0,
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: 'minmax(0, 1fr)',
+              sm: 'repeat(2, minmax(0, 1fr))',
+              md: 'repeat(3, minmax(0, 1fr))',
+              xl: 'repeat(6, minmax(0, 1fr))'
+            }
+          }}
+        >
           <Grid item xs={12} sm={6} md={4} lg={2}>
             <StatCard
               title="Total Users"

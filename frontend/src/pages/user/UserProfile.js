@@ -227,7 +227,7 @@ export default function UserProfile() {
         <Box>
 
           {/* ── page header ── */}
-          <Box sx={{ mb: 4 }}>
+          <Box sx={{ mb: 4, textAlign: 'center' }}>
             <Typography variant="h4" fontWeight={800} sx={{
               background: `linear-gradient(135deg, ${C.primary}, ${C.secondary})`,
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', mb: 0.5,
@@ -257,12 +257,23 @@ export default function UserProfile() {
             </Grow>
           )}
 
-          <Grid container spacing={3}>
+          <Box sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: 'minmax(0, 1fr)',
+              md: 'minmax(0, 1.6fr) minmax(280px, 0.9fr)'
+            },
+            gap: 3,
+            width: '100%',
+            minWidth: 0,
+            alignItems: 'start'
+          }}>
             {/* ══════════════ LEFT COLUMN ══════════════ */}
-            <Grid item xs={12} md={8}>
+            <Box sx={{ minWidth: 0 }}>
 
               {/* ─── Personal Information ─── */}
               <Card elevation={0} sx={{
+                width: '100%', minWidth: 0,
                 mb: 3, border:`1px solid ${C.light}`, borderRadius: 3,
                 transition:'box-shadow 0.3s', '&:hover':{ boxShadow:`0 8px 24px ${C.light}` },
               }}>
@@ -331,6 +342,7 @@ export default function UserProfile() {
 
               {/* ─── Change Password ─── */}
               <Card elevation={0} sx={{
+                width: '100%', minWidth: 0,
                 border:`1px solid ${C.light}`, borderRadius:3,
                 transition:'box-shadow 0.3s', '&:hover':{ boxShadow:`0 8px 24px ${C.light}` },
               }}>
@@ -437,11 +449,12 @@ export default function UserProfile() {
                   </Button>
                 </CardContent>
               </Card>
-            </Grid>
+            </Box>
 
             {/* ══════════════ RIGHT COLUMN ══════════════ */}
-            <Grid item xs={12} md={4}>
+            <Box sx={{ minWidth: 0 }}>
               <Card elevation={0} sx={{
+                width: '100%', minWidth: 0,
                 border:`1px solid ${C.light}`, borderRadius:3, overflow:'hidden',
                 position:{ md:'sticky' }, top:20,
                 transition:'box-shadow 0.3s', '&:hover':{ boxShadow:`0 8px 24px ${C.light}` },
@@ -501,7 +514,7 @@ export default function UserProfile() {
                   }}/>
 
                   {/* action buttons */}
-                  <Box sx={{ display:'flex', gap:1, mb:1.5 }}>
+                  <Box sx={{ display:'flex', gap:1, mb:1.5, minWidth:0 }}>
                     <Button fullWidth variant="contained" size="small" startIcon={<UploadIcon/>}
                       onClick={()=>fileInputRef.current?.click()} disabled={uploading}
                       sx={{ ...gradientBtn }}>
@@ -542,15 +555,15 @@ export default function UserProfile() {
                     ].map((info,i)=>(
                       <Paper key={i} elevation={0} sx={{
                         display:'flex', alignItems:'center', justifyContent:'space-between',
-                        p:1.5, borderRadius:2, bgcolor: C.lighter, border:`1px solid ${C.light}`,
+                        gap:1, minWidth:0, p:1.5, borderRadius:2, bgcolor: C.lighter, border:`1px solid ${C.light}`,
                       }}>
-                        <Box sx={{ display:'flex', alignItems:'center', gap:1 }}>
+                        <Box sx={{ display:'flex', alignItems:'center', gap:1, minWidth:0 }}>
                           {info.icon}
                           <Typography variant="caption" color="text.secondary" fontWeight={600}>
                             {info.label}
                           </Typography>
                         </Box>
-                        <Typography variant="caption" fontWeight={700} sx={{ color: info.valueColor || C.dark }}>
+                        <Typography variant="caption" fontWeight={700} sx={{ color: info.valueColor || C.dark, textAlign:'right', overflowWrap:'anywhere' }}>
                           {info.value}
                         </Typography>
                       </Paper>
@@ -558,8 +571,8 @@ export default function UserProfile() {
                   </Box>
                 </CardContent>
               </Card>
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
 
           {/* ══════════════ CAMERA DIALOG ══════════════ */}
           <Dialog open={cameraOpen} onClose={closeCamera} maxWidth="md" fullWidth

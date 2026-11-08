@@ -77,7 +77,7 @@ export default function UserHistory() {
       <Fade in timeout={500}>
         <Box>
           {/* header */}
-          <Box sx={{ mb: 4 }}>
+          <Box sx={{ mb: 4, textAlign: 'center' }}>
             <Typography variant="h4" fontWeight={800} sx={{
               background: `linear-gradient(135deg,${C.primary},${C.secondary})`,
               WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', mb:0.5
@@ -88,22 +88,33 @@ export default function UserHistory() {
           {error && <Alert severity="error" onClose={() => setError('')} sx={{ mb:3, borderRadius:2 }}>{error}</Alert>}
 
           {/* stat cards */}
-          <Grid container spacing={2.5} sx={{ mb:4 }}>
+          <Box sx={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))',
+            gap: 2.5,
+            width: '100%',
+            minWidth: 0,
+            mb: 4,
+            alignItems: 'stretch'
+          }}>
             {[
               { icon:<BookIcon/>,    label:'Books Read',    value:returned.length,  grad:`linear-gradient(135deg,${C.primary},${C.secondary})` },
               { icon:<ScheduleIcon/>,label:'Active Loans',  value:active.length,    grad:`linear-gradient(135deg,#3b82f6,#60a5fa)` },
               { icon:<TimeIcon/>,    label:'Avg. Days',     value:`${avgDays}d`,    grad:`linear-gradient(135deg,#8b5cf6,#a78bfa)` },
               { icon:<TrophyIcon/>,  label:'On-Time Rate',  value:`${onTimePct}%`,  grad:`linear-gradient(135deg,#f59e0b,#fbbf24)` },
             ].map((s,i) => (
-              <Grid item xs={6} sm={3} key={i}>
+              <Box key={i} sx={{ minWidth: 0, display: 'flex' }}>
                 <Grow in timeout={400 + i * 100}>
                   <Card elevation={0} sx={{
+                    width: '100%',
+                    minWidth: 0,
+                    height: '100%',
                     border:`2px solid transparent`,
                     background:`linear-gradient(white,white) padding-box, ${s.grad} border-box`,
-                    borderRadius:3, transition:'all 0.3s ease',
+                    borderRadius:3, boxShadow:'0 2px 12px rgba(27,67,50,.08)', transition:'all 0.3s ease',
                     '&:hover':{ transform:'translateY(-5px)', boxShadow:`0 12px 28px rgba(0,0,0,.1)` }
                   }}>
-                    <CardContent sx={{ p:2.5, textAlign:'center' }}>
+                    <CardContent sx={{ p:2.5, textAlign:'center', width:'100%' }}>
                       <Avatar sx={{ width:50, height:50, mx:'auto', mb:1.5, background:s.grad }}>
                         {React.cloneElement(s.icon, { sx:{ color:'white', fontSize:24 } })}
                       </Avatar>
@@ -114,9 +125,9 @@ export default function UserHistory() {
                     </CardContent>
                   </Card>
                 </Grow>
-              </Grid>
+              </Box>
             ))}
-          </Grid>
+          </Box>
 
           {/* filters */}
           <Paper elevation={0} sx={{
