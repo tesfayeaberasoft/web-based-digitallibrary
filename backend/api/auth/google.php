@@ -1,4 +1,9 @@
 <?php
+// Suppress any PHP warnings/deprecations from corrupting JSON output
+ini_set('display_errors', '0');
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_NOTICE);
+ob_start(); // buffer output so stray warnings don't break JSON
+
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/../../config/config.php';
@@ -6,7 +11,7 @@ require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../utils/jwt.php';
 
 // Google Client ID — from env or hardcoded fallback
-$googleClientId = defined('GOOGLE_CLIENT_ID') && GOOGLE_CLIENT_ID !== ''
+$GOOGLE_CLIENT_ID = defined('GOOGLE_CLIENT_ID') && GOOGLE_CLIENT_ID !== ''
     ? GOOGLE_CLIENT_ID
     : '22900232380-bu194bg29pvdauj1ac9tu5i588onh6u8.apps.googleusercontent.com';
 
@@ -20,38 +25,81 @@ if (empty($data->credential)) {
 }
 
 /**
- * Decode a base64url-encoded string (no padding needed)
+ * Decode a base64url-encoded JWT segment (no padding needed)
  */
-function base64url_decode_segment($data) {
-    $padded = str_pad(strtr($data, '-_', '+/'), strlen($data) + (4 - strlen($data) % 4) % 4, '=');
-    return base64_decode($padded);
+function b64url_decode($data) {
+    $rem     = strlen($data) % 4;
+    $padded  = $rem ? $data . str_repeat('=', 4 - $rem) : $data;
+    return base64_decode(strtr($padded, '-_', '+/'));
 }
 
 /**
- * Decode the JWT payload without verifying the signature.
- * We still validate claims (aud, iss, exp) — we just don't do RSA signature
- * verification, which requires the google certs endpoint.
- * This is safe for local/dev because the token already came from Google's
- * OAuth popup in the browser (PKCE flow) and can't be forged by the user.
+ * Decode the JWT payload without verifying the RSA signature.
+ * Claims (iss, aud, exp, email) are still validated.
  */
-function decodeGoogleJwtPayload($idToken) {
+function decodeGoogleJwt($idToken) {
     $parts = explode('.', $idToken);
     if (count($parts) !== 3) {
         return null;
     }
-    $payload = json_decode(base64url_decode_segment($parts[1]), true);
+    $payload = json_decode(b64url_decode($parts[1]), true);
     return is_array($payload) ? $payload : null;
 }
 
 /**
- * Strategy 1: Verify via Google's tokeninfo endpoint (online, authoritative).
+ * Validate all security-relevant claims from the decoded payload.
  */
-function verifyViaTokeninfo($idToken) {
-    if (!function_exists('curl_init')) {
-        return ['ok' => false, 'reason' => 'curl_unavailable'];
+function validateClaims($payload, $clientId) {
+    $iss = $payload['iss'] ?? '';
+    $aud = $payload['aud'] ?? '';
+    $exp = (int)($payload['exp'] ?? 0);
+
+    // iss must be Google
+    if (!in_array($iss, ['accounts.google.com', 'https://accounts.google.com'], true)) {
+        error_log("[google.php] claim fail: iss=$iss");
+        return false;
     }
 
-    $ch = curl_init('https://oauth2.googleapis.com/tokeninfo?id_token=' . rawurlencode($idToken));
+    // aud may be a single string or an array (OpenID Connect allows array)
+    $audList = is_array($aud) ? $aud : array_map('trim', explode(',', $aud));
+    if (!in_array($clientId, $audList, true)) {
+        error_log("[google.php] claim fail: aud=" . json_encode($aud) . " clientId=$clientId");
+        return false;
+    }
+
+    // Token must not be expired (allow 60s clock skew)
+    if ($exp < (time() - 60)) {
+        error_log("[google.php] claim fail: expired exp=$exp now=" . time());
+        return false;
+    }
+
+    // Must have a Google user ID and verified email
+    if (empty($payload['sub']) || empty($payload['email'])) {
+        error_log("[google.php] claim fail: missing sub or email");
+        return false;
+    }
+
+    $emailVerified = filter_var($payload['email_verified'] ?? false, FILTER_VALIDATE_BOOLEAN);
+    if (!$emailVerified) {
+        error_log("[google.php] claim fail: email_verified=false for " . $payload['email']);
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * Try Google's tokeninfo endpoint (online, authoritative).
+ * Returns the parsed payload array on success, or null on failure.
+ */
+function fetchTokeninfo($idToken) {
+    if (!function_exists('curl_init')) {
+        error_log('[google.php] cURL not available');
+        return null;
+    }
+
+    $url = 'https://oauth2.googleapis.com/tokeninfo?id_token=' . rawurlencode($idToken);
+    $ch  = curl_init($url);
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_CONNECTTIMEOUT => 5,
@@ -60,113 +108,65 @@ function verifyViaTokeninfo($idToken) {
         CURLOPT_SSL_VERIFYHOST => 2,
         CURLOPT_HTTPHEADER     => ['Accept: application/json'],
     ]);
-    $response   = curl_exec($ch);
-    $curlError  = curl_error($ch);
-    $httpStatus = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
+    $body   = curl_exec($ch);
+    $curlErr = curl_error($ch);
+    $status  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    // Note: curl_close() deprecated in PHP 8.4 but harmless
+    @curl_close($ch);
 
-    if ($curlError || $response === false) {
-        error_log('Google tokeninfo cURL error: ' . $curlError);
-        return ['ok' => false, 'reason' => 'network_error'];
+    if ($curlErr || $body === false) {
+        error_log("[google.php] tokeninfo cURL error: $curlErr");
+        return null;
     }
 
-    if ($httpStatus !== 200) {
-        error_log('Google tokeninfo HTTP ' . $httpStatus . ': ' . $response);
-        return ['ok' => false, 'reason' => 'invalid_token'];
+    if ($status !== 200) {
+        error_log("[google.php] tokeninfo HTTP $status: $body");
+        return null;
     }
 
-    $payload = json_decode($response, true);
-    return is_array($payload) ? ['ok' => true, 'payload' => $payload] : ['ok' => false, 'reason' => 'parse_error'];
+    $payload = json_decode($body, true);
+    return is_array($payload) ? $payload : null;
 }
 
-/**
- * Strategy 2: Decode the JWT locally and validate claims only.
- * Used as fallback when tokeninfo is unreachable or rate-limited.
- */
-function verifyViaLocalDecode($idToken, $clientId) {
-    $payload = decodeGoogleJwtPayload($idToken);
-    if (!$payload) {
-        return ['ok' => false, 'reason' => 'decode_failed'];
-    }
-    return ['ok' => true, 'payload' => $payload];
-}
+// ── Main verification ──────────────────────────────────────────────────────
+$idToken        = $data->credential;
+$googlePayload  = null;
+$verifyMethod   = '';
 
-/**
- * Validate the decoded payload's claims regardless of which strategy produced it.
- */
-function validateGoogleClaims($payload, $clientId) {
-    $iss = $payload['iss'] ?? '';
-    $aud = $payload['aud'] ?? '';
-    $exp = (int)($payload['exp'] ?? 0);
-
-    if (!in_array($iss, ['accounts.google.com', 'https://accounts.google.com'], true)) {
-        error_log("Google claim fail: bad iss=$iss");
-        return false;
-    }
-
-    // aud may be a comma-separated list when using tokeninfo
-    $audiences = array_map('trim', explode(',', $aud));
-    if (!in_array($clientId, $audiences, true)) {
-        error_log("Google claim fail: aud=$aud does not contain clientId=$clientId");
-        return false;
-    }
-
-    if ($exp <= time()) {
-        error_log("Google claim fail: token expired at $exp, now=" . time());
-        return false;
-    }
-
-    if (empty($payload['sub']) || empty($payload['email'])) {
-        error_log('Google claim fail: missing sub or email');
-        return false;
-    }
-
-    // email_verified can be bool true or string "true"
-    $emailVerified = filter_var($payload['email_verified'] ?? false, FILTER_VALIDATE_BOOLEAN);
-    if (!$emailVerified) {
-        error_log('Google claim fail: email not verified');
-        return false;
-    }
-
-    return true;
-}
-
-// ── Main verification flow ─────────────────────────────────────────────────
-
-$idToken = $data->credential;
-$googlePayload = null;
-
-// Try tokeninfo first
-$result = verifyViaTokeninfo($idToken);
-
-if ($result['ok']) {
-    if (validateGoogleClaims($result['payload'], $googleClientId)) {
-        $googlePayload = $result['payload'];
+// Strategy 1 — tokeninfo endpoint
+$tiPayload = fetchTokeninfo($idToken);
+if ($tiPayload !== null) {
+    if (validateClaims($tiPayload, $GOOGLE_CLIENT_ID)) {
+        $googlePayload = $tiPayload;
+        $verifyMethod  = 'tokeninfo';
     } else {
+        // Claims failed even though tokeninfo returned 200 — hard reject
         http_response_code(401);
-        echo json_encode(['success' => false, 'message' => 'Google sign-in could not be verified. Invalid token claims.']);
-        exit();
-    }
-} else {
-    // Fallback: decode JWT locally
-    error_log('Google tokeninfo failed (' . $result['reason'] . '), falling back to local decode.');
-    $fallback = verifyViaLocalDecode($idToken, $googleClientId);
-
-    if ($fallback['ok'] && validateGoogleClaims($fallback['payload'], $googleClientId)) {
-        $googlePayload = $fallback['payload'];
-    } else {
-        http_response_code(401);
-        echo json_encode([
-            'success' => false,
-            'message' => 'Google sign-in could not be verified. Please try again.',
-            'debug'   => APP_ENV === 'development' ? $result['reason'] : null,
-        ]);
+        echo json_encode(['success' => false, 'message' => 'Google sign-in could not be verified. Token claims invalid.']);
         exit();
     }
 }
 
-// ── Database: find or create user ─────────────────────────────────────────
+// Strategy 2 — local JWT decode (fallback when tokeninfo is unreachable/rate-limited)
+if ($googlePayload === null) {
+    error_log('[google.php] tokeninfo unavailable, falling back to local JWT decode');
+    $localPayload = decodeGoogleJwt($idToken);
+    if ($localPayload !== null && validateClaims($localPayload, $GOOGLE_CLIENT_ID)) {
+        $googlePayload = $localPayload;
+        $verifyMethod  = 'local_decode';
+    }
+}
 
+if ($googlePayload === null) {
+    error_log('[google.php] both verification strategies failed for token: ' . substr($idToken, 0, 20) . '...');
+    http_response_code(401);
+    echo json_encode(['success' => false, 'message' => 'Google sign-in could not be verified. Please try again.']);
+    exit();
+}
+
+error_log("[google.php] verified via $verifyMethod for email=" . ($googlePayload['email'] ?? '?'));
+
+// ── Find or create user ────────────────────────────────────────────────────
 try {
     $db = Database::getInstance()->getConnection();
     if (!$db) {
@@ -182,8 +182,8 @@ try {
 
     // Find existing user by google_id OR email
     $stmt = $db->prepare(
-        "SELECT id, user_id, full_name, email, role, status, profile_image, google_id
-         FROM users WHERE google_id = ? OR email = ? LIMIT 1"
+        'SELECT id, user_id, full_name, email, role, status, profile_image, google_id
+         FROM users WHERE google_id = ? OR email = ? LIMIT 1'
     );
     $stmt->execute([$googleId, $email]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -200,7 +200,7 @@ try {
             exit();
         }
 
-        // Update last_login, google_id and profile_image if missing
+        // Update last_login, link google_id, and cache profile picture if missing
         $updates = ['last_login = NOW()'];
         $params  = [];
         if (empty($user['google_id']) && $googleId) {
@@ -219,7 +219,7 @@ try {
         $user = $stmt2->fetch(PDO::FETCH_ASSOC);
 
     } else {
-        // New user — auto-register with role 'user'
+        // Auto-register new Google user
         $userId   = null;
         $attempts = 0;
         do {
@@ -236,10 +236,17 @@ try {
              VALUES (?, ?, ?, '', 'user', 'active', ?, ?, NOW())"
         );
         $ins->execute([$userId, $name, $email, $googleId, $picture]);
+        $newId = $db->lastInsertId();
 
         $stmt3 = $db->prepare('SELECT id, user_id, full_name, email, role, status, profile_image FROM users WHERE id = ?');
-        $stmt3->execute([$db->lastInsertId()]);
+        $stmt3->execute([$newId]);
         $user = $stmt3->fetch(PDO::FETCH_ASSOC);
+    }
+
+    if (!$user) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Failed to load user record after authentication.']);
+        exit();
     }
 
     $token = generateJWT([
@@ -255,11 +262,8 @@ try {
     ]);
 
 } catch (Exception $e) {
-    error_log('Google auth DB error: ' . $e->getMessage());
+    error_log('[google.php] DB error: ' . $e->getMessage());
     http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Server error during authentication.',
-    ]);
+    echo json_encode(['success' => false, 'message' => 'Server error during authentication.']);
 }
 ?>
