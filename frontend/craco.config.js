@@ -9,7 +9,7 @@ module.exports = {
   },
   webpack: {
     configure: (webpackConfig) => {
-      // ── 1. Handle .mjs files from node_modules correctly ──────────────────
+      // Allow .mjs files from node_modules to be processed correctly
       webpackConfig.module.rules.push({
         test: /\.mjs$/,
         include: /node_modules/,
@@ -17,18 +17,8 @@ module.exports = {
         resolve: { fullySpecified: false },
       });
 
-      // ── 2. Exclude pdfjs-dist worker from being bundled by webpack ─────────
-      // Without this, webpack wraps the worker in its own module system which
-      // breaks the internal message channel (sendWithPromise becomes null).
-      webpackConfig.module.rules.push({
-        test: /pdf\.worker(\.min)?\.m?js$/,
-        type: 'asset/resource',
-        generator: {
-          filename: 'static/js/[name][ext]',
-        },
-      });
-
-      // ── 3. Copy worker to build output for production ──────────────────────
+      // Keep the pdf worker in /public so we can serve it as a static file.
+      // We use a blob: URL in BookReader.js to bypass webpack's Worker factory.
       webpackConfig.plugins.push(
         new CopyPlugin({
           patterns: [

@@ -20,25 +20,26 @@ import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
 // ── PDF.js worker setup ────────────────────────────────────────────────────
-// CRA's webpack 5 bundles everything, which breaks the worker's internal
-// message channel (sendWithPromise becomes null). The only reliable fix
-// is to load the worker as a true external script via a blob URL so the
-// browser runs it in a real separate thread outside webpack's module system.
+// pdfjs-dist 4.x creates workers with {type:"module"} hardcoded and the
+// worker file uses ES module export{}. CRA's webpack 5 intercepts Worker()
+// and wraps it in its own module registry, breaking the internal message
+// channel (sendWithPromise becomes null).
+//
+// Fix: create a blob: URL containing an ES module that re-exports the worker
+// file via a dynamic import(). The blob: URL bypasses webpack's Worker
+// factory entirely, so the browser creates a genuine module worker thread
+// that runs the pdfjs worker script in isolation.
 (function setupPdfWorker() {
-  const workerPath = `${process.env.PUBLIC_URL}/pdf.worker.min.mjs`;
+  const workerUrl = `${window.location.origin}${process.env.PUBLIC_URL}/pdf.worker.min.mjs`;
   try {
-    const origin = window.location.origin;
-    const fullUrl = `${origin}${workerPath}`;
-    // The worker file is a classic script (not ES module) despite the .mjs
-    // extension, so importScripts() works correctly here.
+    // ES module blob — uses import() so it works with type:"module" workers
     const blob = new Blob(
-      [`importScripts('${fullUrl}')`],
-      { type: 'application/javascript' }
+      [`import '${workerUrl}';`],
+      { type: 'text/javascript' }
     );
     pdfjs.GlobalWorkerOptions.workerSrc = URL.createObjectURL(blob);
-  } catch (e) {
-    // Fallback to direct static URL
-    pdfjs.GlobalWorkerOptions.workerSrc = workerPath;
+  } catch (_) {
+    pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
   }
 }());
 
@@ -120,6 +121,7 @@ export default function BookReader() {
     }
     if (error) return <Alert severity="error">{error}</Alert>;
     if (!book) return null;
+
     if (book.file_type === 'epub') {
       return epubUrl ? (
         <Box sx={{ height: '75vh', minHeight: 500 }}>
@@ -130,8 +132,13 @@ export default function BookReader() {
             title={book.title}
           />
         </Box>
-      ) : <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}><CircularProgress /></Box>;
+      ) : (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
+          <CircularProgress />
+        </Box>
+      );
     }
+
     return (
       <Stack spacing={2} alignItems="center">
         <Stack direction="row" spacing={1} alignItems="center">
@@ -195,7 +202,9 @@ export default function BookReader() {
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: book ? { xs: 'minmax(0, 1fr)', lg: 'minmax(0, 1.5fr) minmax(320px, 0.85fr)' } : 'minmax(0, 1fr)',
+            gridTemplateColumns: book
+              ? { xs: 'minmax(0, 1fr)', lg: 'minmax(0, 1.5fr) minmax(320px, 0.85fr)' }
+              : 'minmax(0, 1fr)',
             gap: 2,
             alignItems: 'start'
           }}

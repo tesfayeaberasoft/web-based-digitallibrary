@@ -47,7 +47,7 @@
     "build:dev": "craco build",
     "test": "craco test",
     "eject": "react-scripts eject",
-    "postinstall": "node -e \"const fs=require('fs');const src='node_modules/pdfjs-dist/build/pdf.worker.min.mjs';const dst='public/pdf.worker.min.mjs';try{if(fs.existsSync(src))fs.copyFileSync(src,dst);}catch(e){}\""
+    "postinstall": "node -e \"const fs=require('fs');try{fs.copyFileSync('node_modules/pdfjs-dist/build/pdf.worker.min.mjs','public/pdf.worker.min.mjs');}catch(e){console.warn('pdf worker copy skipped:',e.message)}\""
   },
   "devDependencies": {
     "@craco/craco": "^7.1.0",
