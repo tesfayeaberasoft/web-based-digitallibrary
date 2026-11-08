@@ -8,5 +8,5 @@ echo.
 echo Make sure MySQL is started in XAMPP first!
 echo.
 cd /d "%~dp0backend"
-php -d upload_max_filesize=50M -d post_max_size=55M -S localhost:8000 router.php
+php -d upload_max_filesize=50M -d post_max_size=55M -d display_errors=0 -d log_errors=1 -S localhost:8000 router.php
 pause

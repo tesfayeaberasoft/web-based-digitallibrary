@@ -3,6 +3,12 @@
  * Application Configuration
  */
 
+// Suppress deprecation/notice output globally so they never corrupt JSON responses.
+// Errors are still written to the error log.
+ini_set('display_errors', '0');
+ini_set('log_errors', '1');
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_NOTICE);
+
 function loadApplicationEnvironment($envFile) {
     if (!is_file($envFile)) {
         error_log('Application environment file not found: ' . $envFile);
