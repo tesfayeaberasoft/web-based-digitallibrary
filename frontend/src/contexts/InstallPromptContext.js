@@ -1,30 +1,31 @@
+/**
+ * InstallPromptContext
+ *
+ * Provides `canInstall`, `isInstalled`, and `promptToInstall` to any
+ * component that needs them. The PersistentInstallCard manages its own
+ * prompt state internally (module-level singleton), so this context is
+ * now a lightweight companion — kept for compatibility.
+ */
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 const InstallPromptContext = createContext(null);
 
-// Module-level singletons — capture the event before React even mounts.
+// Module-level singletons — capture beforeinstallprompt before React mounts.
 let deferredInstallPrompt = null;
 const promptListeners = new Set();
 const installedListeners = new Set();
 
 if (typeof window !== 'undefined') {
-  // ── KEY FIX ────────────────────────────────────────────────────────────
-  // The browser fires `beforeinstallprompt` ONCE, typically at initial page
-  // load (e.g. on '/' or '/login'). The old code had a path-guard here that
-  // discarded the event when the user hadn't navigated to a dashboard yet,
-  // so deferredInstallPrompt was always null and canInstall was always false.
-  //
-  // Fix: capture the event unconditionally. The InstallCard component itself
-  // controls where it renders — we don't need to guard here.
   window.addEventListener('beforeinstallprompt', (event) => {
     event.preventDefault();
     deferredInstallPrompt = event;
-    promptListeners.forEach((listener) => listener(event));
+    promptListeners.forEach((fn) => fn(event));
   });
 
   window.addEventListener('appinstalled', () => {
     deferredInstallPrompt = null;
-    installedListeners.forEach((listener) => listener());
+    installedListeners.forEach((fn) => fn());
   });
 }
 
@@ -40,43 +41,32 @@ export function InstallPromptProvider({ children }) {
   const [isInstalled, setIsInstalled] = useState(isRunningStandalone);
 
   useEffect(() => {
-    const handleBeforeInstallPrompt = (event) => {
-      if (!isRunningStandalone()) {
-        setInstallPrompt(event);
-      }
+    const handlePrompt = (event) => {
+      if (!isRunningStandalone()) setInstallPrompt(event);
     };
-
-    const handleAppInstalled = () => {
+    const handleInstalled = () => {
       setInstallPrompt(null);
       setIsInstalled(true);
     };
 
-    promptListeners.add(handleBeforeInstallPrompt);
-    installedListeners.add(handleAppInstalled);
-
-    // Sync with any event already captured before this provider mounted
-    if (deferredInstallPrompt) {
-      handleBeforeInstallPrompt(deferredInstallPrompt);
-    }
+    promptListeners.add(handlePrompt);
+    installedListeners.add(handleInstalled);
+    if (deferredInstallPrompt) handlePrompt(deferredInstallPrompt);
 
     return () => {
-      promptListeners.delete(handleBeforeInstallPrompt);
-      installedListeners.delete(handleAppInstalled);
+      promptListeners.delete(handlePrompt);
+      installedListeners.delete(handleInstalled);
     };
   }, []);
 
   const promptToInstall = async () => {
     if (!installPrompt) return;
-
-    const promptEvent = installPrompt;
+    const e = installPrompt;
     deferredInstallPrompt = null;
     setInstallPrompt(null);
-
-    await promptEvent.prompt();
-    const { outcome } = await promptEvent.userChoice;
-    if (outcome === 'accepted') {
-      setIsInstalled(true);
-    }
+    await e.prompt();
+    const { outcome } = await e.userChoice;
+    if (outcome === 'accepted') setIsInstalled(true);
     return outcome;
   };
 
@@ -94,9 +84,7 @@ export function InstallPromptProvider({ children }) {
 }
 
 export function useInstallPrompt() {
-  const context = useContext(InstallPromptContext);
-  if (!context) {
-    throw new Error('useInstallPrompt must be used within InstallPromptProvider');
-  }
-  return context;
+  const ctx = useContext(InstallPromptContext);
+  if (!ctx) throw new Error('useInstallPrompt must be used within InstallPromptProvider');
+  return ctx;
 }

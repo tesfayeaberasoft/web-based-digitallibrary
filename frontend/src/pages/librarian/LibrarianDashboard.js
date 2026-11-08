@@ -47,6 +47,7 @@ import {
   Person as PersonIcon
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
+import PersistentInstallCard from '../../components/InstallCard';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -140,6 +141,8 @@ const LibrarianDashboard = () => {
     <DashboardLayout title="Librarian Panel">
       <Fade in={true} timeout={600}>
         <Box className="librarian-page">
+          {/* Persistent PWA install card — session-scoped dismiss */}
+          <PersistentInstallCard />
           {/* Header */}
           <Box sx={{ mb: 4 }}>
             <Typography variant="h4" fontWeight={700} gutterBottom>

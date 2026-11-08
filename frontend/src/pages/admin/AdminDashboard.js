@@ -56,9 +56,8 @@ import {
   Close as CloseIcon
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import axios from 'axios';
-
-const StatCard = ({ title, value, change, icon, color, bgColor, subtitle, onClick, delay = 0 }) => (
+import PersistentInstallCard from '../../components/InstallCard';
+import axios from 'axios'; = ({ title, value, change, icon, color, bgColor, subtitle, onClick, delay = 0 }) => (
   <Zoom in timeout={500 + delay}>
     <Card 
       sx={{ 
@@ -274,6 +273,8 @@ const AdminDashboard = () => {
   return (
     <DashboardLayout title="Admin Panel">
       <Box>
+        {/* Persistent PWA install card — session-scoped dismiss */}
+        <PersistentInstallCard />
         {/* Header Section */}
         <Fade in timeout={300}>
           <Box sx={{ mb: 4 }}>

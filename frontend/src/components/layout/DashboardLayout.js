@@ -1,6 +1,5 @@
 import { apiUrl } from '../../config/api';
-import React, { useState, useEffect } from 'react';
-import {
+import React, { useState, useEffect } from 'react';import {
   Box, AppBar, Toolbar, Typography, IconButton, Avatar, Badge, Menu, MenuItem,
   Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText,
   Divider, Chip, useMediaQuery, useTheme, Fab, BottomNavigation,
@@ -19,7 +18,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from './LanguageSwitcher';
-import InstallCard from '../InstallCard';
 
 // Green theme palette
 const C = {
@@ -808,9 +806,6 @@ export default function DashboardLayout({ children, title }) {
           </Button>
         </DialogActions>
       </Dialog>
-
-      {/* PWA Install Card — shown on every authenticated page */}
-      <InstallCard />
     </Box>
   );
 }
