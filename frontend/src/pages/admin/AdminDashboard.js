@@ -57,7 +57,9 @@ import {
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import PersistentInstallCard from '../../components/InstallCard';
-import axios from 'axios'; = ({ title, value, change, icon, color, bgColor, subtitle, onClick, delay = 0 }) => (
+import axios from 'axios';
+
+const StatCard = ({ title, value, change, icon, color, bgColor, subtitle, onClick, delay = 0 }) => (
   <Zoom in timeout={500 + delay}>
     <Card 
       sx={{ 

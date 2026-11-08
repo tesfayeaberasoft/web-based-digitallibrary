@@ -1,5 +1,6 @@
 import { apiUrl } from '../../config/api';
-import React, { useState, useEffect } from 'react';import {
+import React, { useState, useEffect } from 'react';
+import {
   Box, AppBar, Toolbar, Typography, IconButton, Avatar, Badge, Menu, MenuItem,
   Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText,
   Divider, Chip, useMediaQuery, useTheme, Fab, BottomNavigation,
@@ -647,11 +648,14 @@ export default function DashboardLayout({ children, title }) {
         component="main"
         sx={{
           flexGrow: 1,
+          minWidth: 0,          // prevent flex child from overflowing
           pt: 10,
           pb: isMobile ? 10 : 4,
           px: { xs: 2, sm: 3, md: 4 },
-          ml: isMobile ? 0 : (sidebarMini ? `${miniDrawerWidth}px` : `${drawerWidth}px`),
-          transition: 'margin 0.3s ease',
+          // No ml needed — the permanent Drawer already occupies its space
+          // as a flex sibling. Setting ml here was doubling the offset and
+          // creating the large blank gap visible in the screenshot.
+          transition: 'all 0.3s ease',
           minHeight: '100vh',
           bgcolor: C.lighter,
           position: 'relative'
