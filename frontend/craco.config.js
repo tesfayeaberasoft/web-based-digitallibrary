@@ -9,32 +9,23 @@ module.exports = {
   },
   webpack: {
     configure: (webpackConfig) => {
-      // Add support for importing .mjs files
-      webpackConfig.module.rules.push({
-        test: /\.mjs$/,
-        include: /node_modules/,
-        type: 'javascript/auto',
-      });
-
-      // Copy pdf.worker.min.mjs to both public (dev) and build (production)
+      // Copy the pdfjs-dist 3.x classic worker to /public on every build.
+      // BookReader.js points workerSrc directly at this static file.
       webpackConfig.plugins.push(
         new CopyPlugin({
           patterns: [
             {
-              from: path.resolve(__dirname, 'node_modules/pdfjs-dist/build/pdf.worker.min.mjs'),
-              to: path.resolve(__dirname, 'public/pdf.worker.min.mjs'),
-              force: true,
-            },
-            {
-              from: path.resolve(__dirname, 'node_modules/pdfjs-dist/build/pdf.worker.min.mjs'),
-              to: path.resolve(__dirname, 'build/pdf.worker.min.mjs'),
+              from: path.resolve(
+                __dirname,
+                'node_modules/pdfjs-dist/build/pdf.worker.min.js'
+              ),
+              to: path.resolve(__dirname, 'public/pdf.worker.min.js'),
               force: true,
               noErrorOnMissing: true,
             },
           ],
         })
       );
-
       return webpackConfig;
     },
   },

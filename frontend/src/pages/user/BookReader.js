@@ -16,13 +16,16 @@ import { ReactReader } from 'react-reader';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import BookNotepad from './BookNotepad';
 import axios from 'axios';
-import 'react-pdf/dist/Page/AnnotationLayer.css';
-import 'react-pdf/dist/Page/TextLayer.css';
+import 'react-pdf/dist/cjs/Page/AnnotationLayer.css';
+import 'react-pdf/dist/cjs/Page/TextLayer.css';
 
-// Use local worker file served from /public to avoid dynamic-import issues with CRA webpack
-pdfjs.GlobalWorkerOptions.workerSrc = `${process.env.PUBLIC_URL}/pdf.worker.min.mjs`;
+// ── PDF.js worker setup ──────────────────────────────────────────────────
+// react-pdf v7 uses pdfjs-dist 3.x which ships a classic (non-ESM) worker.
+// Point directly at the static file in /public — no webpack interception,
+// no blob tricks needed. The classic worker runs fine in CRA.
+pdfjs.GlobalWorkerOptions.workerSrc = `${window.location.origin}${process.env.PUBLIC_URL}/pdf.worker.min.js`;
 
-const API_URL = apiUrl("/api");
+const API_URL = apiUrl('/api');
 
 export default function BookReader() {
   const { bookId } = useParams();
@@ -66,7 +69,7 @@ export default function BookReader() {
         if (data.book.file_type === 'epub') {
           const content = await axios.get(`${API_URL}/books/${bookId}/content`, {
             ...config,
-            responseType: 'blob'
+            responseType: 'blob',
           });
           objectUrl = URL.createObjectURL(content.data);
           if (active) {
@@ -79,9 +82,13 @@ export default function BookReader() {
         }
       } catch (requestError) {
         if (active) {
-          setError(requestError.response?.status === 401
-            ? 'Your session has expired. Please sign in again.'
-            : requestError.response?.data?.message || requestError.message || 'Unable to open this eBook.');
+          setError(
+            requestError.response?.status === 401
+              ? 'Your session has expired. Please sign in again.'
+              : requestError.response?.data?.message ||
+                requestError.message ||
+                'Unable to open this eBook.'
+          );
         }
       } finally {
         if (active) setLoading(false);
@@ -96,10 +103,15 @@ export default function BookReader() {
 
   const readerContent = () => {
     if (loading) {
-      return <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}><CircularProgress /></Box>;
+      return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
+          <CircularProgress />
+        </Box>
+      );
     }
     if (error) return <Alert severity="error">{error}</Alert>;
     if (!book) return null;
+
     if (book.file_type === 'epub') {
       return epubUrl ? (
         <Box sx={{ height: '75vh', minHeight: 500 }}>
@@ -110,8 +122,13 @@ export default function BookReader() {
             title={book.title}
           />
         </Box>
-      ) : <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}><CircularProgress /></Box>;
+      ) : (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
+          <CircularProgress />
+        </Box>
+      );
     }
+
     return (
       <Stack spacing={2} alignItems="center">
         <Stack direction="row" spacing={1} alignItems="center">
@@ -119,7 +136,7 @@ export default function BookReader() {
             variant="outlined"
             startIcon={<NavigateBefore />}
             disabled={pageNumber <= 1}
-            onClick={() => setPageNumber((page) => page - 1)}
+            onClick={() => setPageNumber((p) => p - 1)}
           >
             Previous
           </Button>
@@ -130,7 +147,7 @@ export default function BookReader() {
             variant="outlined"
             endIcon={<NavigateNext />}
             disabled={!pageCount || pageNumber >= pageCount}
-            onClick={() => setPageNumber((page) => page + 1)}
+            onClick={() => setPageNumber((p) => p + 1)}
           >
             Next
           </Button>
@@ -138,18 +155,22 @@ export default function BookReader() {
         <Document
           file={{
             url: `${API_URL}/books/${bookId}/content`,
-            httpHeaders: { Authorization: `Bearer ${token}` }
+            httpHeaders: { Authorization: `Bearer ${token}` },
           }}
           onLoadSuccess={({ numPages }) => {
             setPageCount(numPages);
-            setPageNumber((page) => Math.min(page, numPages));
+            setPageNumber((p) => Math.min(p, numPages));
           }}
           onLoadError={(loadError) => {
             console.error('PDF load error:', loadError);
             setError(loadError.message || 'Unable to render this PDF.');
           }}
           loading={<CircularProgress />}
-          error={<Alert severity="error">Unable to render this PDF. Please try again.</Alert>}
+          error={
+            <Alert severity="error">
+              Unable to render this PDF. Please try again.
+            </Alert>
+          }
         >
           <Page
             pageNumber={pageNumber}
@@ -175,20 +196,24 @@ export default function BookReader() {
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: book ? { xs: 'minmax(0, 1fr)', lg: 'minmax(0, 1.5fr) minmax(320px, 0.85fr)' } : 'minmax(0, 1fr)',
+            gridTemplateColumns: book
+              ? { xs: 'minmax(0, 1fr)', lg: 'minmax(0, 1.5fr) minmax(320px, 0.85fr)' }
+              : 'minmax(0, 1fr)',
             gap: 2,
-            alignItems: 'start'
+            alignItems: 'start',
           }}
         >
           <Paper
             component="section"
             elevation={2}
-            onContextMenu={(event) => event.preventDefault()}
+            onContextMenu={(e) => e.preventDefault()}
             sx={{ p: { xs: 2, md: 3 }, minHeight: '70vh', minWidth: 0, overflow: 'auto' }}
           >
             {book && (
               <Box sx={{ mb: 2, textAlign: 'center' }}>
-                <Typography variant="h5" fontWeight={700}>{book.title}</Typography>
+                <Typography variant="h5" fontWeight={700}>
+                  {book.title}
+                </Typography>
                 <Typography color="text.secondary">{book.author}</Typography>
               </Box>
             )}
@@ -201,7 +226,8 @@ export default function BookReader() {
           )}
         </Box>
         <Typography variant="caption" color="text.secondary" textAlign="center">
-          This reader does not provide download or print controls. Digital content can still be captured from a screen or browser.
+          This reader does not provide download or print controls. Digital
+          content can still be captured from a screen or browser.
         </Typography>
       </Stack>
     </DashboardLayout>
