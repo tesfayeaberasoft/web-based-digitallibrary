@@ -19,8 +19,28 @@ import axios from 'axios';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
-// Use local worker file served from /public to avoid dynamic-import issues with CRA webpack
-pdfjs.GlobalWorkerOptions.workerSrc = `${process.env.PUBLIC_URL}/pdf.worker.min.mjs`;
+// ── PDF.js worker setup ────────────────────────────────────────────────────
+// CRA's webpack 5 bundles everything, which breaks the worker's internal
+// message channel (sendWithPromise becomes null). The only reliable fix
+// is to load the worker as a true external script via a blob URL so the
+// browser runs it in a real separate thread outside webpack's module system.
+(function setupPdfWorker() {
+  const workerPath = `${process.env.PUBLIC_URL}/pdf.worker.min.mjs`;
+  try {
+    const origin = window.location.origin;
+    const fullUrl = `${origin}${workerPath}`;
+    // The worker file is a classic script (not ES module) despite the .mjs
+    // extension, so importScripts() works correctly here.
+    const blob = new Blob(
+      [`importScripts('${fullUrl}')`],
+      { type: 'application/javascript' }
+    );
+    pdfjs.GlobalWorkerOptions.workerSrc = URL.createObjectURL(blob);
+  } catch (e) {
+    // Fallback to direct static URL
+    pdfjs.GlobalWorkerOptions.workerSrc = workerPath;
+  }
+}());
 
 const API_URL = apiUrl("/api");
 
