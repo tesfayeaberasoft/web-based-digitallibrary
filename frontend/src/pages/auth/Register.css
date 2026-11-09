@@ -1,0 +1,154 @@
+.register-page {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+.register-page-container.MuiContainer-root {
+  display: flex;
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.register-layout-card.MuiCard-root {
+  display: flex;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  border-radius: 0;
+  background: #fff;
+  box-shadow: 0 16px 48px rgba(20, 54, 40, 0.16);
+}
+
+.register-layout-grid {
+  display: grid;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+}
+
+.register-panel {
+  display: flex;
+  min-width: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  box-sizing: border-box;
+}
+
+.register-info-panel > .MuiBox-root {
+  display: flex;
+  width: 100%;
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+  box-sizing: border-box;
+}
+
+.register-info-panel .MuiTypography-root {
+  overflow-wrap: anywhere;
+}
+
+.register-form-panel {
+  justify-content: center;
+  background: linear-gradient(180deg, #fff 0%, #f8fbf9 100%);
+}
+
+.register-form-panel > .MuiBox-root {
+  display: flex;
+  width: 100%;
+  max-width: 720px;
+  min-width: 0;
+  margin: auto;
+  box-sizing: border-box;
+}
+
+.register-form-panel .MuiFormControl-root,
+.register-form-panel .MuiButton-root {
+  min-width: 0;
+}
+
+.register-form-panel .MuiStepper-root {
+  min-width: 0;
+}
+
+.register-form-panel .MuiStep-root {
+  min-width: 0;
+  padding-right: 4px;
+  padding-left: 4px;
+}
+
+.register-form-panel .MuiStepLabel-label {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+  .register-layout-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .register-info-panel > .MuiBox-root,
+  .register-form-panel > .MuiBox-root {
+    padding: 20px !important;
+  }
+
+  .register-info-panel .MuiTypography-h3,
+  .register-form-panel .MuiTypography-h4 {
+    font-size: clamp(1.05rem, 4.5vw, 1.8rem);
+    line-height: 1.2;
+  }
+
+  .register-info-panel .MuiTypography-h6,
+  .register-form-panel .MuiTypography-body1 {
+    font-size: clamp(0.68rem, 2.8vw, 0.95rem);
+    line-height: 1.4;
+  }
+
+  .register-feature {
+    min-width: 0;
+    margin-bottom: 12px !important;
+  }
+
+  .register-feature-icon {
+    width: 32px !important;
+    height: 32px !important;
+    margin-right: 8px !important;
+  }
+
+  .register-feature-icon .MuiSvgIcon-root {
+    font-size: 18px !important;
+  }
+
+  .register-form-panel .MuiStep-root {
+    padding-right: 2px;
+    padding-left: 2px;
+  }
+
+  .register-form-panel .MuiStepLabel-label {
+    font-size: clamp(0.5rem, 2vw, 0.7rem);
+    line-height: 1.1;
+  }
+
+  .register-form-panel .MuiStepLabel-iconContainer {
+    padding-right: 3px;
+  }
+
+  .register-form-panel .MuiSvgIcon-root.MuiStepIcon-root {
+    font-size: clamp(16px, 5vw, 22px);
+  }
+
+  .register-form-panel .MuiFormControlLabel-label {
+    font-size: 0.7rem;
+  }
+}

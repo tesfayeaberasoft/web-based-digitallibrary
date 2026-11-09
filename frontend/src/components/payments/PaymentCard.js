@@ -163,6 +163,9 @@ const PaymentCard = ({ fine, onPaymentInitiated, onPaymentComplete }) => {
   return (
     <Card
       sx={{
+        width: '100%',
+        minWidth: 0,
+        height: '100%',
         borderRadius: 3,
         border: `2px solid ${C.light}`,
         position: 'relative',

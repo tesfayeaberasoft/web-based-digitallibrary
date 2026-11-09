@@ -39,6 +39,7 @@ import {
   Visibility
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
+import './SuperAdminAuditLogs.css';
 import axios from 'axios';
 
 const API = apiUrl("/api/super-admin/audit-logs");
@@ -211,6 +212,7 @@ const SuperAdminAuditLogs = () => {
   return (
     <DashboardLayout title="Audit & Activity Logs">
       <Paper
+        className="super-admin-audit-hero"
         sx={{
           p: 3,
           mb: 3,
@@ -224,7 +226,7 @@ const SuperAdminAuditLogs = () => {
           gap: 2
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box className="super-admin-audit-hero-content" sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <History sx={{ fontSize: 44 }} />
           <Box>
             <Typography variant="h5" fontWeight={700}>
@@ -235,7 +237,7 @@ const SuperAdminAuditLogs = () => {
             </Typography>
           </Box>
         </Box>
-        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+        <Box className="super-admin-audit-hero-actions" sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
           <Button
             variant="contained"
             sx={{ bgcolor: 'white', color: RED, '&:hover': { bgcolor: '#f5f5f5' } }}
@@ -263,13 +265,13 @@ const SuperAdminAuditLogs = () => {
         </Alert>
       )}
 
-      <Card sx={{ mb: 3 }}>
+      <Card className="super-admin-audit-filters" sx={{ mb: 3 }}>
         <CardContent>
           <Typography variant="subtitle1" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <FilterList fontSize="small" /> Filters
           </Typography>
-          <Grid container spacing={2} alignItems="flex-end">
-            <Grid item xs={12} sm={6} md={2}>
+          <Grid container className="super-admin-audit-filter-grid" alignItems="flex-end">
+            <Grid item className="super-admin-audit-filter-field super-admin-audit-date-filter" xs={12} sm={6} md={2}>
               <TextField
                 fullWidth
                 label="From date"
@@ -280,7 +282,7 @@ const SuperAdminAuditLogs = () => {
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={2}>
+            <Grid item className="super-admin-audit-filter-field super-admin-audit-date-filter" xs={12} sm={6} md={2}>
               <TextField
                 fullWidth
                 label="To date"
@@ -291,7 +293,7 @@ const SuperAdminAuditLogs = () => {
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item className="super-admin-audit-filter-field super-admin-audit-search-filter" xs={12} sm={6} md={3}>
               <TextField
                 fullWidth
                 label="User (name, email, ID)"
@@ -301,7 +303,7 @@ const SuperAdminAuditLogs = () => {
                 placeholder="Search actor..."
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={2}>
+            <Grid item className="super-admin-audit-filter-field super-admin-audit-select-filter" xs={12} sm={6} md={2}>
               <FormControl fullWidth size="small">
                 <InputLabel>Action</InputLabel>
                 <Select value={action} label="Action" onChange={(e) => setAction(e.target.value)}>
@@ -314,7 +316,7 @@ const SuperAdminAuditLogs = () => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={6} md={2}>
+            <Grid item className="super-admin-audit-filter-field super-admin-audit-select-filter" xs={12} sm={6} md={2}>
               <FormControl fullWidth size="small">
                 <InputLabel>Table</InputLabel>
                 <Select value={tableName} label="Table" onChange={(e) => setTableName(e.target.value)}>
@@ -327,8 +329,8 @@ const SuperAdminAuditLogs = () => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Button variant="contained" color="error" onClick={handleSearch} disabled={loading} sx={{ mr: 1 }}>
+            <Grid item className="super-admin-audit-filter-actions" xs={12} sm={6} md={3}>
+              <Button variant="contained" color="error" onClick={handleSearch} disabled={loading}>
                 Apply
               </Button>
               <Button variant="outlined" onClick={handleReset} disabled={loading}>
@@ -339,9 +341,9 @@ const SuperAdminAuditLogs = () => {
         </CardContent>
       </Card>
 
-      <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid item xs={12} sm={4}>
-          <Card sx={{ borderTop: `4px solid ${RED}` }}>
+      <Grid container className="super-admin-audit-summary-grid" sx={{ mb: 2 }}>
+        <Grid item className="super-admin-audit-summary-item" xs={12} sm={4}>
+          <Card className="super-admin-audit-summary-card" sx={{ borderTop: `4px solid ${RED}` }}>
             <CardContent>
               <Typography variant="body2" color="text.secondary">
                 Matching records
@@ -355,8 +357,8 @@ const SuperAdminAuditLogs = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={4}>
-          <Card>
+        <Grid item className="super-admin-audit-summary-item" xs={12} sm={4}>
+          <Card className="super-admin-audit-summary-card">
             <CardContent>
               <Typography variant="body2" color="text.secondary">
                 Action types in range
@@ -367,8 +369,8 @@ const SuperAdminAuditLogs = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={4}>
-          <Card>
+        <Grid item className="super-admin-audit-summary-item" xs={12} sm={4}>
+          <Card className="super-admin-audit-summary-card">
             <CardContent>
               <Typography variant="body2" color="text.secondary">
                 Tables affected
@@ -381,7 +383,7 @@ const SuperAdminAuditLogs = () => {
         </Grid>
       </Grid>
 
-      <Card>
+      <Card className="super-admin-audit-table-card">
         <CardContent>
           <TableContainer sx={{ position: 'relative', minHeight: 200 }}>
             {loading && (

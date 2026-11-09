@@ -258,15 +258,17 @@ const LibrarianBarcode = () => {
   return (
     <DashboardLayout>
       <Box className="librarian-page" sx={{ p: 3 }}>
-        <Typography variant="h4" gutterBottom sx={{ color: '#4a9b8e', fontWeight: 600 }}>
-          Barcode Scanner
-        </Typography>
-        <Typography variant="body1" color="text.secondary" paragraph>
-          Scan barcodes for quick book issue, return, and lookup operations
-        </Typography>
+        <Box className="librarian-page-heading" sx={{ mb: 3, textAlign: 'center' }}>
+          <Typography variant="h4" gutterBottom sx={{ color: '#4a9b8e', fontWeight: 600 }}>
+            Barcode Scanner
+          </Typography>
+          <Typography variant="body1" color="text.secondary" paragraph>
+            Scan barcodes for quick book issue, return, and lookup operations
+          </Typography>
+        </Box>
 
         {/* Quick Action Cards */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid container className="librarian-fluid-grid librarian-barcode-actions-grid" spacing={3} sx={{ mb: 4 }}>
           <Grid item xs={12} md={3}>
             <Fade in timeout={300}>
               <Card sx={{ 
@@ -559,7 +561,7 @@ const LibrarianBarcode = () => {
               </Typography>
             </Box>
             
-            <Grid container spacing={2}>
+            <Grid container className="librarian-fluid-grid librarian-barcode-instructions-grid" spacing={2}>
               <Grid item xs={12} md={4}>
                 <Typography variant="subtitle2" gutterBottom>Issue Book:</Typography>
                 <Typography variant="body2" color="text.secondary">

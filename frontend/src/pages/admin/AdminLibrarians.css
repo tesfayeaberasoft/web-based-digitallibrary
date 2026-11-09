@@ -1,0 +1,125 @@
+.admin-librarians-metrics-grid.MuiGrid-root {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 20px;
+  width: 100%;
+  min-width: 0;
+  margin: 0 0 24px;
+}
+
+.admin-librarians-metric-item {
+  display: flex;
+  width: auto !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.admin-librarians-metric-item > * {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.admin-librarians-metric-item .MuiCard-root {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 16px rgba(27, 67, 50, 0.1);
+}
+
+.admin-librarians-metric-item .MuiCardContent-root {
+  width: 100%;
+  box-sizing: border-box;
+  padding: clamp(12px, 1.5vw, 22px);
+}
+
+.admin-librarians-metric-item .MuiTypography-h4 {
+  font-size: clamp(1.1rem, 2.2vw, 2.125rem);
+  line-height: 1.15;
+}
+
+.admin-librarians-metric-item .MuiTypography-body2 {
+  font-size: clamp(0.65rem, 1vw, 0.875rem);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.admin-librarians-metric-item .MuiSvgIcon-root {
+  flex: 0 0 auto;
+  font-size: clamp(22px, 3vw, 40px);
+}
+
+.admin-librarians-filter-grid.MuiGrid-root {
+  display: grid !important;
+  grid-template-columns: minmax(240px, 2fr) minmax(150px, 1fr) minmax(120px, auto);
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  width: min(100%, 1080px);
+  margin: 0 auto;
+}
+
+.admin-librarians-search-item,
+.admin-librarians-status-item,
+.admin-librarians-refresh-item {
+  width: auto !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.admin-librarians-filter-grid .MuiOutlinedInput-root {
+  background-color: #fff;
+  border-radius: 10px;
+}
+
+.admin-librarians-filter-grid .MuiOutlinedInput-notchedOutline {
+  border-color: #d7e3dc;
+}
+
+.admin-librarians-filter-grid .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: #52b788;
+}
+
+.admin-librarians-filter-grid .MuiButton-root {
+  min-height: 52px;
+  border-color: #2d6a4f;
+  color: #2d6a4f;
+  font-weight: 650;
+}
+
+@media (max-width: 700px) {
+  .admin-librarians-metrics-grid.MuiGrid-root {
+    gap: 10px;
+  }
+
+  .admin-librarians-metric-item .MuiCardContent-root {
+    padding: 8px;
+  }
+
+  .admin-librarians-metric-item .MuiTypography-h4 {
+    font-size: clamp(0.95rem, 4vw, 1.5rem);
+  }
+
+  .admin-librarians-metric-item .MuiTypography-body2 {
+    font-size: clamp(0.55rem, 2.4vw, 0.75rem);
+  }
+
+  .admin-librarians-metric-item .MuiSvgIcon-root {
+    font-size: clamp(18px, 5vw, 28px);
+  }
+
+  .admin-librarians-filter-grid.MuiGrid-root {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .admin-librarians-filter-grid .MuiButton-root {
+    width: 100%;
+  }
+}

@@ -91,13 +91,14 @@ function BookCover({ book, isAvail, compact = false }) {
   return (
     <Box sx={{
       width: compact ? 56 : '100%',
-      height: compact ? 76 : 220,
+      height: compact ? 76 : 'auto',
+      aspectRatio: compact ? undefined : '4 / 5',
       position: 'relative',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       overflow: 'hidden',
-      p: compact ? 0 : 2,
+      p: compact ? 0 : 1,
       bgcolor: '#f3f6f4',
     }}>
       {sourceIndex < sources.length ? (
@@ -112,6 +113,9 @@ function BookCover({ book, isAvail, compact = false }) {
           sx={{
             width: '100%',
             height: '100%',
+            maxWidth: '100%',
+            maxHeight: '100%',
+            display: 'block',
             objectFit: 'contain',
           }}
         />
@@ -177,7 +181,7 @@ export default function BrowseBooks() {
   const [totalBooks,  setTotalBooks]  = useState(0);
   const [favoriteIds, setFavoriteIds] = useState(() => new Set());
   const [reviewsBook, setReviewsBook] = useState(null);
-  const LIMIT = 12;
+  const LIMIT = 24;
 
   useEffect(() => { fetchCategories(); }, []);
   useEffect(() => { fetchBooks(); }, [page, searchQuery, selCategory, avail]); // eslint-disable-line
@@ -496,7 +500,7 @@ export default function BrowseBooks() {
         </Container>
       </Box>
 
-      <Container sx={{ py: 4 }}>
+      <Container maxWidth="xl" sx={{ py: 4 }}>
         {/* ── Filter Bar ── */}
         <Paper elevation={0} sx={{
           p: 3, mb: 4, borderRadius: 3,
@@ -609,14 +613,21 @@ export default function BrowseBooks() {
               </Box>
             </Box>
 
-            <Grid container spacing={3}>
+            <Box sx={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))',
+              gap: 2.5,
+              width: '100%',
+              minWidth: 0,
+              alignItems: 'stretch'
+            }}>
               {books.map((book, idx) => {
                 const isAvail = book.available_copies > 0;
                 return (
-                  <Grid item xs={12} sm={6} md={4} lg={3} key={book.id}>
+                  <Box key={book.id} sx={{ minWidth: 0, display: 'flex' }}>
                     <Grow in timeout={300 + (idx % 12) * 60}>
                       <Card elevation={0} sx={{
-                        height:'100%', display:'flex', flexDirection:'column',
+                        width:'100%', minWidth:0, height:'100%', display:'flex', flexDirection:'column',
                         border:`2px solid ${C.light}`, borderRadius:3,
                         transition:'all 0.3s cubic-bezier(.4,0,.2,1)',
                         '&:hover':{
@@ -629,7 +640,7 @@ export default function BrowseBooks() {
                         <BookCover book={book} isAvail={isAvail} />
 
                         {/* ── Content ── */}
-                        <CardContent sx={{ flexGrow:1, p:2.5 }}>
+                        <CardContent sx={{ flexGrow:1, p:2 }}>
                           <Typography variant="h6" fontWeight={800} sx={{
                             color:C.dark, mb:0.5, lineHeight:1.25,
                             overflow:'hidden', textOverflow:'ellipsis',
@@ -681,28 +692,37 @@ export default function BrowseBooks() {
                         <Divider sx={{ borderColor:C.light }} />
 
                         {/* ── Action ── */}
-                        <CardActions sx={{ p:2, gap:1 }}>
-                          <Tooltip title={favoriteIds.has(Number(book.id)) ? 'Remove from favorites' : 'Add to favorites'}>
-                            <IconButton
-                              aria-label={favoriteIds.has(Number(book.id)) ? 'Remove from favorites' : 'Add to favorites'}
-                              color={favoriteIds.has(Number(book.id)) ? 'error' : 'default'}
-                              onClick={() => handleFavoriteToggle(book)}
+                        <CardActions sx={{
+                          p: 1.5,
+                          mt: 'auto',
+                          display: 'grid',
+                          gridTemplateColumns: 'minmax(0, 1fr)',
+                          gap: 1
+                        }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+                            <Tooltip title={favoriteIds.has(Number(book.id)) ? 'Remove from favorites' : 'Add to favorites'}>
+                              <IconButton
+                                aria-label={favoriteIds.has(Number(book.id)) ? 'Remove from favorites' : 'Add to favorites'}
+                                color={favoriteIds.has(Number(book.id)) ? 'error' : 'default'}
+                                onClick={() => handleFavoriteToggle(book)}
+                              >
+                                {favoriteIds.has(Number(book.id)) ? <Favorite /> : <FavoriteBorder />}
+                              </IconButton>
+                            </Tooltip>
+                            <Button
+                              fullWidth
+                              variant="outlined"
+                              startIcon={<Star />}
+                              onClick={() => setReviewsBook(book)}
+                              sx={{ ...gradBtn(true), minWidth: 0, minHeight: 40 }}
                             >
-                              {favoriteIds.has(Number(book.id)) ? <Favorite /> : <FavoriteBorder />}
-                            </IconButton>
-                          </Tooltip>
-                          <Button
-                            variant="outlined"
-                            startIcon={<Star />}
-                            onClick={() => setReviewsBook(book)}
-                            sx={{ ...gradBtn(true), flex: 1, minWidth: 0 }}
-                          >
-                            Review
-                          </Button>
+                              Review
+                            </Button>
+                          </Box>
                           {book.can_read_online && (
-                            <Button variant="outlined" startIcon={<AutoStories />}
+                            <Button fullWidth variant="outlined" startIcon={<AutoStories />}
                               onClick={() => handleReadOnline(book)}
-                              sx={{ ...gradBtn(true), flex:1, minWidth:0 }}>
+                              sx={{ ...gradBtn(true), minHeight: 42 }}>
                               Read Online
                             </Button>
                           )}
@@ -711,7 +731,7 @@ export default function BrowseBooks() {
                             onClick={() => handleBorrow(book)}
                             sx={{
                               ...gradBtn(),
-                              flex:1,
+                              minHeight: 42,
                               ...(isAvail ? {} : {
                                 background:`linear-gradient(135deg,#f59e0b,#fbbf24)`,
                                 '&:hover':{ background:`linear-gradient(135deg,#d97706,#f59e0b)` },
@@ -722,10 +742,10 @@ export default function BrowseBooks() {
                         </CardActions>
                       </Card>
                     </Grow>
-                  </Grid>
+                  </Box>
                 );
               })}
-            </Grid>
+            </Box>
 
             {/* ── Pagination ── */}
             {totalPages > 1 && (

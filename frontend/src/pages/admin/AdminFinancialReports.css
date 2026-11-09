@@ -1,0 +1,92 @@
+.admin-financial-reports-tabs .admin-financial-reports-tab-list {
+  width: 100%;
+}
+
+.admin-financial-reports-tabs .admin-financial-reports-tab-list .MuiTabs-flexContainer {
+  justify-content: center;
+}
+
+.admin-financial-reports-page .admin-financial-reports-overview-grid.MuiGrid-root {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(140px, auto)) auto;
+  align-items: stretch;
+  gap: 20px;
+  width: 100%;
+  min-width: 0;
+  margin: 0 0 24px;
+}
+
+.admin-financial-reports-overview-grid > .admin-financial-reports-metric-item,
+.admin-financial-reports-overview-grid > .admin-financial-reports-breakdown-item {
+  width: auto !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.admin-financial-reports-overview-grid > .admin-financial-reports-metric-item {
+  display: flex;
+}
+
+.admin-financial-reports-metric-item > * {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.admin-financial-reports-metric-item .MuiCard-root {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 16px rgba(27, 67, 50, 0.1);
+}
+
+.admin-financial-reports-metric-item .MuiCardContent-root {
+  width: 100%;
+  box-sizing: border-box;
+  padding: clamp(14px, 1.5vw, 22px);
+}
+
+.admin-financial-reports-metric-item .MuiTypography-h4 {
+  font-size: clamp(1.1rem, 2.2vw, 2.125rem);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.admin-financial-reports-overview-grid > .admin-financial-reports-breakdown-item {
+  grid-column: 1 / -1;
+}
+
+.admin-financial-reports-breakdown-item > .MuiPaper-root {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #e4ebe6;
+  box-shadow: 0 4px 16px rgba(27, 67, 50, 0.07);
+}
+
+@media (max-width: 600px) {
+  .admin-financial-reports-page .admin-financial-reports-overview-grid.MuiGrid-root {
+    gap: 12px;
+    grid-template-rows: repeat(2, minmax(110px, auto)) auto;
+  }
+
+  .admin-financial-reports-metric-item .MuiCardContent-root {
+    padding: 10px;
+  }
+
+  .admin-financial-reports-metric-item .MuiTypography-body2,
+  .admin-financial-reports-metric-item .MuiTypography-caption {
+    font-size: clamp(0.6rem, 2.4vw, 0.875rem);
+    line-height: 1.25;
+  }
+
+  .admin-financial-reports-tabs .MuiTab-root {
+    min-width: 0;
+    padding-right: 8px;
+    padding-left: 8px;
+    font-size: clamp(0.6rem, 2.4vw, 0.95rem);
+  }
+}

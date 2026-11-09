@@ -45,6 +45,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-toastify';
 import { GoogleLogin } from '@react-oauth/google';
 import { useTranslation } from 'react-i18next';
+import './Register.css';
 
 const C = {
   primary: '#2d6a4f',
@@ -527,18 +528,7 @@ const Register = () => {
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        background: `linear-gradient(135deg, ${C.primary} 0%, ${C.secondary} 100%)`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        position: 'relative',
-        overflow: 'hidden',
-        py: 4
-      }}
-    >
+    <Box className="register-page" sx={{ background: `linear-gradient(135deg, ${C.primary} 0%, ${C.secondary} 100%)` }}>
       {/* Animated Background Elements */}
       {[
         { size: 450, top: -120, right: -120, opacity: 0.1 },
@@ -567,7 +557,7 @@ const Register = () => {
         />
       ))}
 
-      <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1 }}>
+      <Container className="register-page-container" maxWidth={false} sx={{ position: 'relative', zIndex: 1 }}>
         {/* Go to Home Button */}
         <Box sx={{ position: 'absolute', top: 20, left: 20, zIndex: 10 }}>
           <Button
@@ -593,24 +583,24 @@ const Register = () => {
 
         <Fade in={visible} timeout={800}>
           <Card
+            className="register-layout-card"
             elevation={0}
             sx={{
-              borderRadius: '20px',
+              borderRadius: 0,
               overflow: 'hidden',
               background: 'white'
             }}
           >
-            <Grid container spacing={0} alignItems="stretch">
+            <Box className="register-layout-grid">
               {/* Left Side - Welcome Section */}
-              <Grid item xs={12} sm={6}>
+              <Box className="register-panel register-info-panel">
                 <Box
                   sx={{
                     background: `linear-gradient(135deg, ${C.primary} 0%, ${C.secondary} 100%)`,
-                    p: { xs: 4, md: 6 },
+                    p: { xs: 3, md: 6 },
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'center',
-                    minHeight: { xs: 400, md: 750 },
                     position: 'relative',
                     overflow: 'hidden'
                   }}
@@ -672,8 +662,9 @@ const Register = () => {
                       { icon: <Group />, title: t('auth.register.featureCommunity'), desc: t('auth.register.featureCommunityDesc') },
                       { icon: <Devices />, title: t('auth.register.featureDevices'), desc: t('auth.register.featureDevicesDesc') }
                     ].map((feature, index) => (
-                      <Box key={index} sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                      <Box key={index} className="register-feature" sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                         <Box
+                          className="register-feature-icon"
                           sx={{
                             width: 52,
                             height: 52,
@@ -700,17 +691,16 @@ const Register = () => {
                     ))}
                   </Box>
                 </Box>
-              </Grid>
+              </Box>
 
               {/* Right Side - Registration Form */}
-              <Grid item xs={12} sm={6}>
+              <Box className="register-panel register-form-panel">
                 <Box
                   sx={{
-                    p: { xs: 4, md: 6 },
+                    p: { xs: 3, md: 6 },
                     display: 'flex',
                     flexDirection: 'column',
-                    justifyContent: 'center',
-                    minHeight: { xs: 'auto', md: 750 }
+                    justifyContent: 'center'
                   }}
                 >
                   <Typography variant="h4" fontWeight={800} sx={{ color: C.dark, mb: 1 }}>
@@ -871,8 +861,8 @@ const Register = () => {
                     {t('auth.register.browseBooks')}
                   </Button>
                 </Box>
-              </Grid>
-            </Grid>
+              </Box>
+            </Box>
           </Card>
         </Fade>
       </Container>

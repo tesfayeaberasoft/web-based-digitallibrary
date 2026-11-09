@@ -58,6 +58,7 @@ import {
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import PersistentInstallCard from '../../components/InstallCard';
 import axios from 'axios';
+import './AdminDashboard.css';
 
 const StatCard = ({ title, value, change, icon, color, bgColor, subtitle, onClick, delay = 0 }) => (
   <Zoom in timeout={500 + delay}>
@@ -324,6 +325,7 @@ const AdminDashboard = () => {
         {/* Key Performance Indicators */}
         <Grid
           container
+          className="admin-dashboard-kpi-grid"
           spacing={3}
           sx={{
             mb: 4,
@@ -473,11 +475,11 @@ const AdminDashboard = () => {
         </Grow>
 
         {/* Charts and Analytics */}
-        <Grid container spacing={3}>
+        <Grid container className="admin-dashboard-charts-grid">
           {/* Monthly Circulation Chart */}
-          <Grid item xs={12} md={6}>
+          <Grid item className="admin-dashboard-chart-item">
             <Grow in timeout={1000}>
-              <Card sx={{ borderRadius: 4, overflow: 'hidden' }}>
+              <Card className="admin-dashboard-chart-card" sx={{ borderRadius: 4, overflow: 'hidden' }}>
                 <CardContent>
                   <Typography variant="h6" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <TrendingUp sx={{ color: '#4a9b8e' }} />
@@ -526,9 +528,9 @@ const AdminDashboard = () => {
           </Grid>
 
           {/* Revenue Trend */}
-          <Grid item xs={12} md={6}>
+          <Grid item className="admin-dashboard-chart-item">
             <Grow in timeout={1200}>
-              <Card sx={{ borderRadius: 4, overflow: 'hidden' }}>
+              <Card className="admin-dashboard-chart-card" sx={{ borderRadius: 4, overflow: 'hidden' }}>
                 <CardContent>
                   <Typography variant="h6" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <AttachMoney sx={{ color: '#5c6bc0' }} />
@@ -577,9 +579,9 @@ const AdminDashboard = () => {
           </Grid>
 
           {/* Category Distribution */}
-          <Grid item xs={12} md={6}>
+          <Grid item className="admin-dashboard-chart-item">
             <Grow in timeout={1400}>
-              <Card sx={{ borderRadius: 4, overflow: 'hidden' }}>
+              <Card className="admin-dashboard-chart-card" sx={{ borderRadius: 4, overflow: 'hidden' }}>
                 <CardContent>
                   <Typography variant="h6" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <AssessmentIcon sx={{ color: '#9575cd' }} />
@@ -622,9 +624,9 @@ const AdminDashboard = () => {
           </Grid>
 
           {/* Recent Activities */}
-          <Grid item xs={12} md={6}>
+          <Grid item className="admin-dashboard-activities-item">
             <Grow in timeout={1600}>
-              <Card sx={{ borderRadius: 4, overflow: 'hidden' }}>
+              <Card className="admin-dashboard-activities-card" sx={{ borderRadius: 4, overflow: 'hidden' }}>
                 <CardContent>
                   <Typography variant="h6" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <NotificationsIcon sx={{ color: '#4a9b8e' }} />

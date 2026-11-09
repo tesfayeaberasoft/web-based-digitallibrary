@@ -309,15 +309,35 @@ const NotificationsPage = () => {
                 </Typography>
               </Box>
             ) : (
-              <List sx={{ p: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <List sx={{
+                p: 0,
+                m: 0,
+                display: 'grid',
+                gridTemplateColumns: {
+                  xs: 'minmax(0, 1fr)',
+                  md: 'repeat(2, minmax(0, 1fr))'
+                },
+                gap: 2.5,
+                width: '100%',
+                minWidth: 0,
+                alignItems: 'stretch'
+              }}>
                 {notifications.map((notification, index) => (
                   <React.Fragment key={notification.id}>
                     <ListItem
                       sx={{
+                        gridColumn: {
+                          md: notifications.length % 2 === 1 && index === notifications.length - 1
+                            ? '1 / -1'
+                            : 'auto'
+                        },
                         alignItems: 'flex-start',
                         px: { xs: 1.5, sm: 2 },
                         py: 2,
                         pr: { xs: 7, sm: 8 },
+                        width: '100%',
+                        minWidth: 0,
+                        boxSizing: 'border-box',
                         borderRadius: 2.5,
                         border: '1px solid',
                         borderColor: notification.status === 'unread' ? '#d4e5d9' : '#edf0ee',

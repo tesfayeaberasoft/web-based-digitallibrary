@@ -10,7 +10,6 @@ import {
   Grid,
   Switch,
   FormControlLabel,
-  Divider,
   Alert,
   Chip,
   IconButton,
@@ -150,6 +149,7 @@ import {
   CalendarToday
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
+import './AdminSettings.css';
 import { useAuth } from '../../contexts/AuthContext';
 import axios from 'axios';
 
@@ -630,92 +630,73 @@ const AdminSettings = () => {
 
   // Library Settings Tab
   const renderLibrarySettings = () => (
-    <Grid container spacing={3}>
-      <Grid item xs={12}>
-        <Typography variant="h5" fontWeight={600} gutterBottom sx={{ color: 'primary.main' }}>
-          <LibraryBooks sx={{ mr: 1, verticalAlign: 'middle', fontSize: 28 }} />
-          Library Information
-        </Typography>
-      </Grid>
-      
-      {/* Basic Information */}
-      <Grid item xs={12} md={6}>
-        <TextField
-          fullWidth
-          label="Library Name"
-          value={librarySettings.libraryName}
-          onChange={(e) => handleLibrarySettingChange('libraryName', e.target.value)}
-          InputProps={{
-            startAdornment: <Business sx={{ mr: 1, color: 'text.secondary' }} />
-          }}
-        />
-      </Grid>
-      <Grid item xs={12} md={6}>
-        <TextField
-          fullWidth
-          label="Email Address"
-          value={librarySettings.email}
-          onChange={(e) => handleLibrarySettingChange('email', e.target.value)}
-          InputProps={{
-            startAdornment: <Email sx={{ mr: 1, color: 'text.secondary' }} />
-          }}
-        />
-      </Grid>
-      <Grid item xs={12} md={6}>
-        <TextField
-          fullWidth
-          label="Phone Number"
-          value={librarySettings.phone}
-          onChange={(e) => handleLibrarySettingChange('phone', e.target.value)}
-          InputProps={{
-            startAdornment: <Phone sx={{ mr: 1, color: 'text.secondary' }} />
-          }}
-        />
-      </Grid>
-      <Grid item xs={12} md={6}>
-        <TextField
-          fullWidth
-          label="Website"
-          value={librarySettings.website}
-          onChange={(e) => handleLibrarySettingChange('website', e.target.value)}
-          InputProps={{
-            startAdornment: <Web sx={{ mr: 1, color: 'text.secondary' }} />
-          }}
-        />
-      </Grid>
-      <Grid item xs={12}>
-        <TextField
-          fullWidth
-          label="Description"
-          multiline
-          rows={3}
-          value={librarySettings.description}
-          onChange={(e) => handleLibrarySettingChange('description', e.target.value)}
-        />
-      </Grid>
-      <Grid item xs={12}>
-        <TextField
-          fullWidth
-          label="Address"
-          multiline
-          rows={2}
-          value={librarySettings.address}
-          onChange={(e) => handleLibrarySettingChange('address', e.target.value)}
-          InputProps={{
-            startAdornment: <LocationOn sx={{ mr: 1, color: 'text.secondary' }} />
-          }}
-        />
-      </Grid>
+    <Box className="admin-library-settings-grid">
+      <Card variant="outlined" className="admin-library-settings-card admin-library-information-card">
+        <Box className="admin-library-settings-card-heading">
+          <Typography variant="h5" fontWeight={600} sx={{ color: 'primary.main' }}>
+            <LibraryBooks sx={{ mr: 1, verticalAlign: 'middle', fontSize: 28 }} />
+            Library Information
+          </Typography>
+        </Box>
+        <Box className="admin-library-information-fields">
+          <TextField
+            fullWidth
+            label="Library Name"
+            value={librarySettings.libraryName}
+            onChange={(e) => handleLibrarySettingChange('libraryName', e.target.value)}
+            InputProps={{ startAdornment: <Business sx={{ mr: 1, color: 'text.secondary' }} /> }}
+          />
+          <TextField
+            fullWidth
+            label="Email Address"
+            value={librarySettings.email}
+            onChange={(e) => handleLibrarySettingChange('email', e.target.value)}
+            InputProps={{ startAdornment: <Email sx={{ mr: 1, color: 'text.secondary' }} /> }}
+          />
+          <TextField
+            fullWidth
+            label="Phone Number"
+            value={librarySettings.phone}
+            onChange={(e) => handleLibrarySettingChange('phone', e.target.value)}
+            InputProps={{ startAdornment: <Phone sx={{ mr: 1, color: 'text.secondary' }} /> }}
+          />
+          <TextField
+            fullWidth
+            label="Website"
+            value={librarySettings.website}
+            onChange={(e) => handleLibrarySettingChange('website', e.target.value)}
+            InputProps={{ startAdornment: <Web sx={{ mr: 1, color: 'text.secondary' }} /> }}
+          />
+          <TextField
+            fullWidth
+            label="Description"
+            multiline
+            minRows={2}
+            value={librarySettings.description}
+            onChange={(e) => handleLibrarySettingChange('description', e.target.value)}
+            className="admin-library-textarea-field"
+          />
+          <TextField
+            fullWidth
+            label="Address"
+            multiline
+            minRows={2}
+            value={librarySettings.address}
+            onChange={(e) => handleLibrarySettingChange('address', e.target.value)}
+            InputProps={{ startAdornment: <LocationOn sx={{ mr: 1, color: 'text.secondary' }} /> }}
+            className="admin-library-textarea-field"
+          />
+        </Box>
+      </Card>
 
-      <>
-        <Grid item xs={12}>
-          <Divider sx={{ my: 2 }} />
-          <Typography variant="h6" fontWeight={600} gutterBottom>
+      <Card variant="outlined" className="admin-library-settings-card admin-library-policies-card">
+        <Box className="admin-library-settings-card-heading">
+          <Typography variant="h6" fontWeight={600}>
             <LibraryBooks sx={{ mr: 1, verticalAlign: 'middle', color: 'primary.main' }} />
             Library Policies
           </Typography>
-        </Grid>
-        <Grid item xs={12} md={4}>
+        </Box>
+        <Box className="admin-library-policies-fields">
           <TextField
             fullWidth
             label="Maximum Books Per User"
@@ -728,8 +709,6 @@ const AdminSettings = () => {
             }}
             helperText="Maximum number of books a user can borrow at once"
           />
-        </Grid>
-        <Grid item xs={12} md={4}>
           <TextField
             fullWidth
             label="Fine Per Day (USD)"
@@ -737,13 +716,9 @@ const AdminSettings = () => {
             inputProps={{ step: '0.01', min: '0' }}
             value={librarySettings.dueFinesPerDay}
             onChange={(e) => handleLibrarySettingChange('dueFinesPerDay', parseFloat(e.target.value) || 0)}
-            InputProps={{
-              startAdornment: <AttachMoney sx={{ mr: 1, color: 'text.secondary' }} />
-            }}
+            InputProps={{ startAdornment: <AttachMoney sx={{ mr: 1, color: 'text.secondary' }} /> }}
             helperText="Daily fine amount for overdue books"
           />
-        </Grid>
-        <Grid item xs={12} md={4}>
           <TextField
             fullWidth
             label="Maximum Return Days"
@@ -756,27 +731,23 @@ const AdminSettings = () => {
             }}
             helperText="Maximum days allowed for book return"
           />
-        </Grid>
-      </>
+        </Box>
+      </Card>
 
-      {/* Operating Hours */}
-      <Grid item xs={12}>
-        <Divider sx={{ my: 2 }} />
-        <Typography variant="h6" fontWeight={600} gutterBottom>
-          <AccessTime sx={{ mr: 1, verticalAlign: 'middle', color: 'primary.main' }} />
-          Operating Hours
-        </Typography>
-      </Grid>
-      {Object.entries(librarySettings.operatingHours).map(([day, hours]) => (
-        <Grid item xs={12} key={day}>
-          <Card variant="outlined" sx={{ p: 2 }}>
-            <Grid container spacing={2} alignItems="center">
-              <Grid item xs={12} md={2}>
+      <Card variant="outlined" className="admin-library-settings-card admin-library-operating-card">
+        <Box className="admin-library-settings-card-heading">
+          <Typography variant="h6" fontWeight={600}>
+            <AccessTime sx={{ mr: 1, verticalAlign: 'middle', color: 'primary.main' }} />
+            Operating Hours
+          </Typography>
+        </Box>
+        <Box className="admin-library-operating-grid">
+          {Object.entries(librarySettings.operatingHours).map(([day, hours]) => (
+            <Box className="admin-library-operating-day" key={day}>
+              <Box className="admin-library-operating-day-heading">
                 <Typography variant="body1" fontWeight={600} sx={{ textTransform: 'capitalize' }}>
                   {day}
                 </Typography>
-              </Grid>
-              <Grid item xs={12} md={2}>
                 <FormControlLabel
                   control={
                     <Switch
@@ -786,90 +757,72 @@ const AdminSettings = () => {
                   }
                   label="Open"
                 />
-              </Grid>
+              </Box>
               {!hours.closed && (
-                <>
-                  <Grid item xs={12} md={3}>
-                    <TextField
-                      fullWidth
-                      label="Open Time"
-                      type="time"
-                      value={hours.open}
-                      onChange={(e) => handleOperatingHoursChange(day, 'open', e.target.value)}
-                      InputLabelProps={{ shrink: true }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={3}>
-                    <TextField
-                      fullWidth
-                      label="Close Time"
-                      type="time"
-                      value={hours.close}
-                      onChange={(e) => handleOperatingHoursChange(day, 'close', e.target.value)}
-                      InputLabelProps={{ shrink: true }}
-                    />
-                  </Grid>
-                </>
+                <Box className="admin-library-operating-times">
+                  <TextField
+                    fullWidth
+                    label="Opens"
+                    type="time"
+                    value={hours.open}
+                    onChange={(e) => handleOperatingHoursChange(day, 'open', e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                  <TextField
+                    fullWidth
+                    label="Closes"
+                    type="time"
+                    value={hours.close}
+                    onChange={(e) => handleOperatingHoursChange(day, 'close', e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Box>
               )}
-            </Grid>
-          </Card>
-        </Grid>
-      ))}
+            </Box>
+          ))}
+        </Box>
+      </Card>
 
-      {/* Social Media */}
-      <Grid item xs={12}>
-        <Divider sx={{ my: 2 }} />
-        <Typography variant="h6" fontWeight={600} gutterBottom>
-          <SocialDistance sx={{ mr: 1, verticalAlign: 'middle', color: 'primary.main' }} />
-          Social Media Links
-        </Typography>
-      </Grid>
-      <Grid item xs={12} md={6}>
-        <TextField
-          fullWidth
-          label="Facebook"
-          value={librarySettings.socialMedia.facebook}
-          onChange={(e) => handleSocialMediaChange('facebook', e.target.value)}
-          InputProps={{
-            startAdornment: <Facebook sx={{ mr: 1, color: '#1877f2' }} />
-          }}
-        />
-      </Grid>
-      <Grid item xs={12} md={6}>
-        <TextField
-          fullWidth
-          label="Twitter"
-          value={librarySettings.socialMedia.twitter}
-          onChange={(e) => handleSocialMediaChange('twitter', e.target.value)}
-          InputProps={{
-            startAdornment: <Twitter sx={{ mr: 1, color: '#1da1f2' }} />
-          }}
-        />
-      </Grid>
-      <Grid item xs={12} md={6}>
-        <TextField
-          fullWidth
-          label="Instagram"
-          value={librarySettings.socialMedia.instagram}
-          onChange={(e) => handleSocialMediaChange('instagram', e.target.value)}
-          InputProps={{
-            startAdornment: <Instagram sx={{ mr: 1, color: '#e4405f' }} />
-          }}
-        />
-      </Grid>
-      <Grid item xs={12} md={6}>
-        <TextField
-          fullWidth
-          label="LinkedIn"
-          value={librarySettings.socialMedia.linkedin}
-          onChange={(e) => handleSocialMediaChange('linkedin', e.target.value)}
-          InputProps={{
-            startAdornment: <LinkedIn sx={{ mr: 1, color: '#0077b5' }} />
-          }}
-        />
-      </Grid>
+      <Card variant="outlined" className="admin-library-settings-card admin-library-social-card">
+        <Box className="admin-library-settings-card-heading">
+          <Typography variant="h6" fontWeight={600}>
+            <SocialDistance sx={{ mr: 1, verticalAlign: 'middle', color: 'primary.main' }} />
+            Social Media Links
+          </Typography>
+        </Box>
+        <Box className="admin-library-social-fields">
+          <TextField
+            fullWidth
+            label="Facebook"
+            value={librarySettings.socialMedia.facebook}
+            onChange={(e) => handleSocialMediaChange('facebook', e.target.value)}
+            InputProps={{ startAdornment: <Facebook sx={{ mr: 1, color: '#1877f2' }} /> }}
+          />
+          <TextField
+            fullWidth
+            label="Twitter"
+            value={librarySettings.socialMedia.twitter}
+            onChange={(e) => handleSocialMediaChange('twitter', e.target.value)}
+            InputProps={{ startAdornment: <Twitter sx={{ mr: 1, color: '#1da1f2' }} /> }}
+          />
+          <TextField
+            fullWidth
+            label="Instagram"
+            value={librarySettings.socialMedia.instagram}
+            onChange={(e) => handleSocialMediaChange('instagram', e.target.value)}
+            InputProps={{ startAdornment: <Instagram sx={{ mr: 1, color: '#e4405f' }} /> }}
+          />
+          <TextField
+            fullWidth
+            label="LinkedIn"
+            value={librarySettings.socialMedia.linkedin}
+            onChange={(e) => handleSocialMediaChange('linkedin', e.target.value)}
+            InputProps={{ startAdornment: <LinkedIn sx={{ mr: 1, color: '#0077b5' }} /> }}
+          />
+        </Box>
+      </Card>
 
-      <Grid item xs={12}>
+      <Box className="admin-library-settings-save">
         <Button
           variant="contained"
           startIcon={<Save />}
@@ -879,8 +832,8 @@ const AdminSettings = () => {
         >
           {loading ? <CircularProgress size={20} /> : 'Save Library Settings'}
         </Button>
-      </Grid>
-    </Grid>
+      </Box>
+    </Box>
   );
 
   // System Settings Tab
@@ -1960,10 +1913,10 @@ const AdminSettings = () => {
   );
   return (
     <DashboardLayout title="Admin Panel">
-      <Box>
+      <Box className={isSuperAdmin ? 'admin-settings-page admin-system-settings-page' : 'admin-settings-page admin-library-info-page'}>
         {/* Header */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Box>
+        <Box className="admin-settings-header">
+          <Box className="admin-settings-heading">
             <Typography variant="h3" fontWeight={700} gutterBottom sx={{ 
               background: 'linear-gradient(45deg, #4a9b8e 30%, #2c5f5a 90%)',
               backgroundClip: 'text',
@@ -1977,7 +1930,8 @@ const AdminSettings = () => {
               {isSuperAdmin ? 'Configure and manage all system settings and preferences' : 'Update library information and view system summary'}
             </Typography>
           </Box>
-          <Chip 
+          <Chip
+            className="admin-settings-version"
             label={`v${systemStatus.version}`} 
             color="primary" 
             variant="outlined"
@@ -1986,7 +1940,7 @@ const AdminSettings = () => {
         </Box>
 
         {/* System Status Overview */}
-        <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid container className={isSuperAdmin ? 'admin-settings-status-grid' : 'admin-settings-status-grid admin-library-info-metrics'}>
           {isSuperAdmin ? (
             <>
               <Grid item xs={12} md={3}>

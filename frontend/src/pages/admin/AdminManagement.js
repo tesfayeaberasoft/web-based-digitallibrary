@@ -74,6 +74,7 @@ import {
   Key
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
+import './SuperAdminDashboard.css';
 import { useAuth } from '../../contexts/AuthContext';
 import axios from 'axios';
 
@@ -356,10 +357,10 @@ const AdminManagement = () => {
 
   return (
     <DashboardLayout title="Super Admin Panel">
-      <Box>
+      <Box className="super-admin-management-page">
         <Fade in timeout={300}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3, flexWrap: 'wrap', gap: 2 }}>
-            <Box>
+          <Box className="super-admin-management-header" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3, flexWrap: 'wrap', gap: 2 }}>
+            <Box className="super-admin-management-heading">
               <Typography
                 variant="h4"
                 fontWeight={700}
@@ -408,14 +409,14 @@ const AdminManagement = () => {
         </Fade>
 
         {/* Stats */}
-        <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid container className="super-admin-admin-metrics" sx={{ mb: 3 }}>
           {[
             { label: 'Total Admins', value: stats.total, icon: <Groups />, color: '#d32f2f', bg: '#ffebee' },
             { label: 'Active', value: stats.active, icon: <VerifiedUser />, color: '#2e7d32', bg: '#e8f5e9' },
             { label: 'Suspended', value: stats.suspended, icon: <Block />, color: '#c62828', bg: '#ffcdd2' },
             { label: 'Inactive', value: stats.inactive, icon: <Schedule />, color: '#616161', bg: '#f5f5f5' }
           ].map((s, i) => (
-            <Grid item xs={6} md={3} key={s.label}>
+            <Grid item className="super-admin-admin-metric" key={s.label}>
               <Grow in timeout={400 + i * 100}>
                 <Card sx={{ bgcolor: s.bg }}>
                   <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -440,12 +441,12 @@ const AdminManagement = () => {
         </Alert>
 
         {/* Filters */}
-        <Card sx={{ mb: 3 }}>
+        <Card className="super-admin-controls-card" sx={{ mb: 3 }}>
           <CardContent>
-            <Grid container spacing={2} alignItems="center">
-              <Grid item xs={12} md={5}>
+            <Box className="super-admin-controls">
                 <TextField
                   fullWidth
+                  className="super-admin-controls-search"
                   placeholder={showLibrarians ? 'Search librarians...' : 'Search admins by name or email...'}
                   value={searchQuery}
                   onChange={(e) => {
@@ -460,10 +461,8 @@ const AdminManagement = () => {
                     )
                   }}
                 />
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <FormControl fullWidth>
-                  <InputLabel>Status</InputLabel>
+              <FormControl fullWidth className="super-admin-controls-status">
+                <InputLabel>Status</InputLabel>
                   <Select
                     value={statusFilter}
                     label="Status"
@@ -478,13 +477,10 @@ const AdminManagement = () => {
                     <SelectMenuItem value="suspended">Suspended</SelectMenuItem>
                   </Select>
                 </FormControl>
-              </Grid>
-              <Grid item xs={12} md={3}>
-                <Button fullWidth variant="outlined" startIcon={<Refresh />} onClick={() => { fetchUsers(); fetchStats(); }}>
+                <Button className="super-admin-controls-refresh" variant="outlined" startIcon={<Refresh />} onClick={() => { fetchUsers(); fetchStats(); }}>
                   Refresh
                 </Button>
-              </Grid>
-            </Grid>
+            </Box>
           </CardContent>
         </Card>
 

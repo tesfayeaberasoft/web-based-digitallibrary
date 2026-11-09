@@ -34,7 +34,7 @@ const C = {
 const drawerWidth = 280;
 const miniDrawerWidth = 72;
 
-export default function DashboardLayout({ children, title }) {
+export default function DashboardLayout({ children, title, centerTitle = false }) {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
@@ -122,6 +122,12 @@ export default function DashboardLayout({ children, title }) {
     ...item,
     text: t(`navigation.${item.text}`)
   }));
+  const dashboardPath = {
+    'super-admin': '/super-admin',
+    admin: '/admin',
+    librarian: '/librarian',
+    user: '/dashboard'
+  }[user?.role] || '/dashboard';
   const isActive = (path) => location.pathname === path;
 
   const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
@@ -490,7 +496,24 @@ export default function DashboardLayout({ children, title }) {
           )}
 
           <MenuBook sx={{ mr: 2, fontSize: 28 }} />
-          <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 700, letterSpacing: 0.5 }}>
+          <Typography
+            variant="h6"
+            sx={{
+              flexGrow: centerTitle ? 0 : 1,
+              fontWeight: 700,
+              letterSpacing: 0.5,
+              ...(centerTitle && {
+                position: 'absolute',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: 'max-content',
+                maxWidth: { xs: 'calc(100% - 144px)', sm: 'calc(100% - 260px)' },
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                textAlign: 'center'
+              })
+            }}
+          >
             {title
               ? t(`pageTitles.${title}`, { defaultValue: title })
               : t('common.digitalLibrary')}
@@ -588,7 +611,7 @@ export default function DashboardLayout({ children, title }) {
             <MenuItem onClick={() => { handleProfileMenuClose(); navigate('/profile'); }}>
               <AccountCircle sx={{ mr: 2 }} /> {t('common.profile')}
             </MenuItem>
-            <MenuItem onClick={() => { handleProfileMenuClose(); navigate('/dashboard'); }}>
+            <MenuItem onClick={() => { handleProfileMenuClose(); navigate(dashboardPath); }}>
               <Dashboard sx={{ mr: 2 }} /> {t('common.dashboard')}
             </MenuItem>
             <Divider />
@@ -647,8 +670,10 @@ export default function DashboardLayout({ children, title }) {
       <Box
         component="main"
         sx={{
-          flexGrow: 1,
-          minWidth: 0,          // prevent flex child from overflowing
+          flex: '1 1 0%',
+          width: 0,
+          minWidth: 0,
+          boxSizing: 'border-box',
           pt: 10,
           pb: isMobile ? 10 : 4,
           px: { xs: 2, sm: 3, md: 4 },
@@ -664,8 +689,7 @@ export default function DashboardLayout({ children, title }) {
         {/* Content Wrapper with Fade Animation */}
         <Fade in={true} timeout={600}>
           <Box sx={{ 
-            maxWidth: 1400, 
-            mx: 'auto',
+            width: '100%',
             minHeight: 'calc(100vh - 180px)'
           }}>
             {children}

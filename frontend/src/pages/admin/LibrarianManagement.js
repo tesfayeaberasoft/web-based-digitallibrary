@@ -103,6 +103,8 @@ import {
   SupervisedUserCircle
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
+import './AdminManagementHeader.css';
+import './SuperAdminDashboard.css';
 import axios from 'axios';
 
 const LibrarianManagement = () => {
@@ -476,11 +478,11 @@ const LibrarianManagement = () => {
 
   return (
     <DashboardLayout title="Admin Panel">
-      <Box>
+      <Box className="super-admin-management-page">
         {/* Header */}
         <Fade in timeout={300}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Box>
+          <Box className="admin-management-page-header">
+            <Box className="admin-management-page-heading">
               <Typography variant="h3" fontWeight={700} gutterBottom sx={{ 
                 background: 'linear-gradient(45deg, #d32f2f 30%, #f44336 90%)',
                 backgroundClip: 'text',
@@ -494,7 +496,7 @@ const LibrarianManagement = () => {
                 Manage librarians, promote users, and control staff permissions
               </Typography>
             </Box>
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+            <Box className="admin-management-page-actions" sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
               <FormControlLabel
                 control={
                   <Switch
@@ -548,12 +550,12 @@ const LibrarianManagement = () => {
 
         {/* Filters */}
         <Grow in timeout={500}>
-          <Card sx={{ mb: 3 }}>
+          <Card className="super-admin-controls-card" sx={{ mb: 3 }}>
             <CardContent>
-              <Grid container spacing={2} alignItems="center">
-                <Grid item xs={12} md={6}>
+              <Box className="super-admin-controls">
                   <TextField
                     fullWidth
+                    className="super-admin-controls-search"
                     placeholder="Search librarians by name, email, or employee ID..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -565,9 +567,7 @@ const LibrarianManagement = () => {
                       ),
                     }}
                   />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth>
+                  <FormControl fullWidth className="super-admin-controls-status">
                     <InputLabel>Status</InputLabel>
                     <Select
                       value={statusFilter}
@@ -580,18 +580,17 @@ const LibrarianManagement = () => {
                       <SelectMenuItem value="suspended">Suspended</SelectMenuItem>
                     </Select>
                   </FormControl>
-                </Grid>
-                <Grid item xs={12} md={3}>
+                  <Box className="super-admin-controls-refresh-wrap">
                   <Button
-                    fullWidth
+                    className="super-admin-controls-refresh"
                     variant="outlined"
                     startIcon={<Refresh />}
                     onClick={fetchUsers}
                   >
                     Refresh
                   </Button>
-                </Grid>
-              </Grid>
+                  </Box>
+              </Box>
             </CardContent>
           </Card>
         </Grow>

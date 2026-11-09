@@ -372,7 +372,7 @@ const LibrarianRequests = () => {
   return (
     <DashboardLayout title="Librarian Panel">
       <Box className="librarian-page">
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Box className="librarian-page-header" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Box>
             <Typography variant="h4" fontWeight={700} gutterBottom>
               Book Requests
@@ -398,8 +398,8 @@ const LibrarianRequests = () => {
         )}
 
         <Card>
-          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-            <Tabs value={tabValue} onChange={handleTabChange}>
+          <Box className="librarian-request-tabs-container" sx={{ borderBottom: 1, borderColor: 'divider' }}>
+            <Tabs className="librarian-centered-tabs librarian-request-tabs" centered value={tabValue} onChange={handleTabChange}>
               <Tab label={`Active Loans (${loans.length})`} />
               <Tab label={`Reservations (${reservations.length})`} />
             </Tabs>

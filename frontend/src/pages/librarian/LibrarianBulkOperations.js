@@ -334,16 +334,18 @@ const LibrarianBulkOperations = () => {
   return (
     <DashboardLayout>
       <Box className="librarian-page" sx={{ p: 3 }}>
-        <Typography variant="h4" gutterBottom sx={{ color: '#4a9b8e', fontWeight: 600 }}>
-          Bulk Operations
-        </Typography>
-        <Typography variant="body1" color="text.secondary" paragraph>
-          Process multiple book issues or returns efficiently
-        </Typography>
+        <Box className="librarian-page-heading" sx={{ mb: 3, textAlign: 'center' }}>
+          <Typography variant="h4" gutterBottom sx={{ color: '#4a9b8e', fontWeight: 600 }}>
+            Bulk Operations
+          </Typography>
+          <Typography variant="body1" color="text.secondary" paragraph>
+            Process multiple book issues or returns efficiently
+          </Typography>
+        </Box>
 
         <Card sx={{ mb: 3 }}>
-          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-            <Tabs value={tabValue} onChange={handleTabChange}>
+          <Box className="librarian-bulk-tabs-container" sx={{ borderBottom: 1, borderColor: 'divider' }}>
+            <Tabs className="librarian-centered-tabs librarian-bulk-tabs" centered value={tabValue} onChange={handleTabChange}>
               <Tab 
                 label="Bulk Issue" 
                 icon={<IssueIcon />}
@@ -362,7 +364,7 @@ const LibrarianBulkOperations = () => {
             {tabValue === 0 && (
               <Fade in timeout={500}>
                 <Box>
-                  <Grid container spacing={3}>
+                  <Grid container className="librarian-form-grid" spacing={3}>
                     {/* User Selection */}
                     <Grid item xs={12} md={6}>
                       <Card sx={{ height: '100%', bgcolor: '#f8f9fa' }}>

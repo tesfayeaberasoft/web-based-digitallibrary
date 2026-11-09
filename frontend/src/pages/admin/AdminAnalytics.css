@@ -1,0 +1,129 @@
+.admin-analytics-metrics-grid.MuiGrid-root,
+.admin-analytics-charts-grid.MuiGrid-root {
+  display: grid !important;
+  width: 100%;
+  min-width: 0;
+  margin: 0 0 24px;
+  align-items: stretch;
+  gap: 20px;
+}
+
+.admin-analytics-metrics-grid.MuiGrid-root {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.admin-analytics-charts-grid.MuiGrid-root {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-analytics-metrics-grid > .admin-analytics-metric-item,
+.admin-analytics-charts-grid > .admin-analytics-chart-item {
+  display: flex;
+  width: auto !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.admin-analytics-metric-item > *,
+.admin-analytics-chart-item > * {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.admin-analytics-metrics-grid .MuiCard-root,
+.admin-analytics-chart-card.MuiCard-root {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  border: 1px solid #e4ebe6;
+  box-shadow: 0 4px 16px rgba(27, 67, 50, 0.07);
+}
+
+.admin-analytics-metrics-grid .MuiCardContent-root,
+.admin-analytics-chart-card .MuiCardContent-root {
+  box-sizing: border-box;
+  padding: clamp(14px, 1.5vw, 24px);
+}
+
+.admin-analytics-metrics-grid .MuiTypography-body2 {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+  .admin-analytics-metrics-grid.MuiGrid-root,
+  .admin-analytics-charts-grid.MuiGrid-root {
+    gap: 12px;
+  }
+
+  .admin-analytics-metrics-grid .MuiCardContent-root,
+  .admin-analytics-chart-card .MuiCardContent-root {
+    padding: 10px;
+  }
+
+  .admin-analytics-metrics-grid .MuiTypography-body2 {
+    font-size: clamp(0.6rem, 2.5vw, 0.875rem);
+    line-height: 1.25;
+  }
+
+  .admin-analytics-metrics-grid .MuiTypography-h4 {
+    font-size: clamp(1rem, 4vw, 2.125rem);
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+  }
+
+  .admin-analytics-metrics-grid .MuiAvatar-root {
+    width: clamp(28px, 8vw, 48px);
+    height: clamp(28px, 8vw, 48px);
+  }
+}
+
+.admin-analytics-popular-revenue-grid.MuiGrid-root {
+  display: grid !important;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  align-items: stretch;
+  gap: 20px;
+  width: 100%;
+  min-width: 0;
+  margin: 0 0 24px;
+}
+
+.admin-analytics-popular-revenue-grid > .admin-analytics-popular-books-item,
+.admin-analytics-popular-revenue-grid > .admin-analytics-revenue-item {
+  display: flex;
+  width: auto !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.admin-analytics-popular-books-item > *,
+.admin-analytics-revenue-item > * {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.admin-analytics-popular-books-card.MuiCard-root,
+.admin-analytics-revenue-card.MuiCard-root {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  border: 1px solid #e4ebe6;
+  box-shadow: 0 4px 16px rgba(27, 67, 50, 0.07);
+}
+
+.admin-analytics-revenue-card .MuiCardContent-root {
+  height: 100%;
+  box-sizing: border-box;
+  padding: clamp(16px, 1.8vw, 28px);
+}
+
+@media (max-width: 600px) {
+  .admin-analytics-popular-revenue-grid.MuiGrid-root {
+    gap: 12px;
+  }
+}

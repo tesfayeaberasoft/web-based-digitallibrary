@@ -1,0 +1,132 @@
+.login-page {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+.login-page-container.MuiContainer-root {
+  display: flex;
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.login-layout-card.MuiCard-root {
+  display: flex;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  border-radius: 0;
+  background: #fff;
+  box-shadow: 0 16px 48px rgba(20, 54, 40, 0.16);
+}
+
+.login-layout-grid {
+  display: grid;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+}
+
+.login-panel {
+  display: flex;
+  min-width: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  box-sizing: border-box;
+}
+
+.login-info-panel > .MuiBox-root {
+  width: 100%;
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+  box-sizing: border-box;
+}
+
+.login-info-panel .MuiTypography-root {
+  overflow-wrap: anywhere;
+}
+
+.login-form-panel {
+  justify-content: center;
+  background: linear-gradient(180deg, #fff 0%, #f8fbf9 100%);
+}
+
+.login-form-panel > .MuiBox-root {
+  width: 100%;
+  max-width: 640px;
+  margin: auto;
+  box-sizing: border-box;
+}
+
+.login-form-panel .MuiFormControl-root,
+.login-form-panel .MuiButton-root {
+  min-width: 0;
+}
+
+@media (max-width: 600px) {
+  .login-layout-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .login-panel {
+    min-width: 0;
+  }
+
+  .login-info-panel > .MuiBox-root,
+  .login-form-panel > .MuiBox-root {
+    padding: 20px !important;
+  }
+
+  .login-info-panel .MuiTypography-h3,
+  .login-form-panel .MuiTypography-h4 {
+    font-size: clamp(1.1rem, 5vw, 1.8rem);
+    line-height: 1.2;
+  }
+
+  .login-info-panel .MuiTypography-h6,
+  .login-form-panel .MuiTypography-body1 {
+    font-size: clamp(0.7rem, 3vw, 0.95rem);
+    line-height: 1.45;
+  }
+
+  .login-feature {
+    min-width: 0;
+  }
+
+  .login-feature-icon {
+    width: 34px !important;
+    height: 34px !important;
+    margin-right: 10px !important;
+  }
+
+  .login-feature-icon .MuiSvgIcon-root {
+    font-size: 18px !important;
+  }
+
+  .login-form-panel form > .MuiBox-root {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .login-form-panel .MuiFormControlLabel-root {
+    margin-right: 4px;
+  }
+
+  .login-form-panel .MuiFormControlLabel-label,
+  .login-form-panel .MuiLink-root {
+    font-size: 0.7rem;
+  }
+}

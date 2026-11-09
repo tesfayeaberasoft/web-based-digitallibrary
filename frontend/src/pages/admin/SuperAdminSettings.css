@@ -1,0 +1,353 @@
+.super-admin-settings-page {
+  width: 100%;
+  min-width: 0;
+}
+
+.super-admin-settings-header {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center !important;
+  width: 100%;
+}
+
+.super-admin-settings-heading {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  text-align: center;
+}
+
+.super-admin-settings-heading h4,
+.super-admin-settings-heading p {
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+.super-admin-settings-header > .MuiBox-root:last-child {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+}
+
+.super-admin-settings-kpis {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 20px;
+  width: 100%;
+  margin: 0 0 24px;
+}
+
+.super-admin-settings-kpis > .super-admin-settings-kpi {
+  width: auto !important;
+  max-width: none !important;
+  min-width: 0;
+  padding: 0;
+}
+
+.super-admin-settings-kpi > .MuiBox-root,
+.super-admin-settings-kpi .MuiCard-root {
+  height: 100%;
+  min-width: 0;
+}
+
+.super-admin-settings-kpi .MuiCard-root {
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(34, 48, 65, 0.08);
+}
+
+.super-admin-settings-kpi .MuiCardContent-root {
+  min-height: 84px;
+  padding: 16px;
+}
+
+.super-admin-settings-kpi .MuiTypography-h6,
+.super-admin-settings-kpi .MuiTypography-caption {
+  overflow-wrap: anywhere;
+}
+
+.super-admin-settings-tab-panel {
+  width: 100%;
+  min-width: 0;
+  padding: 24px !important;
+}
+
+.super-admin-settings-page > .MuiPaper-root {
+  width: 100%;
+  border: 1px solid rgba(31, 55, 75, 0.1);
+  box-shadow: 0 8px 26px rgba(34, 48, 65, 0.07);
+}
+
+.super-admin-settings-page .MuiTabs-root {
+  min-height: 72px;
+  background: #f8fafc;
+}
+
+.super-admin-settings-page .MuiTabs-flexContainer {
+  justify-content: center;
+}
+
+.super-admin-settings-page .MuiTab-root {
+  min-height: 72px;
+  min-width: 96px;
+  padding: 10px 16px;
+  font-weight: 600;
+}
+
+.super-admin-settings-form-grid,
+.super-admin-settings-tools-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  align-items: stretch;
+  gap: 20px;
+  width: 100%;
+  margin: 0;
+}
+
+.super-admin-settings-policies-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+.super-admin-settings-tools-grid {
+  grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+}
+
+.super-admin-settings-library-grid > .super-admin-settings-field-wide {
+  grid-column: auto;
+}
+
+.super-admin-settings-tools-grid > .super-admin-settings-tool-item:nth-child(-n + 4) {
+  grid-column: span 3;
+}
+
+.super-admin-settings-tools-grid > .super-admin-settings-tool-item:nth-child(n + 5) {
+  grid-column: span 4;
+}
+
+.super-admin-settings-form-grid > .super-admin-settings-field,
+.super-admin-settings-tools-grid > .super-admin-settings-tool-item {
+  width: auto !important;
+  max-width: none !important;
+  min-width: 0;
+  padding: 0;
+}
+
+.super-admin-settings-field-wide {
+  grid-column: 1 / -1;
+}
+
+.super-admin-settings-field {
+  min-width: 0;
+}
+
+.super-admin-settings-field > .MuiTextField-root,
+.super-admin-settings-field > .MuiFormControl-root,
+.super-admin-settings-field > .MuiButton-root,
+.super-admin-settings-field > .MuiFormControlLabel-root {
+  width: 100%;
+  min-width: 0;
+}
+
+.super-admin-settings-form-grid .MuiTextField-root,
+.super-admin-settings-form-grid .MuiFormControl-root {
+  min-width: 0;
+}
+
+.super-admin-settings-form-grid .MuiOutlinedInput-root {
+  min-height: 54px;
+  border-radius: 9px;
+  background: #fff;
+}
+
+.super-admin-settings-form-grid .MuiOutlinedInput-notchedOutline {
+  border-color: rgba(31, 55, 75, 0.2);
+}
+
+.super-admin-settings-form-grid .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: #b71c1c;
+}
+
+.super-admin-settings-form-grid .Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #b71c1c;
+  border-width: 2px;
+}
+
+.super-admin-settings-form-grid .MuiSlider-root {
+  display: block;
+  width: calc(100% - 16px);
+  margin: 12px 8px 24px;
+}
+
+.super-admin-settings-slider-label {
+  display: block;
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+
+.super-admin-settings-switch-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+.super-admin-settings-switch-grid .super-admin-setting-switch {
+  min-width: 0;
+  height: 100%;
+  margin: 0;
+  padding: 16px;
+  border-color: rgba(31, 55, 75, 0.14);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(34, 48, 65, 0.04);
+}
+
+.super-admin-settings-switch-grid .MuiFormControlLabel-root {
+  gap: 10px;
+  min-width: 0;
+}
+
+.super-admin-settings-switch-grid .MuiFormControlLabel-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.super-admin-settings-switch-grid .MuiSwitch-root {
+  flex: 0 0 auto;
+}
+
+.super-admin-settings-security-switches {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.super-admin-settings-field > .super-admin-settings-switch-grid {
+  align-content: start;
+}
+
+.super-admin-settings-tool-item > .MuiBox-root,
+.super-admin-settings-tool-item .super-admin-settings-action-card {
+  height: 100%;
+  min-width: 0;
+}
+
+.super-admin-settings-action-card {
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(34, 48, 65, 0.07);
+}
+
+.super-admin-settings-action-card .MuiCardContent-root {
+  height: 100%;
+  padding: 24px 18px;
+}
+
+.super-admin-settings-tab-panel > .MuiBox-root > .MuiCard-root {
+  width: 100%;
+  margin-top: 20px;
+  border: 1px solid rgba(31, 55, 75, 0.12);
+  box-shadow: 0 4px 16px rgba(34, 48, 65, 0.06);
+}
+
+.super-admin-settings-tab-panel .MuiTableContainer-root {
+  width: 100%;
+}
+
+.super-admin-settings-tab-panel .MuiTableCell-root {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+  .super-admin-settings-kpi .MuiCardContent-root {
+    padding: 12px;
+  }
+
+  .super-admin-settings-kpi .MuiAvatar-root {
+    width: 30px;
+    height: 30px;
+  }
+
+  .super-admin-settings-kpis .MuiTypography-h6 {
+    font-size: clamp(0.8rem, 2vw, 1.25rem);
+  }
+
+  .super-admin-settings-policies-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .super-admin-settings-policies-grid > .super-admin-settings-field:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .super-admin-settings-switch-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .super-admin-settings-header {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+  }
+
+  .super-admin-settings-heading,
+  .super-admin-settings-header > .MuiBox-root:last-child {
+    grid-column: 1;
+    justify-self: center;
+    text-align: center;
+  }
+
+  .super-admin-settings-header > .MuiBox-root:last-child {
+    grid-row: 2;
+    justify-content: center;
+  }
+
+  .super-admin-settings-kpis {
+    gap: 20px;
+  }
+
+  .super-admin-settings-kpi .MuiCardContent-root {
+    padding: 8px;
+  }
+
+  .super-admin-settings-kpi .MuiAvatar-root {
+    display: none;
+  }
+
+  .super-admin-settings-kpis .MuiTypography-h6 {
+    font-size: clamp(0.7rem, 3vw, 1rem);
+  }
+
+  .super-admin-settings-tab-panel {
+    padding: 14px !important;
+  }
+
+  .super-admin-settings-page .MuiTabs-root,
+  .super-admin-settings-page .MuiTab-root {
+    min-height: 60px;
+  }
+
+  .super-admin-settings-page .MuiTab-root {
+    min-width: 78px;
+    padding-inline: 8px;
+    font-size: 0.72rem;
+  }
+
+  .super-admin-settings-form-grid,
+  .super-admin-settings-policies-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 14px;
+  }
+
+  .super-admin-settings-library-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 20px;
+  }
+
+  .super-admin-settings-field-wide,
+  .super-admin-settings-policies-grid > .super-admin-settings-field:last-child {
+    grid-column: 1;
+  }
+
+  .super-admin-settings-switch-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

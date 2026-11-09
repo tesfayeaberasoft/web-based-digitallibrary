@@ -162,18 +162,14 @@ const LibrarianDashboard = () => {
           {/* Main Stats Cards */}
           <Grid
             container
+            className="librarian-fluid-grid librarian-dashboard-four-grid"
             spacing={3}
             sx={{
-              mb: 4,
               m: 0,
+              mb: { xs: 3, sm: 4 },
               width: '100%',
               minWidth: 0,
-              display: 'grid',
-              gridTemplateColumns: {
-                xs: 'minmax(0, 1fr)',
-                sm: 'repeat(2, minmax(0, 1fr))',
-                md: 'repeat(4, minmax(0, 1fr))'
-              }
+              display: 'grid'
             }}
           >
             {/* Total Books */}
@@ -340,10 +336,10 @@ const LibrarianDashboard = () => {
               borderRadius: 2
             }}
           >
-            <Typography variant="h6" fontWeight={700} sx={{ mb: 2, color: '#2c5f57' }}>
+            <Typography variant="h6" fontWeight={700} sx={{ mb: 2, color: '#2c5f57', textAlign: 'center' }}>
               📅 Today's Activity
             </Typography>
-            <Grid container spacing={3}>
+            <Grid container className="librarian-fluid-grid" spacing={3}>
               <Grid item xs={12} sm={4}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <Avatar sx={{ bgcolor: '#4a9b8e', width: 48, height: 48 }}>
@@ -393,10 +389,10 @@ const LibrarianDashboard = () => {
           </Paper>
 
           {/* Quick Actions */}
-          <Typography variant="h6" fontWeight={700} gutterBottom sx={{ mb: 2 }}>
+          <Typography variant="h6" fontWeight={700} gutterBottom sx={{ mb: 2, textAlign: 'center' }}>
             ⚡ Quick Actions
           </Typography>
-          <Grid container spacing={3}>
+          <Grid container className="librarian-fluid-grid librarian-dashboard-four-grid librarian-dashboard-actions" spacing={3}>
             <Grid item xs={12} sm={6} md={3}>
               <Zoom in={true} timeout={600}>
                 <Button 
