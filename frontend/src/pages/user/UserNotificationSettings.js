@@ -1,7 +1,7 @@
 import { apiUrl } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import {
-  Box, Typography, Grid, Switch, Button, Alert, Divider,
+  Box, Typography, Switch, Button, Alert, Divider,
   Card, CardContent, Chip, Fade, CircularProgress, Avatar, Paper, Grow
 } from '@mui/material';
 import {
@@ -154,7 +154,7 @@ export default function UserNotificationSettings() {
       <Fade in timeout={500}>
         <Box>
           {/* header */}
-          <Box sx={{ mb: { xs:3, md:4 }, display:'flex', alignItems:{ xs:'flex-start', sm:'center' }, gap:2 }}>
+          <Box sx={{ mb: { xs:3, md:4 }, display:'flex', alignItems:{ xs:'flex-start', sm:'center' }, gap:2, justifyContent:'center' }}>
             <Avatar sx={{
               width:52, height:52, borderRadius:2.5,
               bgcolor:'#eaf4ed', color:C.primary,
@@ -162,7 +162,7 @@ export default function UserNotificationSettings() {
             }}>
               <NotifIcon />
             </Avatar>
-            <Box>
+            <Box sx={{ textAlign:{ xs:'left', sm:'center' } }}>
               <Typography variant="h4" fontWeight={750} sx={{
                 color:'#20352a', letterSpacing:'-0.035em', mb:0.5,
                 fontSize:{ xs:'1.7rem', sm:'2rem' }, lineHeight:1.2
@@ -183,11 +183,21 @@ export default function UserNotificationSettings() {
             </Grow>
           )}
 
-          <Grid container spacing={3}>
+          <Box sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: 'minmax(0, 1fr)',
+              md: 'repeat(2, minmax(0, 1fr))'
+            },
+            gap: 3,
+            width: '100%',
+            minWidth: 0,
+            alignItems: 'stretch'
+          }}>
             {/* ── Delivery Methods ── */}
-            <Grid item xs={12} md={6}>
+            <Box sx={{ minWidth: 0, display: 'flex' }}>
               <Grow in timeout={400}>
-                <Card elevation={0} sx={{ border:'1px solid #e5ebe7', borderRadius:3, height:'100%', bgcolor:'#fff',
+                <Card elevation={0} sx={{ width:'100%', minWidth:0, border:'1px solid #e5ebe7', borderRadius:3, height:'100%', bgcolor:'#fff',
                   boxShadow:'0 1px 2px rgba(16,24,40,.025)',
                   transition:'border-color 220ms ease, box-shadow 220ms ease, transform 220ms ease',
                   '&:hover':{ borderColor:'#c8d9ce', boxShadow:'0 12px 32px rgba(32,53,42,.07)', transform:'translateY(-2px)' } }}>
@@ -214,12 +224,12 @@ export default function UserNotificationSettings() {
                   </CardContent>
                 </Card>
               </Grow>
-            </Grid>
+            </Box>
 
             {/* ── Notification Types ── */}
-            <Grid item xs={12} md={6}>
+            <Box sx={{ minWidth: 0, display: 'flex' }}>
               <Grow in timeout={500}>
-                <Card elevation={0} sx={{ border:'1px solid #e5ebe7', borderRadius:3, height:'100%', bgcolor:'#fff',
+                <Card elevation={0} sx={{ width:'100%', minWidth:0, border:'1px solid #e5ebe7', borderRadius:3, height:'100%', bgcolor:'#fff',
                   boxShadow:'0 1px 2px rgba(16,24,40,.025)',
                   transition:'border-color 220ms ease, box-shadow 220ms ease, transform 220ms ease',
                   '&:hover':{ borderColor:'#c8d9ce', boxShadow:'0 12px 32px rgba(32,53,42,.07)', transform:'translateY(-2px)' } }}>
@@ -243,12 +253,12 @@ export default function UserNotificationSettings() {
                   </CardContent>
                 </Card>
               </Grow>
-            </Grid>
+            </Box>
 
             {/* ── Due Date Reminders ── */}
-            <Grid item xs={12} md={6}>
+            <Box sx={{ minWidth: 0, display: 'flex' }}>
               <Grow in timeout={600}>
-                <Card elevation={0} sx={{ border:'1px solid #e5ebe7', borderRadius:3, bgcolor:'#fff',
+                <Card elevation={0} sx={{ width:'100%', minWidth:0, border:'1px solid #e5ebe7', borderRadius:3, bgcolor:'#fff',
                   boxShadow:'0 1px 2px rgba(16,24,40,.025)',
                   transition:'border-color 220ms ease, box-shadow 220ms ease, transform 220ms ease',
                   '&:hover':{ borderColor:'#c8d9ce', boxShadow:'0 12px 32px rgba(32,53,42,.07)', transform:'translateY(-2px)' } }}>
@@ -286,12 +296,12 @@ export default function UserNotificationSettings() {
                   </CardContent>
                 </Card>
               </Grow>
-            </Grid>
+            </Box>
 
             {/* ── Overdue Alerts ── */}
-            <Grid item xs={12} md={6}>
+            <Box sx={{ minWidth: 0, display: 'flex' }}>
               <Grow in timeout={700}>
-                <Card elevation={0} sx={{ border:'1px solid #e5ebe7', borderRadius:3, bgcolor:'#fff',
+                <Card elevation={0} sx={{ width:'100%', minWidth:0, border:'1px solid #e5ebe7', borderRadius:3, bgcolor:'#fff',
                   boxShadow:'0 1px 2px rgba(16,24,40,.025)',
                   transition:'border-color 220ms ease, box-shadow 220ms ease, transform 220ms ease',
                   '&:hover':{ borderColor:'#c8d9ce', boxShadow:'0 12px 32px rgba(32,53,42,.07)', transform:'translateY(-2px)' } }}>
@@ -329,13 +339,15 @@ export default function UserNotificationSettings() {
                   </CardContent>
                 </Card>
               </Grow>
-            </Grid>
+            </Box>
 
             {/* ── Save ── */}
-            <Grid item xs={12}>
+            <Box sx={{ gridColumn: '1 / -1', minWidth: 0 }}>
               <Grow in timeout={800}>
                 <Paper elevation={0} sx={{
-                  p:{ xs:2.5, sm:3 }, borderRadius:3, textAlign:'center',
+                  p:{ xs:2.5, sm:3 }, borderRadius:3,
+                  display:'flex', flexDirection:{ xs:'column-reverse', sm:'row' },
+                  justifyContent:'space-between', alignItems:{ xs:'stretch', sm:'center' }, gap:2,
                   background:'#f8fbf9',
                   border:'1px solid #e3ebe5'
                 }}>
@@ -344,7 +356,7 @@ export default function UserNotificationSettings() {
                     sx={{
                       background:`linear-gradient(135deg,${C.primary},${C.secondary})`,
                       color:'white', fontWeight:650, letterSpacing:'0.005em',
-                      px:{ xs:4, sm:5 }, py:1.35, borderRadius:2.25,
+                      px:{ xs:4, sm:5 }, py:1.35, minHeight:48, borderRadius:2.25,
                       boxShadow:'0 3px 8px rgba(45,106,79,.18)',
                       '&:hover':{ background:`linear-gradient(135deg,${C.dark},${C.primary})`,
                         transform:'translateY(-1px)', boxShadow:'0 6px 14px rgba(45,106,79,.24)' },
@@ -352,13 +364,13 @@ export default function UserNotificationSettings() {
                     }}>
                     {saving ? 'Saving…' : 'Save Settings'}
                   </Button>
-                  <Typography variant="caption" sx={{ mt:1.5, display:'block', color:'#748078' }}>
+                  <Typography variant="caption" sx={{ color:'#748078', textAlign:{ xs:'center', sm:'left' } }}>
                     Changes apply immediately for future notifications
                   </Typography>
                 </Paper>
               </Grow>
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
         </Box>
       </Fade>
     </DashboardLayout>

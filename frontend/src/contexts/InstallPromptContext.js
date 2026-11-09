@@ -1,25 +1,31 @@
+/**
+ * InstallPromptContext
+ *
+ * Provides `canInstall`, `isInstalled`, and `promptToInstall` to any
+ * component that needs them. The PersistentInstallCard manages its own
+ * prompt state internally (module-level singleton), so this context is
+ * now a lightweight companion — kept for compatibility.
+ */
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 const InstallPromptContext = createContext(null);
+
+// Module-level singletons — capture beforeinstallprompt before React mounts.
 let deferredInstallPrompt = null;
 const promptListeners = new Set();
 const installedListeners = new Set();
-const installCardPaths = new Set(['/dashboard', '/admin', '/super-admin', '/librarian']);
 
 if (typeof window !== 'undefined') {
   window.addEventListener('beforeinstallprompt', (event) => {
-    if (!installCardPaths.has(window.location.pathname)) {
-      return;
-    }
-
     event.preventDefault();
     deferredInstallPrompt = event;
-    promptListeners.forEach((listener) => listener(event));
+    promptListeners.forEach((fn) => fn(event));
   });
 
   window.addEventListener('appinstalled', () => {
     deferredInstallPrompt = null;
-    installedListeners.forEach((listener) => listener());
+    installedListeners.forEach((fn) => fn());
   });
 }
 
@@ -35,44 +41,32 @@ export function InstallPromptProvider({ children }) {
   const [isInstalled, setIsInstalled] = useState(isRunningStandalone);
 
   useEffect(() => {
-    const handleBeforeInstallPrompt = (event) => {
-      if (!isRunningStandalone()) {
-        setInstallPrompt(event);
-      }
+    const handlePrompt = (event) => {
+      if (!isRunningStandalone()) setInstallPrompt(event);
     };
-
-    const handleAppInstalled = () => {
+    const handleInstalled = () => {
       setInstallPrompt(null);
       setIsInstalled(true);
     };
 
-    promptListeners.add(handleBeforeInstallPrompt);
-    installedListeners.add(handleAppInstalled);
-    if (deferredInstallPrompt) {
-      handleBeforeInstallPrompt(deferredInstallPrompt);
-    }
+    promptListeners.add(handlePrompt);
+    installedListeners.add(handleInstalled);
+    if (deferredInstallPrompt) handlePrompt(deferredInstallPrompt);
 
     return () => {
-      promptListeners.delete(handleBeforeInstallPrompt);
-      installedListeners.delete(handleAppInstalled);
+      promptListeners.delete(handlePrompt);
+      installedListeners.delete(handleInstalled);
     };
   }, []);
 
   const promptToInstall = async () => {
-    if (!installPrompt) {
-      return;
-    }
-
-    const promptEvent = installPrompt;
+    if (!installPrompt) return;
+    const e = installPrompt;
     deferredInstallPrompt = null;
     setInstallPrompt(null);
-
-    await promptEvent.prompt();
-    const { outcome } = await promptEvent.userChoice;
-
-    if (outcome === 'accepted') {
-      setIsInstalled(true);
-    }
+    await e.prompt();
+    const { outcome } = await e.userChoice;
+    if (outcome === 'accepted') setIsInstalled(true);
     return outcome;
   };
 
@@ -90,11 +84,7 @@ export function InstallPromptProvider({ children }) {
 }
 
 export function useInstallPrompt() {
-  const context = useContext(InstallPromptContext);
-
-  if (!context) {
-    throw new Error('useInstallPrompt must be used within InstallPromptProvider');
-  }
-
-  return context;
+  const ctx = useContext(InstallPromptContext);
+  if (!ctx) throw new Error('useInstallPrompt must be used within InstallPromptProvider');
+  return ctx;
 }

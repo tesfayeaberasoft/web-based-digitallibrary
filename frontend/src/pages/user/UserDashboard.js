@@ -37,7 +37,7 @@ import {
   LibraryBooks
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import InstallCard from '../../components/InstallCard';
+import PersistentInstallCard from '../../components/InstallCard';
 import FinesWidget from '../../components/payments/FinesWidget';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -168,17 +168,18 @@ const UserDashboard = () => {
     <DashboardLayout title="Digital Library">
       <Fade in={true} timeout={600}>
         <Box>
-          <InstallCard />
+          {/* Persistent PWA install card — session-scoped dismiss */}
+          <PersistentInstallCard />
           {/* Welcome Header with Refresh */}
           <Box sx={{ 
             mb: 4, 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: 2
+            position: 'relative',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
           }}>
-            <Box>
+            {/* Centered Text Content */}
+            <Box sx={{ textAlign: 'center' }}>
               <Typography 
                 variant="h4" 
                 fontWeight={800} 
@@ -196,11 +197,15 @@ const UserDashboard = () => {
                 Here's your reading journey at a glance
               </Typography>
             </Box>
+            
+            {/* Refresh Button - Positioned Absolutely on Right */}
             <Tooltip title="Refresh Statistics">
               <IconButton 
                 onClick={handleRefresh}
                 disabled={refreshing}
                 sx={{ 
+                  position: 'absolute',
+                  right: 0,
                   bgcolor: C.lighter,
                   color: C.primary,
                   '&:hover': { 
@@ -229,7 +234,22 @@ const UserDashboard = () => {
           )}
           
           {/* Main Stats Cards - 4 Column Grid */}
-          <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid
+            container
+            spacing={3}
+            sx={{
+              m: 0,
+              mb: { xs: 2, sm: 3 },
+              width: '100%',
+              minWidth: 0,
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: 'minmax(0, 1fr)',
+                sm: 'repeat(2, minmax(0, 1fr))',
+                lg: 'repeat(4, minmax(0, 1fr))'
+              }
+            }}
+          >
             {/* Books Read Card */}
             <Grid item xs={12} sm={6} lg={3}>
               <Grow in={true} timeout={600}>
@@ -576,14 +596,29 @@ const UserDashboard = () => {
           )}
 
           {/* Bottom Section - Progress & Quick Actions */}
-          <Grid container spacing={3}>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: 'minmax(0, 1fr)',
+                md: 'repeat(2, minmax(0, 1fr))'
+              },
+              gap: 3,
+              width: '100%',
+              minWidth: 0,
+              alignItems: 'stretch',
+              mb: 4
+            }}
+          >
             {/* Reading Goal Progress */}
-            <Grid item xs={12} md={6}>
+            <Box sx={{ minWidth: 0, display: 'flex' }}>
               <Fade in={true} timeout={1600}>
                 <Card 
                   elevation={0}
                   sx={{ 
                     height: '100%',
+                    width: '100%',
+                    minWidth: 0,
                     border: `1px solid ${C.light}`,
                     borderRadius: 3,
                     transition: 'all 0.3s ease',
@@ -640,8 +675,8 @@ const UserDashboard = () => {
                       </Typography>
                     </Box>
 
-                    <Grid container spacing={2} sx={{ mb: 3 }}>
-                      <Grid item xs={6}>
+                    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 2, mb: 3 }}>
+                      <Box sx={{ minWidth: 0 }}>
                         <Paper sx={{ p: 2, bgcolor: C.lighter, borderRadius: 2, border: `1px solid ${C.light}` }}>
                           <Typography variant="caption" color="text.secondary" fontWeight={600}>
                             This Week
@@ -656,8 +691,8 @@ const UserDashboard = () => {
                             </Typography>
                           </Box>
                         </Paper>
-                      </Grid>
-                      <Grid item xs={6}>
+                      </Box>
+                      <Box sx={{ minWidth: 0 }}>
                         <Paper sx={{ p: 2, bgcolor: C.lighter, borderRadius: 2, border: `1px solid ${C.light}` }}>
                           <Typography variant="caption" color="text.secondary" fontWeight={600}>
                             This Month
@@ -672,8 +707,8 @@ const UserDashboard = () => {
                             </Typography>
                           </Box>
                         </Paper>
-                      </Grid>
-                    </Grid>
+                      </Box>
+                    </Box>
 
                     <Button
                       fullWidth
@@ -699,15 +734,17 @@ const UserDashboard = () => {
                   </CardContent>
                 </Card>
               </Fade>
-            </Grid>
+            </Box>
 
             {/* Quick Actions */}
-            <Grid item xs={12} md={6}>
+            <Box sx={{ minWidth: 0, display: 'flex' }}>
               <Fade in={true} timeout={1800}>
                 <Card 
                   elevation={0}
                   sx={{ 
                     height: '100%',
+                    width: '100%',
+                    minWidth: 0,
                     border: `1px solid ${C.light}`,
                     borderRadius: 3,
                     transition: 'all 0.3s ease',
@@ -737,17 +774,29 @@ const UserDashboard = () => {
                       </Box>
                     </Box>
 
-                    <Grid container spacing={2}>
+                    <Box
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: {
+                          xs: 'repeat(2, minmax(0, 1fr))',
+                          xl: 'repeat(4, minmax(0, 1fr))'
+                        },
+                        gap: 2,
+                        width: '100%',
+                        minWidth: 0
+                      }}
+                    >
                       {[
                         { icon: <Search />, label: 'Browse Books', path: '/browse', color: C.primary },
                         { icon: <BookmarkBorder />, label: 'My Reservations', path: '/my-books', color: C.secondary },
                         { icon: <LibraryBooks />, label: 'Borrowed Books', path: '/my-books', color: C.accent },
                         { icon: <Favorite />, label: 'Favorites', path: '/favorites', color: C.primary }
                       ].map((action, index) => (
-                        <Grid item xs={6} key={index}>
+                        <Box key={index} sx={{ minWidth: 0 }}>
                           <Paper
                             onClick={() => navigate(action.path)}
                             sx={{
+                              height: '100%',
                               p: 2.5,
                               textAlign: 'center',
                               cursor: 'pointer',
@@ -786,9 +835,9 @@ const UserDashboard = () => {
                               {action.label}
                             </Typography>
                           </Paper>
-                        </Grid>
+                        </Box>
                       ))}
-                    </Grid>
+                    </Box>
 
                     <Divider sx={{ my: 3 }} />
 
@@ -813,8 +862,8 @@ const UserDashboard = () => {
                   </CardContent>
                 </Card>
               </Fade>
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
 
           {/* Favorite Books */}
           <Card elevation={0} sx={{ mt: 4, border: `1px solid ${C.light}`, borderRadius: 3 }}>
@@ -854,16 +903,27 @@ const UserDashboard = () => {
                   </Button>
                 </Paper>
               ) : (
-                <Grid container spacing={2}>
-                  {favorites.slice(0, 4).map((book) => (
-                    <Grid item xs={12} sm={6} md={3} key={book.id}>
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))',
+                    gap: 2,
+                    width: '100%',
+                    minWidth: 0,
+                    '& > *': { minWidth: 0 }
+                  }}
+                >
+                  {favorites.map((book) => (
+                    <Box key={book.id} sx={{ minWidth: 0 }}>
                       <Paper
                         sx={{
                           height: '100%',
                           p: 2,
                           bgcolor: C.lighter,
                           border: `1px solid ${C.light}`,
-                          borderRadius: 2
+                          borderRadius: 2,
+                          transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                          '&:hover': { transform: 'translateY(-3px)', boxShadow: `0 8px 20px ${C.primary}18` }
                         }}
                       >
                         <Typography variant="subtitle1" fontWeight={700} noWrap title={book.title}>
@@ -879,9 +939,9 @@ const UserDashboard = () => {
                           View in library
                         </Button>
                       </Paper>
-                    </Grid>
+                    </Box>
                   ))}
-                </Grid>
+                </Box>
               )}
             </CardContent>
           </Card>

@@ -8,7 +8,6 @@ import {
   CardActions,
   CardContent,
   CircularProgress,
-  Grid,
   IconButton,
   Stack,
   Typography
@@ -61,7 +60,7 @@ export default function UserFavorites() {
   return (
     <DashboardLayout title="My Favorites">
       <Stack spacing={3}>
-        <Box>
+        <Box sx={{ textAlign: 'center' }}>
           <Typography variant="h4" fontWeight={700}>My Favorites</Typography>
           <Typography color="text.secondary">Books you have saved to your wishlist.</Typography>
         </Box>
@@ -79,13 +78,30 @@ export default function UserFavorites() {
             </CardContent>
           </Card>
         ) : (
-          <Grid container spacing={2}>
+          <Box sx={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 260px), 1fr))',
+            gap: 2.5,
+            width: '100%',
+            minWidth: 0,
+            alignItems: 'stretch'
+          }}>
             {favorites.map((book) => (
-              <Grid item xs={12} sm={6} md={4} lg={3} key={book.id}>
-                <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <Box key={book.id} sx={{ minWidth: 0, display: 'flex' }}>
+                <Card sx={{
+                  width: '100%',
+                  minWidth: 0,
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  borderRadius: 2,
+                  boxShadow: '0 2px 12px rgba(27, 67, 50, 0.08)',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                  '&:hover': { transform: 'translateY(-3px)', boxShadow: '0 8px 20px rgba(27, 67, 50, 0.14)' }
+                }}>
                   <CardContent sx={{ flexGrow: 1 }}>
                     <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-                      <Box>
+                      <Box sx={{ minWidth: 0, overflowWrap: 'anywhere' }}>
                         <Typography variant="h6" fontWeight={700}>{book.title}</Typography>
                         <Typography color="text.secondary">{book.author}</Typography>
                       </Box>
@@ -119,9 +135,9 @@ export default function UserFavorites() {
                     </Button>
                   </CardActions>
                 </Card>
-              </Grid>
+              </Box>
             ))}
-          </Grid>
+          </Box>
         )}
       </Stack>
     </DashboardLayout>

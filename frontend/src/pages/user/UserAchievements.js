@@ -1,7 +1,7 @@
 import { apiUrl } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import {
-  Box, Typography, Grid, Card, CardContent, Avatar, Chip,
+  Box, Typography, Card, CardContent, Avatar, Chip,
   LinearProgress, CircularProgress, Alert, Paper, Fade, Grow
 } from '@mui/material';
 import {
@@ -98,7 +98,7 @@ export default function UserAchievements() {
       <Fade in timeout={500}>
         <Box>
           {/* ── header ── */}
-          <Box sx={{ mb: 4 }}>
+          <Box sx={{ mb: 4, textAlign: 'center' }}>
             <Typography variant="h4" fontWeight={800} sx={{
               background: `linear-gradient(135deg, ${C.primary}, ${C.secondary})`,
               WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', mb:0.5
@@ -113,17 +113,29 @@ export default function UserAchievements() {
           {error && <Alert severity="error" sx={{ mb:3, borderRadius:2 }}>{error}</Alert>}
 
           {/* ── summary strip ── */}
-          <Grid container spacing={2.5} sx={{ mb: 4 }}>
+          <Box sx={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))',
+            gap: 2.5,
+            width: '100%',
+            minWidth: 0,
+            mb: 4,
+            alignItems: 'stretch'
+          }}>
             {[
               { icon:<TrophyIcon/>,        label:'Earned',       value:`${earned.length}/${list.length}`, color:C.primary,  grad:`linear-gradient(135deg,${C.primary},${C.secondary})` },
               { icon:<StarsIcon/>,         label:'Total Points', value:totalPts,                          color:'#f59e0b',  grad:'linear-gradient(135deg,#f59e0b,#fbbf24)' },
               { icon:<LockIcon/>,          label:'Locked',       value:locked.length,                     color:'#8b5cf6',  grad:'linear-gradient(135deg,#8b5cf6,#a78bfa)' },
               { icon:<WorkspacePremium/>,  label:'Completion',   value:`${pct}%`,                         color:C.secondary,grad:`linear-gradient(135deg,${C.secondary},${C.accent})` },
             ].map((s, i) => (
-              <Grid item xs={6} sm={3} key={i}>
+              <Box key={i} sx={{ minWidth: 0, display: 'flex' }}>
                 <Grow in timeout={400 + i * 120}>
                   <Card elevation={0} sx={{
+                    width: '100%',
+                    minWidth: 0,
+                    height: '100%',
                     border:`2px solid ${s.color}30`, borderRadius:3,
+                    boxShadow:'0 2px 12px rgba(27,67,50,.08)',
                     transition:'all 0.3s ease',
                     '&:hover':{ transform:'translateY(-6px)', boxShadow:`0 16px 32px ${s.color}25`, borderColor:s.color }
                   }}>
@@ -136,9 +148,9 @@ export default function UserAchievements() {
                     </CardContent>
                   </Card>
                 </Grow>
-              </Grid>
+              </Box>
             ))}
-          </Grid>
+          </Box>
 
           {/* ── overall progress bar ── */}
           <Paper elevation={0} sx={{ p:3, mb:4, borderRadius:3, border:`2px solid ${C.light}`,
@@ -163,14 +175,22 @@ export default function UserAchievements() {
                 <CheckIcon sx={{ color:C.secondary }} />
                 <Typography variant="h6" fontWeight={700} sx={{ color:C.dark }}>Unlocked ({earned.length})</Typography>
               </Box>
-              <Grid container spacing={3} sx={{ mb: 4 }}>
+              <Box sx={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))',
+                gap: 3,
+                width: '100%',
+                minWidth: 0,
+                mb: 4,
+                alignItems: 'stretch'
+              }}>
                 {earned.map((a, i) => {
                   const theme = CARD_THEME[a.icon]?.earned || CARD_THEME.book.earned;
                   return (
-                    <Grid item xs={12} sm={6} md={4} key={a.id}>
+                    <Box key={a.id} sx={{ minWidth: 0, display: 'flex' }}>
                       <Grow in timeout={400 + i * 100}>
                         <Card elevation={0} sx={{
-                          height:'100%', background:theme.grad,
+                          height:'100%', width:'100%', minWidth:0, background:theme.grad,
                           border:`2px solid ${theme.border}`,
                           borderRadius:3, position:'relative', overflow:'visible',
                           transition:'all 0.3s ease',
@@ -204,10 +224,10 @@ export default function UserAchievements() {
                           </CardContent>
                         </Card>
                       </Grow>
-                    </Grid>
+                    </Box>
                   );
                 })}
-              </Grid>
+              </Box>
             </>
           )}
 
@@ -218,15 +238,22 @@ export default function UserAchievements() {
                 <LockIcon sx={{ color:'#9ca3af' }} />
                 <Typography variant="h6" fontWeight={700} sx={{ color:C.dark }}>Locked ({locked.length})</Typography>
               </Box>
-              <Grid container spacing={3}>
+              <Box sx={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))',
+                gap: 3,
+                width: '100%',
+                minWidth: 0,
+                alignItems: 'stretch'
+              }}>
                 {locked.map((a, i) => {
                   const theme = CARD_THEME[a.icon]?.locked || CARD_THEME.book.locked;
                   const { pct: p, cur } = getProgress(a);
                   return (
-                    <Grid item xs={12} sm={6} md={4} key={a.id}>
+                    <Box key={a.id} sx={{ minWidth: 0, display: 'flex' }}>
                       <Grow in timeout={400 + i * 100}>
                         <Card elevation={0} sx={{
-                          height:'100%', background:theme.grad,
+                          height:'100%', width:'100%', minWidth:0, background:theme.grad,
                           border:`2px solid ${theme.border}`,
                           borderRadius:3, opacity:0.88,
                           transition:'all 0.3s ease',
@@ -256,10 +283,10 @@ export default function UserAchievements() {
                           </CardContent>
                         </Card>
                       </Grow>
-                    </Grid>
+                    </Box>
                   );
                 })}
-              </Grid>
+              </Box>
             </>
           )}
 
