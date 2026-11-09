@@ -28,6 +28,7 @@ import {
   Legend, ResponsiveContainer, AreaChart, Area
 } from 'recharts';
 import DashboardLayout from '../../components/layout/DashboardLayout';
+import './SuperAdminDashboard.css';
 import PersistentInstallCard from '../../components/InstallCard';
 import axios from 'axios';
 
@@ -278,7 +279,7 @@ export default function SuperAdminDashboard() {
   return (
     <DashboardLayout title="Super Admin Dashboard">
       <Fade in timeout={500}>
-        <Box>
+        <Box className="super-admin-dashboard-page">
           {/* Persistent PWA install card — session-scoped dismiss */}
           <PersistentInstallCard />
 
@@ -292,13 +293,13 @@ export default function SuperAdminDashboard() {
             {[{s:280,t:-80,r:-80,o:.1},{s:180,b:-50,l:-50,o:.08}].map((c,i)=>(
               <Box key={i} sx={{ position:'absolute', width:c.s, height:c.s, borderRadius:'50%', background:'rgba(255,255,255,.2)', top:c.t, bottom:c.b, left:c.l, right:c.r, opacity:c.o }} />
             ))}
-            <Box sx={{ position:'relative', zIndex:1, display:'flex', justifyContent:'space-between', flexWrap:'wrap', gap:2, alignItems:'center' }}>
-              <Box sx={{ display:'flex', alignItems:'center', gap:2 }}>
+            <Box className="super-admin-hero-layout" sx={{ position:'relative', zIndex:1, display:'flex', justifyContent:'space-between', flexWrap:'wrap', gap:2, alignItems:'center' }}>
+              <Box className="super-admin-hero-identity" sx={{ display:'flex', alignItems:'center', gap:2 }}>
                 <Avatar sx={{ width:64, height:64, bgcolor:'rgba(255,255,255,.2)' }}>
                   <SupervisorAccount sx={{ fontSize:36, color:'white' }} />
                 </Avatar>
                 <Box>
-                  <Box sx={{ display:'flex', alignItems:'center', gap:1.5, mb:.4 }}>
+                  <Box className="super-admin-hero-title" sx={{ display:'flex', alignItems:'center', gap:1.5, mb:.4 }}>
                     <Typography variant="h4" fontWeight={900}>Super Administrator</Typography>
                     <Chip label="LIVE" size="small" sx={{ bgcolor:'#ef4444', color:'white', fontWeight:700, animation:'pulse 2s infinite', '@keyframes pulse':{'0%,100%':{opacity:1},'50%':{opacity:.5}} }} />
                   </Box>
@@ -346,14 +347,14 @@ export default function SuperAdminDashboard() {
           )}
 
           {/* ── STAT CARDS ── */}
-          <Grid container spacing={3} sx={{ mb:4 }}>
+          <Grid container className="super-admin-overview-grid" sx={{ mb:4 }}>
             {[
               { title:'Total Users',        value:fmt(totals.total_users),     sub1:`Active: ${fmt(totals.active_users)}`,     sub2:`Staff: ${fmt(totals.total_staff)}`,            icon:<People sx={{ fontSize:56, opacity:.8, color:'white' }} />,           grad:`linear-gradient(135deg,${C.primary},${C.secondary})`, progress:null },
               { title:'Library Collection', value:fmt(totals.total_books),     sub1:`Copies: ${fmt(totals.total_book_copies)}`,sub2:`Available: ${fmt(totals.available_book_copies)}`,icon:<LibraryBooks sx={{ fontSize:56, opacity:.8, color:'white' }} />,       grad:'linear-gradient(135deg,#3b82f6,#60a5fa)',             progress:totals.borrowed_percentage||0 },
               { title:'Active Sessions',    value:D.active_sessions?.online_users||0, sub1:`Today: ${totals.users_today||0}`,  sub2:`This Week: ${totals.users_this_week||0}`,        icon:<SignalCellularAlt sx={{ fontSize:56, opacity:.8, color:'white' }} />, grad:'linear-gradient(135deg,#8b5cf6,#a78bfa)',             progress:null },
               { title:'Pending Fines',      value:`$${Number(totals.total_pending_fine_amount||0).toFixed(2)}`, sub1:`Count: ${fmt(totals.pending_fines)}`, sub2:`Collected: $${Number(totals.total_collected_fines||0).toFixed(2)}`, icon:<AttachMoney sx={{ fontSize:56, opacity:.8, color:'white' }} />, grad:'linear-gradient(135deg,#f59e0b,#fbbf24)', progress:null },
             ].map((s,i)=>(
-              <Grid item xs={12} sm={6} lg={3} key={i}>
+              <Grid item className={s.title === 'Pending Fines' ? 'super-admin-overview-item super-admin-fines-item' : 'super-admin-overview-item'} key={i}>
                 <Grow in timeout={400+i*150}>
                   <Card elevation={0} sx={{ height:'100%', background:s.grad, color:'white', borderRadius:3, position:'relative', overflow:'hidden',
                     transition:'all .3s', '&:hover':{ transform:'translateY(-6px)', boxShadow:'0 20px 40px rgba(0,0,0,.2)' },
@@ -380,13 +381,13 @@ export default function SuperAdminDashboard() {
           </Grid>
 
           {/* ── REAL-TIME + ALERTS ── */}
-          <Grid container spacing={3} sx={{ mb:4 }}>
+          <Grid container className="super-admin-realtime-grid" sx={{ mb:4 }}>
             {/* Real-time */}
-            <Grid item xs={12} md={6}>
-              <Card elevation={0} sx={{ border:`2px solid ${C.light}`, borderRadius:3, height:'100%' }}>
-                <CardContent sx={{ p:3 }}>
+            <Grid item className="super-admin-realtime-item">
+              <Card className="super-admin-realtime-card" elevation={0} sx={{ border:`2px solid ${C.light}`, borderRadius:3, height:'100%' }}>
+                <CardContent className="super-admin-realtime-content" sx={{ p:3 }}>
                   <Box sx={{ display:'flex', justifyContent:'space-between', alignItems:'center', mb:2.5 }}>
-                    <Box sx={{ display:'flex', alignItems:'center', gap:1.5 }}>
+                    <Box className="super-admin-section-title-block" sx={{ display:'flex', alignItems:'center', gap:1.5 }}>
                       <Avatar sx={{ bgcolor:C.lighter, width:42, height:42 }}><FlashOn sx={{ color:C.primary }} /></Avatar>
                       <Box>
                         <Typography variant="h6" fontWeight={700} sx={{ color:C.dark }}>Real-Time Performance</Typography>
@@ -427,7 +428,7 @@ export default function SuperAdminDashboard() {
                   </Paper>
 
                   {perfHistory.length > 2 && (
-                    <Box sx={{ height:160 }}>
+                    <Box className="super-admin-performance-chart" sx={{ height:160 }}>
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={perfHistory}>
                           <defs>
@@ -447,11 +448,11 @@ export default function SuperAdminDashboard() {
             </Grid>
 
             {/* System Alerts */}
-            <Grid item xs={12} md={6}>
-              <Card elevation={0} sx={{ border:`2px solid ${C.light}`, borderRadius:3, height:'100%' }}>
-                <CardContent sx={{ p:3 }}>
+            <Grid item className="super-admin-realtime-item">
+              <Card className="super-admin-realtime-card" elevation={0} sx={{ border:`2px solid ${C.light}`, borderRadius:3, height:'100%' }}>
+                <CardContent className="super-admin-realtime-content" sx={{ p:3 }}>
                   <Box sx={{ display:'flex', justifyContent:'space-between', alignItems:'center', mb:2.5 }}>
-                    <Box sx={{ display:'flex', alignItems:'center', gap:1.5 }}>
+                    <Box className="super-admin-section-title-block" sx={{ display:'flex', alignItems:'center', gap:1.5 }}>
                       <Avatar sx={{ bgcolor:'#fef2f2', width:42, height:42 }}>
                         <Badge badgeContent={systemAlerts.length} color="error">
                           <NotificationsActive sx={{ color:'#ef4444' }} />
@@ -501,8 +502,8 @@ export default function SuperAdminDashboard() {
           {/* ── SYSTEM HEALTH ── */}
           <Card elevation={0} sx={{ border:`2px solid ${C.light}`, borderRadius:3, mb:4 }}>
             <CardContent sx={{ p:3 }}>
-              <Box sx={{ display:'flex', justifyContent:'space-between', alignItems:'center', mb:3 }}>
-                <Box sx={{ display:'flex', alignItems:'center', gap:1.5 }}>
+              <Box className="super-admin-section-header super-admin-health-header" sx={{ display:'flex', justifyContent:'space-between', alignItems:'center', mb:3 }}>
+                <Box className="super-admin-section-title-block" sx={{ display:'flex', alignItems:'center', gap:1.5 }}>
                   <Avatar sx={{ bgcolor:C.lighter, width:44, height:44 }}><MonitorHeart sx={{ color:C.primary }} /></Avatar>
                   <Box>
                     <Typography variant="h6" fontWeight={700} sx={{ color:C.dark }}>System Health</Typography>
@@ -515,7 +516,7 @@ export default function SuperAdminDashboard() {
                   </IconButton>
                 </Tooltip>
               </Box>
-              <Grid container spacing={3}>
+              <Grid container className="super-admin-health-grid">
                 {[
                   { label:'Database', data:sh.database||{}, icon:<Storage sx={{ fontSize:26,color:C.primary}} />,   bg:C.lighter,  border:C.light,     fields:[['Status','status'],['Size','db_size'],['Tables','tables_count'],['Connections','connections']] },
                   { label:'Storage',  data:sh.storage||{},  icon:<DataUsage sx={{ fontSize:26,color:'#3b82f6'}} />, bg:'#eff6ff',  border:'#bfdbfe',   fields:[['Total','total_formatted'],['Used','used_formatted'],['Free','free_formatted'],['Usage %','usage_percent']] },
@@ -524,7 +525,7 @@ export default function SuperAdminDashboard() {
                 ].map((h,i)=>{
                   const st = h.data?.status || h.data?.health_status;
                   return (
-                    <Grid item xs={12} sm={6} lg={3} key={i}>
+                    <Grid item className="super-admin-health-item" key={i}>
                       <Grow in timeout={300+i*100}>
                         <Paper elevation={0} sx={{ p:2.5, borderRadius:3, bgcolor:h.bg, border:`2px solid ${h.border}`, transition:'all .3s', '&:hover':{ transform:'translateY(-4px)', boxShadow:'0 8px 20px rgba(0,0,0,.08)' } }}>
                           <Box sx={{ display:'flex', justifyContent:'space-between', alignItems:'center', mb:2 }}>
@@ -552,38 +553,38 @@ export default function SuperAdminDashboard() {
           </Card>
 
           {/* ── CHARTS ── */}
-          <Grid container spacing={3} sx={{ mb:4 }}>
+          <Grid container className="super-admin-analytics-grid" sx={{ mb:4 }}>
             {/* Registration trend */}
-            <Grid item xs={12} md={6}>
-              <Card elevation={0} sx={{ border:`2px solid ${C.light}`, borderRadius:3 }}>
-                <CardContent sx={{ p:3 }}>
-                  <Box sx={{ display:'flex', alignItems:'center', gap:1.5, mb:3 }}>
+            <Grid item className="super-admin-analytics-item">
+              <Card className="super-admin-analytics-card" elevation={0} sx={{ border:`2px solid ${C.light}`, borderRadius:3 }}>
+                <CardContent className="super-admin-analytics-content" sx={{ p:3 }}>
+                  <Box className="super-admin-section-title-block" sx={{ display:'flex', alignItems:'center', gap:1.5, mb:3 }}>
                     <Avatar sx={{ bgcolor:C.lighter, width:40, height:40 }}><ShowChart sx={{ color:C.primary }} /></Avatar>
                     <Box><Typography variant="h6" fontWeight={700} sx={{ color:C.dark }}>User Registration Trend</Typography><Typography variant="caption" color="text.secondary">New users over time</Typography></Box>
                   </Box>
                   {regTrend.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={220}>
+                    <ResponsiveContainer width="100%" height={260}>
                       <AreaChart data={regTrend}>
                         <defs><linearGradient id="rGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={C.primary} stopOpacity={.3}/><stop offset="95%" stopColor={C.primary} stopOpacity={0}/></linearGradient></defs>
                         <CartesianGrid strokeDasharray="3 3" stroke={C.light} /><XAxis dataKey="date" tick={{ fontSize:11 }} /><YAxis tick={{ fontSize:11 }} /><RTooltip />
                         <Area type="monotone" dataKey="count" stroke={C.primary} fill="url(#rGrad)" strokeWidth={2.5} name="New Users" />
                       </AreaChart>
                     </ResponsiveContainer>
-                  ) : <Box sx={{ height:220, display:'flex', alignItems:'center', justifyContent:'center' }}><Typography color="text.secondary">No data</Typography></Box>}
+                  ) : <Box className="super-admin-chart-empty" sx={{ height:260, display:'flex', alignItems:'center', justifyContent:'center' }}><Typography color="text.secondary">No data</Typography></Box>}
                 </CardContent>
               </Card>
             </Grid>
 
             {/* Books by category */}
-            <Grid item xs={12} md={6}>
-              <Card elevation={0} sx={{ border:`2px solid ${C.light}`, borderRadius:3 }}>
-                <CardContent sx={{ p:3 }}>
-                  <Box sx={{ display:'flex', alignItems:'center', gap:1.5, mb:3 }}>
+            <Grid item className="super-admin-analytics-item">
+              <Card className="super-admin-analytics-card" elevation={0} sx={{ border:`2px solid ${C.light}`, borderRadius:3 }}>
+                <CardContent className="super-admin-analytics-content" sx={{ p:3 }}>
+                  <Box className="super-admin-section-title-block" sx={{ display:'flex', alignItems:'center', gap:1.5, mb:3 }}>
                     <Avatar sx={{ bgcolor:C.lighter, width:40, height:40 }}><BarChartIcon sx={{ color:C.primary }} /></Avatar>
                     <Box><Typography variant="h6" fontWeight={700} sx={{ color:C.dark }}>Books by Category</Typography><Typography variant="caption" color="text.secondary">Collection distribution</Typography></Box>
                   </Box>
                   {catData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={220}>
+                    <ResponsiveContainer width="100%" height={260}>
                       <RBarChart data={catData.slice(0,8)} layout="vertical">
                         <CartesianGrid strokeDasharray="3 3" stroke={C.light} />
                         <XAxis type="number" tick={{ fontSize:11 }} /><YAxis type="category" dataKey="name" width={90} tick={{ fontSize:10 }} /><RTooltip />
@@ -592,21 +593,21 @@ export default function SuperAdminDashboard() {
                         </Bar>
                       </RBarChart>
                     </ResponsiveContainer>
-                  ) : <Box sx={{ height:220, display:'flex', alignItems:'center', justifyContent:'center' }}><Typography color="text.secondary">No data</Typography></Box>}
+                  ) : <Box className="super-admin-chart-empty" sx={{ height:260, display:'flex', alignItems:'center', justifyContent:'center' }}><Typography color="text.secondary">No data</Typography></Box>}
                 </CardContent>
               </Card>
             </Grid>
 
             {/* Loan trends */}
-            <Grid item xs={12} md={6}>
-              <Card elevation={0} sx={{ border:`2px solid ${C.light}`, borderRadius:3 }}>
-                <CardContent sx={{ p:3 }}>
-                  <Box sx={{ display:'flex', alignItems:'center', gap:1.5, mb:3 }}>
+            <Grid item className="super-admin-analytics-item">
+              <Card className="super-admin-analytics-card" elevation={0} sx={{ border:`2px solid ${C.light}`, borderRadius:3 }}>
+                <CardContent className="super-admin-analytics-content" sx={{ p:3 }}>
+                  <Box className="super-admin-section-title-block" sx={{ display:'flex', alignItems:'center', gap:1.5, mb:3 }}>
                     <Avatar sx={{ bgcolor:C.lighter, width:40, height:40 }}><Timeline sx={{ color:C.primary }} /></Avatar>
                     <Box><Typography variant="h6" fontWeight={700} sx={{ color:C.dark }}>Loan Trends</Typography><Typography variant="caption" color="text.secondary">Borrowing activity over time</Typography></Box>
                   </Box>
                   {loanTrend.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={220}>
+                    <ResponsiveContainer width="100%" height={260}>
                       <RBarChart data={loanTrend}>
                         <CartesianGrid strokeDasharray="3 3" stroke={C.light} />
                         <XAxis dataKey="date" tick={{ fontSize:11 }} /><YAxis tick={{ fontSize:11 }} /><RTooltip /><Legend />
@@ -614,23 +615,23 @@ export default function SuperAdminDashboard() {
                         <Bar dataKey="returned" fill={C.secondary} name="Returned" radius={[4,4,0,0]} />
                       </RBarChart>
                     </ResponsiveContainer>
-                  ) : <Box sx={{ height:220, display:'flex', alignItems:'center', justifyContent:'center' }}><Typography color="text.secondary">No data</Typography></Box>}
+                  ) : <Box className="super-admin-chart-empty" sx={{ height:260, display:'flex', alignItems:'center', justifyContent:'center' }}><Typography color="text.secondary">No data</Typography></Box>}
                 </CardContent>
               </Card>
             </Grid>
 
             {/* Top users */}
-            <Grid item xs={12} md={6}>
-              <Card elevation={0} sx={{ border:`2px solid ${C.light}`, borderRadius:3 }}>
-                <CardContent sx={{ p:3 }}>
-                  <Box sx={{ display:'flex', alignItems:'center', gap:1.5, mb:3 }}>
+            <Grid item className="super-admin-top-users-item">
+              <Card className="super-admin-top-users-card" elevation={0} sx={{ border:`2px solid ${C.light}`, borderRadius:3 }}>
+                <CardContent className="super-admin-top-users-content" sx={{ p:3 }}>
+                  <Box className="super-admin-section-title-block" sx={{ display:'flex', alignItems:'center', gap:1.5, mb:3 }}>
                     <Avatar sx={{ bgcolor:C.lighter, width:40, height:40 }}><Stars sx={{ color:C.primary }} /></Avatar>
                     <Box><Typography variant="h6" fontWeight={700} sx={{ color:C.dark }}>Top Active Users</Typography><Typography variant="caption" color="text.secondary">Most active library members</Typography></Box>
                   </Box>
                   {topUsers.length > 0 ? (
-                    <Box sx={{ display:'flex', flexDirection:'column', gap:1.5 }}>
+                    <Box className="super-admin-top-users-list" sx={{ display:'flex', flexDirection:'column', gap:1.5 }}>
                       {topUsers.slice(0,6).map((u,i)=>(
-                        <Box key={i} sx={{ display:'flex', alignItems:'center', justifyContent:'space-between', p:1.5, borderRadius:2, border:`1px solid ${C.light}`, bgcolor:i===0?`${C.primary}08`:C.lighter }}>
+                        <Box className="super-admin-top-user" key={i} sx={{ display:'flex', alignItems:'center', justifyContent:'space-between', p:1.5, borderRadius:2, border:`1px solid ${C.light}`, bgcolor:i===0?`${C.primary}08`:C.lighter }}>
                           <Box sx={{ display:'flex', alignItems:'center', gap:1.5 }}>
                             <Avatar sx={{ width:36, height:36, fontSize:'.85rem', fontWeight:700, background:i===0?`linear-gradient(135deg,${C.primary},${C.secondary})`:`linear-gradient(135deg,${C.secondary},${C.accent})` }}>
                               {(u.full_name||'U')[0].toUpperCase()}
@@ -653,7 +654,7 @@ export default function SuperAdminDashboard() {
           {/* ── RECENT ACTIVITIES ── */}
           <Card elevation={0} sx={{ border:`2px solid ${C.light}`, borderRadius:3, mb:4 }}>
             <CardContent sx={{ p:3 }}>
-              <Box sx={{ display:'flex', alignItems:'center', gap:1.5, mb:3 }}>
+              <Box className="super-admin-section-title-block" sx={{ display:'flex', alignItems:'center', gap:1.5, mb:3 }}>
                 <Avatar sx={{ bgcolor:C.lighter, width:44, height:44 }}><History sx={{ color:C.primary }} /></Avatar>
                 <Box>
                   <Typography variant="h6" fontWeight={700} sx={{ color:C.dark }}>Recent Activities</Typography>
@@ -705,11 +706,11 @@ export default function SuperAdminDashboard() {
           {/* ── QUICK ACTIONS ── */}
           <Card elevation={0} sx={{ border:`2px solid ${C.light}`, borderRadius:3, mb:4 }}>
             <CardContent sx={{ p:3 }}>
-              <Box sx={{ display:'flex', alignItems:'center', gap:1.5, mb:3 }}>
+              <Box className="super-admin-section-title-block" sx={{ display:'flex', alignItems:'center', gap:1.5, mb:3 }}>
                 <Avatar sx={{ bgcolor:C.lighter, width:44, height:44 }}><Build sx={{ color:C.primary }} /></Avatar>
                 <Box><Typography variant="h6" fontWeight={700} sx={{ color:C.dark }}>System Management</Typography><Typography variant="caption" color="text.secondary">Maintenance, backups &amp; utilities</Typography></Box>
               </Box>
-              <Grid container spacing={2}>
+              <Grid container className="super-admin-actions-grid">
                 {[
                   { label:'Create Backup',     icon:<Backup/>,           action:()=>handleAction('create_backup'),     color:C.primary,   desc:'Back up database now' },
                   { label:'Restore Backup',    icon:<RestartAlt/>,       action:openRestoreDialog,                     color:'#8b5cf6',   desc:'Restore from backup file' },
@@ -720,7 +721,7 @@ export default function SuperAdminDashboard() {
                   { label:'System Settings',   icon:<Settings/>,         action:()=>setOpenDialog('settings'),         color:C.dark,      desc:'Edit system config' },
                   { label:'Emergency Actions', icon:<PowerSettingsNew/>, action:()=>setOpenDialog('emergency'),        color:'#ef4444',   desc:'Maintenance &amp; shutdown' },
                 ].map((a,i)=>(
-                  <Grid item xs={12} sm={6} md={3} key={i}>
+                  <Grid item className="super-admin-action-item" key={i}>
                     <Grow in timeout={300+i*60}>
                       <Paper elevation={0} onClick={a.action} sx={{ p:2.5, borderRadius:3, cursor:'pointer', bgcolor:C.lighter, border:`2px solid ${C.light}`,
                         transition:'all .3s', '&:hover':{ transform:'translateY(-5px)', bgcolor:'white', borderColor:a.color, boxShadow:`0 12px 24px ${a.color}20` } }}>

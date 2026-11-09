@@ -1,0 +1,51 @@
+.admin-management-page-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, auto) minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.admin-management-page-heading {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  text-align: center;
+}
+
+.admin-management-page-actions,
+.admin-management-page-action {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+}
+
+.admin-management-page-heading h3,
+.admin-management-page-heading h6 {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 700px) {
+  .admin-management-page-header {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .admin-management-page-heading {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .admin-management-page-actions,
+  .admin-management-page-action {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: center;
+  }
+
+  .admin-management-page-actions {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}

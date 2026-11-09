@@ -216,7 +216,7 @@ const LibrarianReports = () => {
     const { summary } = reportData;
     
     return (
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container className="librarian-fluid-grid librarian-reports-summary-grid" spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} md={3}>
           <Grow in={true} timeout={600}>
             <Card sx={{ 
@@ -419,7 +419,7 @@ const LibrarianReports = () => {
     if (!reportData) return null;
     
     return (
-      <Grid container spacing={3}>
+      <Grid container className="librarian-fluid-grid" spacing={3}>
         <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
@@ -495,7 +495,7 @@ const LibrarianReports = () => {
     const { fines } = reportData;
     
     return (
-      <Grid container spacing={3}>
+      <Grid container className="librarian-fluid-grid" spacing={3}>
         <Grid item xs={12} md={4}>
           <Card sx={{ bgcolor: '#e3f2fd' }}>
             <CardContent>
@@ -592,7 +592,7 @@ const LibrarianReports = () => {
       <Fade in={true} timeout={600}>
         <Box className="librarian-page">
           {/* Header */}
-          <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box className="librarian-page-header" sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box>
               <Typography variant="h4" fontWeight={700} gutterBottom>
                 📊 Reports & Analytics
@@ -601,7 +601,7 @@ const LibrarianReports = () => {
                 Generate and export library reports
               </Typography>
             </Box>
-            <Box sx={{ display: 'flex', gap: 1 }}>
+            <Box className="librarian-page-header__actions" sx={{ display: 'flex', gap: 1 }}>
               <Tooltip title="Refresh Data">
                 <IconButton onClick={fetchReportData} color="primary">
                   <RefreshIcon />

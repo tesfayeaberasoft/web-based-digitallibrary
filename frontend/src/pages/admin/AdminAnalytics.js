@@ -57,6 +57,7 @@ import {
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import axios from 'axios';
+import './AdminAnalytics.css';
 
 const MetricCard = ({ title, value, subtitle, icon, color, bgColor, trend, onClick, delay = 0 }) => (
   <Zoom in timeout={500 + delay}>
@@ -271,8 +272,8 @@ const AdminAnalytics = () => {
         </Fade>
 
         {/* Key Performance Metrics */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
+        <Grid container className="admin-analytics-metrics-grid">
+          <Grid item className="admin-analytics-metric-item">
             <MetricCard
               title="Collection Utilization"
               value={`${analytics.collection_utilization?.utilization_rate || 0}%`}
@@ -284,7 +285,7 @@ const AdminAnalytics = () => {
               delay={0}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item className="admin-analytics-metric-item">
             <MetricCard
               title="Return Rate"
               value={`${analytics.return_analysis?.return_rate || 0}%`}
@@ -296,7 +297,7 @@ const AdminAnalytics = () => {
               delay={100}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item className="admin-analytics-metric-item">
             <MetricCard
               title="On-Time Returns"
               value={`${analytics.satisfaction_metrics?.on_time_rate || 0}%`}
@@ -308,7 +309,7 @@ const AdminAnalytics = () => {
               delay={200}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item className="admin-analytics-metric-item">
             <MetricCard
               title="Avg Books/User"
               value={`${(analytics.user_engagement?.avg_books_per_user || 0).toFixed(1)}`}
@@ -323,10 +324,10 @@ const AdminAnalytics = () => {
         </Grid>
 
         {/* Peak Hours Analysis */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} md={6}>
+        <Grid container className="admin-analytics-charts-grid">
+          <Grid item className="admin-analytics-chart-item">
             <Grow in timeout={800}>
-              <Card sx={{ borderRadius: 4, overflow: 'hidden' }}>
+              <Card className="admin-analytics-chart-card" sx={{ borderRadius: 4, overflow: 'hidden' }}>
                 <CardContent>
                   <Typography variant="h6" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <ScheduleIcon sx={{ color: '#ff7043' }} />
@@ -389,9 +390,9 @@ const AdminAnalytics = () => {
           </Grid>
 
           {/* Weekly Patterns */}
-          <Grid item xs={12} md={6}>
+          <Grid item className="admin-analytics-chart-item">
             <Grow in timeout={1000}>
-              <Card sx={{ borderRadius: 4, overflow: 'hidden' }}>
+              <Card className="admin-analytics-chart-card" sx={{ borderRadius: 4, overflow: 'hidden' }}>
                 <CardContent>
                   <Typography variant="h6" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <CalendarIcon sx={{ color: '#ab47bc' }} />
@@ -442,11 +443,11 @@ const AdminAnalytics = () => {
         </Grid>
 
         {/* Popular Books & Revenue Breakdown */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid container className="admin-analytics-popular-revenue-grid">
           {/* Popular Books */}
-          <Grid item xs={12} md={8}>
+          <Grid item className="admin-analytics-popular-books-item">
             <Grow in timeout={1200}>
-              <Card sx={{ borderRadius: 4, overflow: 'hidden' }}>
+              <Card className="admin-analytics-popular-books-card" sx={{ borderRadius: 4, overflow: 'hidden' }}>
                 <CardContent>
                   <Typography variant="h6" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <TrophyIcon sx={{ color: '#ffa726' }} />
@@ -518,9 +519,9 @@ const AdminAnalytics = () => {
           </Grid>
 
           {/* Revenue Breakdown */}
-          <Grid item xs={12} md={4}>
+          <Grid item className="admin-analytics-revenue-item">
             <Grow in timeout={1400}>
-              <Card sx={{ borderRadius: 4, overflow: 'hidden' }}>
+              <Card className="admin-analytics-revenue-card" sx={{ borderRadius: 4, overflow: 'hidden' }}>
                 <CardContent>
                   <Typography variant="h6" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <MoneyIcon sx={{ color: '#66bb6a' }} />

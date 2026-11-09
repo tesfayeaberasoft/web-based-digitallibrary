@@ -341,7 +341,7 @@ const LibrarianReservations = () => {
   return (
     <DashboardLayout>
       <Box className="librarian-page" sx={{ p: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Box className="librarian-page-header" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Box>
             <Typography variant="h4" gutterBottom sx={{ color: '#4a9b8e', fontWeight: 600 }}>
               Reservation Queue Management
@@ -363,7 +363,7 @@ const LibrarianReservations = () => {
         </Box>
 
         {/* Summary Cards */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid container className="librarian-fluid-grid" spacing={3} sx={{ mb: 4 }}>
           <Grid item xs={12} md={4}>
             <Fade in timeout={300}>
               <Card sx={{ 

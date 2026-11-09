@@ -101,6 +101,8 @@ import {
   SupervisedUserCircle
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
+import './AdminManagementHeader.css';
+import './AdminUsers.css';
 import axios from 'axios';
 
 const AdminUsers = () => {
@@ -424,11 +426,11 @@ const AdminUsers = () => {
 
   return (
     <DashboardLayout title="Admin Panel">
-      <Box>
+      <Box className="admin-users-page">
         {/* Header */}
         <Fade in timeout={300}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Box>
+          <Box className="admin-management-page-header">
+            <Box className="admin-management-page-heading">
               <Typography variant="h3" fontWeight={700} gutterBottom sx={{ 
                 background: 'linear-gradient(45deg, #4a9b8e 30%, #2c5f5a 90%)',
                 backgroundClip: 'text',
@@ -443,6 +445,7 @@ const AdminUsers = () => {
               </Typography>
             </Box>
             <Button
+              className="admin-management-page-action"
               variant="contained"
               startIcon={<GroupAdd />}
               onClick={() => handleOpenDialog('add')}
@@ -483,12 +486,13 @@ const AdminUsers = () => {
 
         {/* Filters */}
         <Grow in timeout={500}>
-          <Card sx={{ mb: 3 }}>
+          <Card className="admin-users-filters-card" sx={{ mb: 3 }}>
             <CardContent>
-              <Grid container spacing={2} alignItems="center">
-                <Grid item xs={12} md={6}>
+              <Grid container className="admin-users-filter-controls" alignItems="center">
+                <Grid item xs={12} md={6} className="admin-users-search-control">
                   <TextField
                     fullWidth
+                    className="admin-users-search"
                     placeholder="Search users by name, email, or ID..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -501,7 +505,7 @@ const AdminUsers = () => {
                     }}
                   />
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid item xs={12} md={6} className="admin-users-status-control">
                   <FormControl fullWidth>
                     <InputLabel>Status</InputLabel>
                     <Select
@@ -516,9 +520,9 @@ const AdminUsers = () => {
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} md={3}>
+                <Grid item xs={12} md="auto" className="admin-users-refresh-control">
                   <Button
-                    fullWidth
+                    className="admin-users-refresh"
                     variant="outlined"
                     startIcon={<Refresh />}
                     onClick={fetchUsers}

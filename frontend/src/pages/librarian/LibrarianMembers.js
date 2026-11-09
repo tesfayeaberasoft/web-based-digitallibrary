@@ -295,7 +295,7 @@ const LibrarianMembers = () => {
       <Fade in={true} timeout={600}>
         <Box className="librarian-page">
           {/* Header */}
-          <Box sx={{ mb: 3 }}>
+          <Box className="librarian-page-heading" sx={{ mb: 3, textAlign: 'center' }}>
             <Typography variant="h4" fontWeight={700} gutterBottom>
               👥 Library Members
             </Typography>
@@ -311,7 +311,7 @@ const LibrarianMembers = () => {
           )}
 
           {/* Summary Cards */}
-          <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid container className="librarian-fluid-grid" spacing={3} sx={{ mb: 4 }}>
             <Grid item xs={12} md={4}>
               <Grow in={true} timeout={600}>
                 <Card sx={{ 
@@ -396,7 +396,7 @@ const LibrarianMembers = () => {
           {/* Members Table */}
           <Card>
             <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-              <Tabs value={tabValue} onChange={handleTabChange}>
+              <Tabs className="librarian-centered-tabs librarian-member-tabs" centered value={tabValue} onChange={handleTabChange}>
                 <Tab label={`All Members (${users.length})`} />
                 <Tab label={`Active (${users.filter(u => u.status === 'active').length})`} />
                 <Tab label={`Inactive (${users.filter(u => u.status !== 'active').length})`} />

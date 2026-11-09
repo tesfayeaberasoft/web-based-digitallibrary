@@ -1,0 +1,70 @@
+.admin-dashboard-charts-grid.MuiGrid-root {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 20px;
+  width: 100%;
+  margin: 0 0 24px;
+}
+
+.admin-dashboard-charts-grid > .admin-dashboard-chart-item,
+.admin-dashboard-charts-grid > .admin-dashboard-activities-item {
+  width: auto !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.admin-dashboard-charts-grid > .admin-dashboard-chart-item {
+  display: flex;
+}
+
+.admin-dashboard-chart-item > *,
+.admin-dashboard-activities-item > * {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.admin-dashboard-chart-card.MuiCard-root,
+.admin-dashboard-activities-card.MuiCard-root {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  border: 1px solid #e4ebe6;
+  box-shadow: 0 4px 16px rgba(27, 67, 50, 0.07);
+}
+
+.admin-dashboard-chart-card .MuiCardContent-root {
+  height: 100%;
+  box-sizing: border-box;
+  padding: clamp(14px, 1.5vw, 24px);
+}
+
+.admin-dashboard-activities-item {
+  grid-column: 1 / -1;
+}
+
+.admin-dashboard-activities-card .MuiCardContent-root {
+  padding: clamp(16px, 1.8vw, 28px);
+}
+
+@media (max-width: 600px) {
+  .admin-dashboard-charts-grid.MuiGrid-root {
+    gap: 12px;
+  }
+
+  .admin-dashboard-chart-card .MuiCardContent-root {
+    padding: 10px;
+  }
+
+  .admin-dashboard-charts-grid .MuiTypography-h6 {
+    font-size: clamp(0.7rem, 3vw, 1.1rem);
+    line-height: 1.25;
+  }
+}
+
+.admin-dashboard-kpi-grid.MuiGrid-root {
+  margin-bottom: 16px !important;
+}

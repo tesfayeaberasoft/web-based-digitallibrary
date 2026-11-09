@@ -111,6 +111,8 @@ import {
   Assessment
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
+import './AdminManagementHeader.css';
+import './AdminLibrarians.css';
 import axios from 'axios';
 
 const AdminLibrarians = () => {
@@ -447,8 +449,8 @@ const AdminLibrarians = () => {
       <Box>
         {/* Header */}
         <Fade in timeout={300}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Box>
+          <Box className="admin-management-page-header">
+            <Box className="admin-management-page-heading">
               <Typography variant="h3" fontWeight={700} gutterBottom sx={{ 
                 background: 'linear-gradient(45deg, #4a9b8e 30%, #2c5f5a 90%)',
                 backgroundClip: 'text',
@@ -463,6 +465,7 @@ const AdminLibrarians = () => {
               </Typography>
             </Box>
             <Button
+              className="admin-management-page-action"
               variant="contained"
               startIcon={<PersonAdd />}
               onClick={() => handleOpenDialog('add')}
@@ -481,8 +484,8 @@ const AdminLibrarians = () => {
 
         {/* Stats Cards */}
         <Grow in timeout={400}>
-          <Grid container spacing={3} sx={{ mb: 3 }}>
-            <Grid item xs={12} md={3}>
+          <Grid container className="admin-librarians-metrics-grid">
+            <Grid item className="admin-librarians-metric-item">
               <Card sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -497,7 +500,7 @@ const AdminLibrarians = () => {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} md={3}>
+            <Grid item className="admin-librarians-metric-item">
               <Card sx={{ background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', color: 'white' }}>
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -512,7 +515,7 @@ const AdminLibrarians = () => {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} md={3}>
+            <Grid item className="admin-librarians-metric-item">
               <Card sx={{ background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', color: 'white' }}>
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -527,7 +530,7 @@ const AdminLibrarians = () => {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} md={3}>
+            <Grid item className="admin-librarians-metric-item">
               <Card sx={{ background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', color: 'white' }}>
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -549,8 +552,8 @@ const AdminLibrarians = () => {
         <Grow in timeout={500}>
           <Card sx={{ mb: 3 }}>
             <CardContent>
-              <Grid container spacing={2} alignItems="center">
-                <Grid item xs={12} md={6}>
+              <Grid container className="admin-librarians-filter-grid" alignItems="center">
+                <Grid item className="admin-librarians-search-item">
                   <TextField
                     fullWidth
                     placeholder="Search librarians by name, email, or employee ID..."
@@ -565,7 +568,7 @@ const AdminLibrarians = () => {
                     }}
                   />
                 </Grid>
-                <Grid item xs={12} md={3}>
+                <Grid item className="admin-librarians-status-item">
                   <FormControl fullWidth>
                     <InputLabel>Status</InputLabel>
                     <Select
@@ -580,7 +583,7 @@ const AdminLibrarians = () => {
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} md={3}>
+                <Grid item className="admin-librarians-refresh-item">
                   <Button
                     fullWidth
                     variant="outlined"

@@ -1,0 +1,316 @@
+.super-admin-analytics-page {
+  width: 100%;
+  min-width: 0;
+}
+
+.super-admin-analytics-header {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center !important;
+  width: 100%;
+}
+
+.super-admin-analytics-heading {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  text-align: center;
+}
+
+.super-admin-analytics-heading h4,
+.super-admin-analytics-heading p {
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+.super-admin-analytics-header > .MuiBox-root:last-child {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+}
+
+.super-admin-analytics-kpis,
+.super-admin-analytics-today-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  align-items: stretch;
+  gap: 20px;
+  width: 100%;
+  margin: 0 0 24px !important;
+}
+
+.super-admin-analytics-kpis > .super-admin-analytics-kpi-item,
+.super-admin-analytics-today-grid > .super-admin-analytics-today-item {
+  width: auto !important;
+  max-width: none !important;
+  min-width: 0;
+  padding: 0 !important;
+}
+
+.super-admin-analytics-kpi-item > .MuiCard-root {
+  height: 100%;
+  min-width: 0;
+  border: 1px solid rgba(31, 55, 75, 0.12);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(34, 48, 65, 0.06);
+}
+
+.super-admin-analytics-kpi-item .MuiCardContent-root,
+.super-admin-analytics-today-item {
+  min-width: 0;
+}
+
+.super-admin-analytics-kpi-item .MuiTypography-root,
+.super-admin-analytics-today-item .MuiTypography-root {
+  overflow-wrap: anywhere;
+}
+
+.super-admin-analytics-today {
+  padding: 20px !important;
+  border-radius: 14px !important;
+}
+
+.super-admin-analytics-today-title {
+  text-align: center;
+}
+
+.super-admin-analytics-today-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 20px;
+  margin-bottom: 0 !important;
+}
+
+.super-admin-analytics-today-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.super-admin-analytics-tabs {
+  width: 100%;
+  overflow: visible;
+  border-bottom: 0;
+}
+
+.super-admin-analytics-tabs .MuiTabs-flexContainer {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+.super-admin-analytics-tabs .MuiTab-root {
+  min-width: 0;
+  min-height: 60px;
+  padding: 14px 18px;
+  font-weight: 600;
+  text-align: center;
+  text-transform: none;
+  border: 1px solid rgba(31, 55, 75, 0.14);
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #475569;
+  box-shadow: 0 2px 8px rgba(34, 48, 65, 0.05);
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.super-admin-analytics-tabs .MuiTab-root:hover {
+  border-color: #94a3b8;
+  background: #eef2f7;
+  color: #1e293b;
+  box-shadow: 0 4px 12px rgba(34, 48, 65, 0.1);
+  transform: translateY(-1px);
+}
+
+.super-admin-analytics-tabs .MuiTab-root.Mui-selected {
+  border-color: #b71c1c;
+  background: linear-gradient(135deg, #d32f2f, #b71c1c);
+  color: #fff;
+  box-shadow: 0 5px 14px rgba(183, 28, 28, 0.22);
+}
+
+.super-admin-analytics-tabs .MuiTab-root.Mui-selected:hover {
+  background: linear-gradient(135deg, #c62828, #9f1717);
+  color: #fff;
+}
+
+.super-admin-analytics-tabs .MuiTab-root .MuiSvgIcon-root {
+  color: inherit;
+}
+
+.super-admin-analytics-tabs .MuiTabs-indicator {
+  display: none;
+}
+
+.super-admin-analytics-overview-grid,
+.super-admin-analytics-circulation-grid,
+.super-admin-analytics-members-grid,
+.super-admin-analytics-revenue-grid {
+  display: grid !important;
+  grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+  align-items: stretch;
+  gap: 20px;
+  width: 100%;
+  margin: 0 !important;
+}
+
+.super-admin-analytics-overview-grid > .MuiGrid-item,
+.super-admin-analytics-circulation-grid > .MuiGrid-item,
+.super-admin-analytics-members-grid > .MuiGrid-item,
+.super-admin-analytics-revenue-grid > .MuiGrid-item {
+  width: auto !important;
+  max-width: none !important;
+  min-width: 0;
+  padding: 0 !important;
+}
+
+.super-admin-analytics-overview-daily,
+.super-admin-analytics-overview-performance,
+.super-admin-analytics-overview-feed {
+  grid-column: span 4;
+}
+
+.super-admin-analytics-overview-monthly,
+.super-admin-analytics-full-item {
+  grid-column: 1 / -1;
+}
+
+.super-admin-analytics-circulation-chart,
+.super-admin-analytics-revenue-chart {
+  grid-column: span 6;
+}
+
+.super-admin-analytics-members-chart {
+  grid-column: span 4;
+}
+
+.super-admin-analytics-overview-grid .MuiCard-root,
+.super-admin-analytics-circulation-grid .MuiCard-root,
+.super-admin-analytics-members-grid .MuiCard-root,
+.super-admin-analytics-revenue-grid .MuiCard-root {
+  height: 100%;
+  min-width: 0;
+  border: 1px solid rgba(31, 55, 75, 0.12);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(34, 48, 65, 0.06);
+}
+
+.super-admin-analytics-overview-grid .MuiCardContent-root,
+.super-admin-analytics-circulation-grid .MuiCardContent-root,
+.super-admin-analytics-members-grid .MuiCardContent-root,
+.super-admin-analytics-revenue-grid .MuiCardContent-root {
+  min-width: 0;
+  padding: 20px;
+}
+
+.super-admin-analytics-overview-grid .recharts-responsive-container,
+.super-admin-analytics-circulation-grid .recharts-responsive-container,
+.super-admin-analytics-members-grid .recharts-responsive-container,
+.super-admin-analytics-revenue-grid .recharts-responsive-container {
+  min-width: 0;
+}
+
+.super-admin-analytics-page .MuiTableContainer-root {
+  width: 100%;
+  min-width: 0;
+}
+
+.super-admin-analytics-page .MuiTableCell-root {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+  .super-admin-analytics-kpis {
+    gap: 12px;
+  }
+
+  .super-admin-analytics-overview-daily,
+  .super-admin-analytics-overview-performance,
+  .super-admin-analytics-overview-feed,
+  .super-admin-analytics-circulation-chart,
+  .super-admin-analytics-revenue-chart {
+    grid-column: span 6;
+  }
+
+  .super-admin-analytics-members-chart {
+    grid-column: span 4;
+  }
+}
+
+@media (max-width: 600px) {
+  .super-admin-analytics-header {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+  }
+
+  .super-admin-analytics-heading,
+  .super-admin-analytics-header > .MuiBox-root:last-child {
+    grid-column: 1;
+    justify-self: center;
+    text-align: center;
+  }
+
+  .super-admin-analytics-header > .MuiBox-root:last-child {
+    grid-row: 2;
+    justify-content: center;
+  }
+
+  .super-admin-analytics-kpis {
+    gap: 12px;
+  }
+
+  .super-admin-analytics-today {
+    padding: 14px !important;
+  }
+
+  .super-admin-analytics-today-grid {
+    gap: 10px;
+  }
+
+  .super-admin-analytics-today-item {
+    justify-content: flex-start;
+  }
+
+  .super-admin-analytics-today-item .MuiAvatar-root {
+    width: 32px;
+    height: 32px;
+  }
+
+  .super-admin-analytics-tabs .MuiTabs-flexContainer {
+    gap: 8px;
+  }
+
+  .super-admin-analytics-tabs .MuiTab-root {
+    min-height: 56px;
+    padding: 10px 6px;
+    font-size: 0.7rem;
+    line-height: 1.2;
+  }
+
+  .super-admin-analytics-tabs .MuiTab-root .MuiSvgIcon-root {
+    margin: 0 0 4px;
+  }
+
+  .super-admin-analytics-tabs .MuiTab-root.MuiTab-labelIcon {
+    flex-direction: column;
+  }
+
+  .super-admin-analytics-overview-grid,
+  .super-admin-analytics-circulation-grid,
+  .super-admin-analytics-members-grid,
+  .super-admin-analytics-revenue-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 16px;
+  }
+
+  .super-admin-analytics-overview-daily,
+  .super-admin-analytics-overview-performance,
+  .super-admin-analytics-overview-feed,
+  .super-admin-analytics-overview-monthly,
+  .super-admin-analytics-circulation-chart,
+  .super-admin-analytics-members-chart,
+  .super-admin-analytics-revenue-chart,
+  .super-admin-analytics-full-item {
+    grid-column: 1;
+  }
+}

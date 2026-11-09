@@ -402,7 +402,7 @@ const LibrarianNotifications = () => {
 
   return (
     <DashboardLayout title="Notification Management">
-      <Box className="librarian-page"
+      <Box className="librarian-page librarian-notifications-page"
         sx={{ 
           background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)', 
           minHeight: 'calc(100vh - 120px)',
@@ -415,7 +415,7 @@ const LibrarianNotifications = () => {
             {/* Header Section */}
             <Box mb={4}>
               <Slide direction="down" in timeout={500}>
-                <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={2}>
+                <Box className="librarian-page-header" display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={2}>
                   <Box>
                     <Typography 
                       variant="h3" 
@@ -455,7 +455,7 @@ const LibrarianNotifications = () => {
                   </Box>
                   
                   {/* Quick Action Buttons */}
-                  <Box display="flex" gap={1} flexWrap="wrap">
+                  <Box className="librarian-page-header__actions" display="flex" gap={1} flexWrap="wrap">
                     <Tooltip title="Send Manual Notification">
                       <Button
                         variant="contained"
@@ -524,7 +524,10 @@ const LibrarianNotifications = () => {
               <Tabs 
                 value={activeTab} 
                 onChange={(e, newValue) => setActiveTab(newValue)}
+                centered
                 sx={{ 
+                  width: '100%',
+                  '& .MuiTabs-flexContainer': { justifyContent: 'center' },
                   '& .MuiTab-root': {
                     minHeight: 72,
                     fontSize: '1.1rem',
@@ -574,7 +577,7 @@ const LibrarianNotifications = () => {
           {activeTab === 0 && (
             <Box>
               {/* Enhanced Statistics Cards */}
-              <Grid container spacing={3} mb={4}>
+              <Grid container className="librarian-fluid-grid librarian-notification-stats-grid">
                 <Grid item xs={12} sm={6} md={3}>
                   <StatCard
                     title="Successfully Sent"
@@ -624,7 +627,7 @@ const LibrarianNotifications = () => {
               </Grid>
 
               {/* Enhanced Quick Actions */}
-              <Grid container spacing={3} mb={4}>
+              <Grid container className="librarian-fluid-grid librarian-notification-actions-grid">
                 <Grid item xs={12} md={4}>
                   <Grow in timeout={800}>
                     <Card sx={{ 
@@ -816,7 +819,7 @@ const LibrarianNotifications = () => {
                     />
                   </Box>
                   
-                  <Grid container spacing={2}>
+                  <Grid container className="librarian-fluid-grid" spacing={2}>
                     <Grid item xs={12} sm={6} md={3}>
                       <Box textAlign="center" p={2}>
                         <Typography variant="h4" color="#4caf50" fontWeight="bold">
@@ -1213,7 +1216,7 @@ const LibrarianNotifications = () => {
           {/* Enhanced Settings Tab */}
           {activeTab === 2 && (
             <Box>
-              <Grid container spacing={3}>
+              <Grid container className="librarian-fluid-grid librarian-notification-settings-grid" spacing={3}>
                 {/* SendGrid Configuration */}
                 <Grid item xs={12} md={6}>
                   <Grow in timeout={500}>
@@ -1343,7 +1346,7 @@ const LibrarianNotifications = () => {
                 </Grid>
 
                 {/* Automation Settings */}
-                <Grid item xs={12}>
+                <Grid item xs={12} className="librarian-notification-automation-item">
                   <Grow in timeout={900}>
                     <Paper sx={{ 
                       p: 4, 

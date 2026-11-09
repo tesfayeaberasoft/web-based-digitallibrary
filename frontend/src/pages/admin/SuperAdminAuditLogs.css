@@ -1,0 +1,190 @@
+.super-admin-audit-hero {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 20px !important;
+  padding: 24px;
+  border-radius: 12px !important;
+}
+
+.super-admin-audit-hero-content {
+  grid-column: 2;
+  grid-row: 1;
+  flex-direction: column;
+  min-width: 0;
+  gap: 8px !important;
+  text-align: center;
+}
+
+.super-admin-audit-hero-content .MuiSvgIcon-root {
+  font-size: 40px;
+}
+
+.super-admin-audit-hero-content h5,
+.super-admin-audit-hero-content p {
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+.super-admin-audit-hero-actions {
+  grid-column: 3;
+  grid-row: 1;
+  justify-content: flex-end;
+}
+
+.super-admin-audit-filters,
+.super-admin-audit-summary-card,
+.super-admin-audit-table-card {
+  border: 1px solid rgba(31, 55, 75, 0.12);
+  border-radius: 12px !important;
+  box-shadow: 0 4px 16px rgba(34, 48, 65, 0.06);
+}
+
+.super-admin-audit-filters > .MuiCardContent-root {
+  padding: 20px;
+}
+
+.super-admin-audit-filter-grid {
+  display: grid !important;
+  grid-template-columns: 1.2fr 1.2fr 1.8fr 1.2fr 1.2fr;
+  align-items: end;
+  gap: 16px 20px;
+  width: 100%;
+  margin: 0;
+}
+
+.super-admin-audit-filter-grid > .super-admin-audit-filter-field,
+.super-admin-audit-filter-grid > .super-admin-audit-filter-actions {
+  width: auto !important;
+  max-width: none !important;
+  min-width: 0;
+  padding: 0 !important;
+}
+
+.super-admin-audit-filter-field > .MuiTextField-root,
+.super-admin-audit-filter-field > .MuiFormControl-root {
+  width: 100%;
+  min-width: 0;
+}
+
+.super-admin-audit-filter-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.super-admin-audit-filter-actions .MuiButton-root {
+  min-width: 88px;
+}
+
+.super-admin-audit-filter-grid .MuiOutlinedInput-root {
+  border-radius: 9px;
+}
+
+.super-admin-audit-summary-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  align-items: stretch;
+  gap: 20px;
+  width: 100%;
+  margin: 0 0 20px !important;
+}
+
+.super-admin-audit-summary-grid > .super-admin-audit-summary-item {
+  width: auto !important;
+  max-width: none !important;
+  min-width: 0;
+  padding: 0 !important;
+}
+
+.super-admin-audit-summary-card {
+  height: 100%;
+  min-width: 0;
+}
+
+.super-admin-audit-summary-card > .MuiCardContent-root {
+  min-height: 120px;
+  padding: 24px !important;
+}
+
+.super-admin-audit-summary-card .MuiTypography-root {
+  overflow-wrap: anywhere;
+}
+
+.super-admin-audit-table-card > .MuiCardContent-root {
+  padding: 20px;
+}
+
+.super-admin-audit-table-card .MuiTableContainer-root {
+  width: 100%;
+  min-width: 0;
+}
+
+.super-admin-audit-table-card .MuiTableCell-root {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+  .super-admin-audit-filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .super-admin-audit-filter-actions {
+    grid-column: 1 / -1;
+  }
+
+  .super-admin-audit-summary-card > .MuiCardContent-root {
+    padding: 18px !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .super-admin-audit-hero {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    padding: 18px;
+  }
+
+  .super-admin-audit-hero-content,
+  .super-admin-audit-hero-actions {
+    grid-column: 1;
+    justify-self: center;
+  }
+
+  .super-admin-audit-hero-actions {
+    grid-row: 2;
+    justify-content: center;
+  }
+
+  .super-admin-audit-filter-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .super-admin-audit-filter-actions {
+    grid-column: 1;
+  }
+
+  .super-admin-audit-summary-grid {
+    gap: 12px;
+  }
+
+  .super-admin-audit-summary-card > .MuiCardContent-root {
+    min-height: 100px;
+    padding: 12px 8px !important;
+  }
+
+  .super-admin-audit-summary-card .MuiTypography-body2,
+  .super-admin-audit-summary-card .MuiTypography-caption {
+    font-size: 0.7rem;
+  }
+
+  .super-admin-audit-summary-card .MuiTypography-h4 {
+    font-size: clamp(1.1rem, 5vw, 2.125rem);
+  }
+
+  .super-admin-audit-table-card > .MuiCardContent-root {
+    padding: 12px;
+  }
+}

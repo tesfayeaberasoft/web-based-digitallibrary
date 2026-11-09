@@ -22,6 +22,7 @@ import {
   Badge, Close, CameraAlt
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
+import './UserProfile.css';
 import { useAuth } from '../../contexts/AuthContext';
 import axios from 'axios';
 
@@ -224,7 +225,7 @@ export default function UserProfile() {
   return (
     <DashboardLayout title="My Profile">
       <Fade in timeout={500}>
-        <Box>
+        <Box className="user-profile-page">
 
           {/* ── page header ── */}
           <Box sx={{ mb: 4, textAlign: 'center' }}>
@@ -257,7 +258,7 @@ export default function UserProfile() {
             </Grow>
           )}
 
-          <Box sx={{
+          <Box className="user-profile-layout" sx={{
             display: 'grid',
             gridTemplateColumns: {
               xs: 'minmax(0, 1fr)',
@@ -266,7 +267,7 @@ export default function UserProfile() {
             gap: 3,
             width: '100%',
             minWidth: 0,
-            alignItems: 'start'
+            alignItems: 'stretch'
           }}>
             {/* ══════════════ LEFT COLUMN ══════════════ */}
             <Box sx={{ minWidth: 0 }}>
@@ -452,11 +453,10 @@ export default function UserProfile() {
             </Box>
 
             {/* ══════════════ RIGHT COLUMN ══════════════ */}
-            <Box sx={{ minWidth: 0 }}>
-              <Card elevation={0} sx={{
+            <Box className="user-profile-summary-column" sx={{ minWidth: 0 }}>
+              <Card className="user-profile-summary-card" elevation={0} sx={{
                 width: '100%', minWidth: 0,
                 border:`1px solid ${C.light}`, borderRadius:3, overflow:'hidden',
-                position:{ md:'sticky' }, top:20,
                 transition:'box-shadow 0.3s', '&:hover':{ boxShadow:`0 8px 24px ${C.light}` },
               }}>
                 {/* green banner */}
@@ -472,7 +472,7 @@ export default function UserProfile() {
                   ))}
                 </Box>
 
-                <CardContent sx={{ px:3, pb:3, pt:0, textAlign:'center' }}>
+                <CardContent className="user-profile-summary-content" sx={{ px:3, pb:3, pt:0, textAlign:'center' }}>
                   {/* Avatar overlapping banner */}
                   <Box sx={{ position:'relative', display:'inline-block', mt:-7, mb:1.5 }}>
                     <Avatar src={imagePreview}
@@ -541,7 +541,7 @@ export default function UserProfile() {
                   <Divider sx={{ borderColor: C.light, mb:2.5 }}/>
 
                   {/* info pills */}
-                  <Box sx={{ display:'flex', flexDirection:'column', gap:1.5 }}>
+                  <Box className="user-profile-summary-stats" sx={{ display:'flex', flexDirection:'column', gap:1.5 }}>
                     {[
                       { icon:<CalendarToday sx={{fontSize:15,color:C.secondary}}/>, label:'Member Since',
                         value: user?.created_at
@@ -553,7 +553,7 @@ export default function UserProfile() {
                       { icon:<Badge sx={{fontSize:15,color:C.secondary}}/>, label:'Account ID',
                         value: user?.id ? `#${user.id}` : '—' },
                     ].map((info,i)=>(
-                      <Paper key={i} elevation={0} sx={{
+                      <Paper className="user-profile-summary-stat" key={i} elevation={0} sx={{
                         display:'flex', alignItems:'center', justifyContent:'space-between',
                         gap:1, minWidth:0, p:1.5, borderRadius:2, bgcolor: C.lighter, border:`1px solid ${C.light}`,
                       }}>

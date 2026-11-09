@@ -1,0 +1,116 @@
+.admin-users-page {
+  width: 100%;
+  min-width: 0;
+}
+
+.admin-users-filters-card {
+  width: 100%;
+  border: 1px solid rgba(31, 91, 80, 0.14);
+  border-radius: 12px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fbfa 100%);
+  box-shadow: 0 4px 18px rgba(24, 55, 48, 0.06);
+}
+
+.admin-users-filters-card > .MuiCardContent-root {
+  padding: 22px;
+}
+
+.admin-users-filter-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+  margin: 0;
+}
+
+.admin-users-filter-controls > .MuiGrid-item {
+  min-width: 0;
+  padding: 0;
+}
+
+.admin-users-filter-controls > .admin-users-search-control {
+  flex: 1 1 420px;
+  width: min(100%, 560px);
+  max-width: 560px;
+}
+
+.admin-users-filter-controls > .admin-users-status-control {
+  flex: 0 1 230px;
+  width: 230px;
+  max-width: 230px;
+}
+
+.admin-users-filter-controls > .admin-users-refresh-control {
+  flex: 0 0 auto;
+  width: auto;
+}
+
+.admin-users-search .MuiOutlinedInput-root,
+.admin-users-status-control .MuiOutlinedInput-root {
+  min-height: 54px;
+  border-radius: 9px;
+  background-color: #fff;
+}
+
+.admin-users-search .MuiOutlinedInput-notchedOutline,
+.admin-users-status-control .MuiOutlinedInput-notchedOutline {
+  border-color: rgba(31, 91, 80, 0.24);
+}
+
+.admin-users-search .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline,
+.admin-users-status-control .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: #4a9b8e;
+}
+
+.admin-users-search .Mui-focused .MuiOutlinedInput-notchedOutline,
+.admin-users-status-control .Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #2c7466;
+  border-width: 2px;
+}
+
+.admin-users-search .MuiInputAdornment-root {
+  color: #438778;
+}
+
+.admin-users-refresh {
+  min-width: 128px;
+  min-height: 50px;
+  padding-inline: 20px;
+  border-color: rgba(44, 116, 102, 0.5);
+  border-radius: 9px;
+  color: #286b5e;
+  font-weight: 600;
+  text-transform: none;
+}
+
+.admin-users-refresh:hover {
+  border-color: #286b5e;
+  background-color: rgba(74, 155, 142, 0.08);
+}
+
+@media (max-width: 700px) {
+  .admin-users-filters-card > .MuiCardContent-root {
+    padding: 16px;
+  }
+
+  .admin-users-filter-controls {
+    gap: 12px;
+  }
+
+  .admin-users-filter-controls > .admin-users-search-control,
+  .admin-users-filter-controls > .admin-users-status-control {
+    flex: 1 1 100%;
+    width: 100%;
+    max-width: none;
+  }
+
+  .admin-users-filter-controls > .admin-users-refresh-control {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .admin-users-refresh {
+    width: 100%;
+  }
+}

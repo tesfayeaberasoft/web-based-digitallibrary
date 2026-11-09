@@ -52,6 +52,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../../components/layout/DashboardLayout';
+import './SuperAdminSecurity.css';
 import axios from 'axios';
 
 const API = apiUrl("/api/super-admin/security");
@@ -184,8 +185,9 @@ const SuperAdminSecurity = () => {
 
   return (
     <DashboardLayout title="Security Operations">
-      <Box sx={{ mb: 3 }}>
+      <Box className="super-admin-security-page" sx={{ mb: 3 }}>
         <Paper
+          className="super-admin-security-hero"
           sx={{
             p: 3,
             background: GRADIENT,
@@ -198,7 +200,7 @@ const SuperAdminSecurity = () => {
             gap: 2
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box className="super-admin-security-hero-content" sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Shield sx={{ fontSize: 48 }} />
             <Box>
               <Typography variant="h5" fontWeight={700}>
@@ -209,7 +211,7 @@ const SuperAdminSecurity = () => {
               </Typography>
             </Box>
           </Box>
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          <Box className="super-admin-security-hero-actions" sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
             <Button
               variant="contained"
               sx={{ bgcolor: 'white', color: RED, '&:hover': { bgcolor: '#f5f5f5' } }}
@@ -241,8 +243,8 @@ const SuperAdminSecurity = () => {
         </Alert>
       )}
 
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
+      <Grid container className="super-admin-security-metrics-grid" sx={{ mb: 3 }}>
+        <Grid item className="super-admin-security-metric-item" xs={12} sm={6} md={3}>
           <StatCard
             title="Failed logins (24h)"
             value={summary.failed_logins_24h ?? 0}
@@ -251,7 +253,7 @@ const SuperAdminSecurity = () => {
             icon={<Warning sx={{ color: summary.failed_logins_24h >= threshold ? '#ed6c02' : RED }} />}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item className="super-admin-security-metric-item" xs={12} sm={6} md={3}>
           <StatCard
             title="Suspicious IPs"
             value={summary.suspicious_ips ?? 0}
@@ -260,7 +262,7 @@ const SuperAdminSecurity = () => {
             icon={<Computer sx={{ color: '#9c27b0' }} />}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item className="super-admin-security-metric-item" xs={12} sm={6} md={3}>
           <StatCard
             title="Inactive admins"
             value={summary.inactive_admins ?? 0}
@@ -269,7 +271,7 @@ const SuperAdminSecurity = () => {
             icon={<PersonOff sx={{ color: '#1976d2' }} />}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item className="super-admin-security-metric-item" xs={12} sm={6} md={3}>
           <StatCard
             title="Blocked IPs"
             value={summary.blocked_ips ?? 0}
@@ -312,8 +314,8 @@ const SuperAdminSecurity = () => {
         </Button>
       </Paper>
 
-      <Grid container spacing={3}>
-        <Grid item xs={12} lg={6}>
+      <Grid container className="super-admin-security-sections-grid">
+        <Grid item className="super-admin-security-section-item" xs={12} lg={6}>
           <Card>
             <CardContent>
               <Typography variant="h6" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -398,7 +400,7 @@ const SuperAdminSecurity = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} lg={6}>
+        <Grid item className="super-admin-security-section-item" xs={12} lg={6}>
           <Card>
             <CardContent>
               <Typography variant="h6" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -448,7 +450,7 @@ const SuperAdminSecurity = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid item className="super-admin-security-section-item" xs={12} md={6}>
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Typography variant="h6" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -497,7 +499,7 @@ const SuperAdminSecurity = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid item className="super-admin-security-section-item" xs={12} md={6}>
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Typography variant="h6" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -531,7 +533,7 @@ const SuperAdminSecurity = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12}>
+        <Grid item className="super-admin-security-section-item" xs={12}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1, mb: 1 }}>

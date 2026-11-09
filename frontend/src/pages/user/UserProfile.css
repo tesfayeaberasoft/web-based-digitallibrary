@@ -1,0 +1,89 @@
+.user-profile-page {
+  width: 100%;
+  min-width: 0;
+}
+
+.user-profile-layout {
+  align-items: stretch;
+}
+
+.user-profile-summary-column {
+  display: flex;
+  min-width: 0;
+}
+
+.user-profile-summary-card {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+  border: 1px solid rgba(82, 183, 136, 0.45);
+  box-shadow: 0 6px 22px rgba(27, 67, 50, 0.08);
+}
+
+.user-profile-summary-card > .MuiBox-root:first-child {
+  flex: 0 0 95px;
+  width: 100%;
+}
+
+.user-profile-summary-content {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  padding: 0 24px 24px !important;
+}
+
+.user-profile-summary-content > .MuiBox-root:first-child {
+  margin-top: -56px;
+  margin-bottom: 0;
+}
+
+.user-profile-summary-content > .MuiTypography-root,
+.user-profile-summary-content > .MuiChip-root,
+.user-profile-summary-content > .MuiDivider-root,
+.user-profile-summary-content > .MuiBox-root,
+.user-profile-summary-content > input {
+  flex-shrink: 0;
+}
+
+.user-profile-summary-content > .MuiTypography-root,
+.user-profile-summary-content > .MuiChip-root,
+.user-profile-summary-content > .MuiDivider-root {
+  margin-bottom: 0;
+}
+
+.user-profile-summary-content > .MuiBox-root:nth-of-type(2) {
+  width: 100%;
+}
+
+.user-profile-summary-content > .MuiBox-root:nth-of-type(3) {
+  width: 100%;
+  margin-top: auto;
+}
+
+.user-profile-summary-stats {
+  gap: 16px !important;
+}
+
+.user-profile-summary-stat {
+  min-height: 56px;
+  padding: 16px !important;
+  border: 1px solid rgba(82, 183, 136, 0.35);
+  border-radius: 10px !important;
+  background: #f0fdf4;
+}
+
+@media (max-width: 900px) {
+  .user-profile-summary-card {
+    height: auto;
+  }
+
+  .user-profile-summary-content > .MuiBox-root:nth-of-type(3) {
+    margin-top: 0;
+  }
+}

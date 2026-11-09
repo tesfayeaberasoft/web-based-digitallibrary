@@ -1,0 +1,175 @@
+.super-admin-security-page {
+  width: 100%;
+  min-width: 0;
+}
+
+.super-admin-security-hero {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 20px !important;
+  padding: 24px;
+  border-radius: 12px !important;
+}
+
+.super-admin-security-hero-content {
+  grid-column: 2;
+  grid-row: 1;
+  flex-direction: column;
+  min-width: 0;
+  gap: 8px !important;
+  text-align: center;
+}
+
+.super-admin-security-hero-content .MuiSvgIcon-root {
+  font-size: 40px;
+}
+
+.super-admin-security-hero-content h5,
+.super-admin-security-hero-content p {
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+.super-admin-security-hero-actions {
+  grid-column: 3;
+  grid-row: 1;
+  justify-content: flex-end;
+}
+
+.super-admin-security-metrics-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  align-items: stretch;
+  gap: 20px;
+  width: 100%;
+  margin: 0 0 24px !important;
+}
+
+.super-admin-security-metrics-grid > .super-admin-security-metric-item {
+  width: auto !important;
+  max-width: none !important;
+  min-width: 0;
+  padding: 0 !important;
+}
+
+.super-admin-security-metric-item > .MuiPaper-root,
+.super-admin-security-metric-item > .MuiCard-root {
+  height: 100%;
+  min-width: 0;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(34, 48, 65, 0.08);
+}
+
+.super-admin-security-metric-item .MuiCardContent-root {
+  min-width: 0;
+  padding: 16px;
+}
+
+.super-admin-security-metric-item .MuiTypography-root {
+  overflow-wrap: anywhere;
+}
+
+.super-admin-security-sections-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  align-items: stretch;
+  gap: 20px;
+  width: 100%;
+  margin: 0 !important;
+}
+
+.super-admin-security-sections-grid > .super-admin-security-section-item {
+  width: auto !important;
+  max-width: none !important;
+  min-width: 0;
+  padding: 0 !important;
+}
+
+.super-admin-security-sections-grid > .super-admin-security-section-item:last-child {
+  grid-column: 1 / -1;
+}
+
+.super-admin-security-section-item > .MuiCard-root {
+  height: 100%;
+  min-width: 0;
+  border: 1px solid rgba(31, 55, 75, 0.12);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(34, 48, 65, 0.06);
+}
+
+.super-admin-security-section-item > .MuiCard-root > .MuiCardContent-root {
+  height: 100%;
+  min-width: 0;
+  padding: 20px;
+}
+
+.super-admin-security-section-item .MuiTableContainer-root {
+  width: 100%;
+  min-width: 0;
+}
+
+.super-admin-security-section-item .MuiTableCell-root {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+  .super-admin-security-metrics-grid {
+    gap: 12px;
+  }
+
+  .super-admin-security-metric-item .MuiCardContent-root {
+    padding: 10px;
+  }
+
+  .super-admin-security-metric-item .MuiTypography-h4 {
+    font-size: clamp(1.15rem, 3vw, 2.125rem);
+  }
+}
+
+@media (max-width: 700px) {
+  .super-admin-security-hero {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    padding: 18px;
+  }
+
+  .super-admin-security-hero-content,
+  .super-admin-security-hero-actions {
+    grid-column: 1;
+    justify-self: center;
+  }
+
+  .super-admin-security-hero-actions {
+    grid-row: 2;
+    justify-content: center;
+  }
+
+  .super-admin-security-sections-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 16px;
+  }
+
+  .super-admin-security-sections-grid > .super-admin-security-section-item:last-child {
+    grid-column: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .super-admin-security-metrics-grid {
+    gap: 8px;
+  }
+
+  .super-admin-security-metric-item .MuiCardContent-root {
+    padding: 8px 6px;
+  }
+
+  .super-admin-security-metric-item .MuiTypography-body2,
+  .super-admin-security-metric-item .MuiTypography-caption {
+    font-size: 0.65rem;
+  }
+
+  .super-admin-security-metric-item .MuiSvgIcon-root {
+    font-size: 1rem;
+  }
+}

@@ -927,7 +927,7 @@ const LibrarianInventory = () => {
   return (
     <DashboardLayout title="Librarian Panel">
       <Box className="librarian-page">
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Box className="librarian-page-header" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Box>
             <Typography variant="h4" fontWeight={700} gutterBottom>
               Book Inventory
@@ -936,7 +936,7 @@ const LibrarianInventory = () => {
               Manage book inventory and stock levels
             </Typography>
           </Box>
-          <Box sx={{ display: 'flex', gap: 1 }}>
+          <Box className="librarian-page-header__actions" sx={{ display: 'flex', gap: 1 }}>
             <Button
               variant="outlined"
               startIcon={<DownloadIcon />}

@@ -11,6 +11,7 @@ import {
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import axios from 'axios';
+import './AdminFinancialReports.css';
 
 const AdminFinancialReports = () => {
   const [tab, setTab] = useState(0);
@@ -66,7 +67,7 @@ const AdminFinancialReports = () => {
 
   return (
     <DashboardLayout title="Admin Panel">
-      <Box>
+      <Box className="admin-financial-reports-page">
         {/* Page Header */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -106,8 +107,10 @@ const AdminFinancialReports = () => {
         )}
 
         {/* Tabs */}
-        <Paper sx={{ borderRadius: 3, overflow: 'hidden', mb: 3 }}>
+        <Paper className="admin-financial-reports-tabs" sx={{ borderRadius: 3, overflow: 'hidden', mb: 3 }}>
           <Tabs
+            centered
+            className="admin-financial-reports-tab-list"
             value={tab}
             onChange={handleTabChange}
             sx={{
@@ -132,9 +135,9 @@ const AdminFinancialReports = () => {
             {/* ── OVERVIEW TAB ── */}
             {tab === 0 && (
               data.overview ? (
-                <Grid container spacing={3}>
+                <Grid container className="admin-financial-reports-overview-grid">
                   {/* Revenue Card */}
-                  <Grid item xs={12} sm={6} md={4}>
+                  <Grid item className="admin-financial-reports-metric-item">
                     <Card sx={{ background: 'linear-gradient(135deg, #4caf50 0%, #388e3c 100%)', color: 'white', borderRadius: 3 }}>
                       <CardContent>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -152,7 +155,7 @@ const AdminFinancialReports = () => {
                   </Grid>
 
                   {/* Transactions */}
-                  <Grid item xs={12} sm={6} md={4}>
+                  <Grid item className="admin-financial-reports-metric-item">
                     <Card sx={{ background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)', color: 'white', borderRadius: 3 }}>
                       <CardContent>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -172,7 +175,7 @@ const AdminFinancialReports = () => {
                   </Grid>
 
                   {/* Avg Payment */}
-                  <Grid item xs={12} sm={6} md={4}>
+                  <Grid item className="admin-financial-reports-metric-item">
                     <Card sx={{ background: 'linear-gradient(135deg, #f57c00 0%, #e65100 100%)', color: 'white', borderRadius: 3 }}>
                       <CardContent>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -190,7 +193,7 @@ const AdminFinancialReports = () => {
                   </Grid>
 
                   {/* Outstanding Fines */}
-                  <Grid item xs={12} sm={6} md={4}>
+                  <Grid item className="admin-financial-reports-metric-item">
                     <Card sx={{ background: 'linear-gradient(135deg, #c62828 0%, #b71c1c 100%)', color: 'white', borderRadius: 3 }}>
                       <CardContent>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -208,7 +211,7 @@ const AdminFinancialReports = () => {
                   </Grid>
 
                   {/* Total Fines */}
-                  <Grid item xs={12} sm={6} md={4}>
+                  <Grid item className="admin-financial-reports-metric-item">
                     <Card sx={{ background: 'linear-gradient(135deg, #6a1b9a 0%, #4a148c 100%)', color: 'white', borderRadius: 3 }}>
                       <CardContent>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -228,7 +231,7 @@ const AdminFinancialReports = () => {
                   </Grid>
 
                   {/* Collection Rate */}
-                  <Grid item xs={12} sm={6} md={4}>
+                  <Grid item className="admin-financial-reports-metric-item">
                     <Card sx={{ background: 'linear-gradient(135deg, #00695c 0%, #004d40 100%)', color: 'white', borderRadius: 3 }}>
                       <CardContent>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -246,7 +249,7 @@ const AdminFinancialReports = () => {
                   </Grid>
 
                   {/* Summary Table */}
-                  <Grid item xs={12}>
+                  <Grid item className="admin-financial-reports-breakdown-item">
                     <Paper sx={{ p: 3, borderRadius: 3 }}>
                       <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>Payment Status Breakdown</Typography>
                       <Grid container spacing={2}>
