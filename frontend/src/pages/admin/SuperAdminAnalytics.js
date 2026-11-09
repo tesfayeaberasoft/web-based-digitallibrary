@@ -4,9 +4,7 @@ import {
   Box,
   Card,
   CardContent,
-  Typography,
-  Grid,
-  Avatar,
+  Typography,  Avatar,
   CircularProgress,
   Alert,
   Button,
@@ -243,13 +241,13 @@ const SuperAdminAnalytics = () => {
       <DashboardLayout title="Super Admin Panel" centerTitle>
         <Box sx={{ p: 2 }}>
           <Skeleton variant="text" width={300} height={48} />
-          <Grid container spacing={2} sx={{ mt: 2 }}>
+          <Box className="super-admin-analytics-skeleton-grid" sx={{ mt: 2 }}>
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Grid item xs={12} sm={6} md={4} lg={2} key={i}>
+              <Box className="super-admin-analytics-skeleton-item" key={i}>
                 <Skeleton variant="rounded" height={120} />
-              </Grid>
+              </Box>
             ))}
-          </Grid>
+          </Box>
           <Skeleton variant="rounded" height={360} sx={{ mt: 3 }} />
         </Box>
       </DashboardLayout>
@@ -319,7 +317,7 @@ const SuperAdminAnalytics = () => {
         {loading && <LinearProgress color="error" sx={{ mb: 2 }} />}
 
         {/* KPI row */}
-        <Grid container className="super-admin-analytics-kpis" sx={{ mb: 3 }}>
+        <Box className="super-admin-analytics-kpis" sx={{ mb: 3 }}>
           {[
             { key: 'users', title: 'Total users', value: overview.total_users, sub: `${overview.active_users} active`, icon: <People />, color: '#1976d2', trend: analytics.monthly_comparison?.users?.change, tab: 2 },
             { key: 'books', title: 'Books / copies', value: `${overview.total_books}`, sub: `${overview.total_copies} copies · ${overview.borrow_rate}% borrowed`, icon: <MenuBook />, color: '#2e7d32', tab: 1 },
@@ -328,7 +326,7 @@ const SuperAdminAnalytics = () => {
             { key: 'staff', title: 'Staff', value: (overview.admins || 0) + (overview.librarians || 0), sub: `${overview.admins} admins · ${overview.librarians} librarians`, icon: <SupervisorAccount />, color: RED, tab: 2 },
             { key: 'health', title: 'Reservations', value: overview.pending_reservations, sub: 'Pending holds', icon: <Warning />, color: overview.overdue_loans > 0 ? '#d32f2f' : '#4a9b8e', tab: 0 }
           ].map((k) => (
-            <Grid item className="super-admin-analytics-kpi-item" xs={12} sm={6} md={4} lg={2} key={k.key}>
+            <Box className="super-admin-analytics-kpi-item" key={k.key}>
               <KpiCard
                 {...k}
                 active={highlightKpi === k.key}
@@ -337,9 +335,9 @@ const SuperAdminAnalytics = () => {
                   setTab(k.tab);
                 }}
               />
-            </Grid>
+            </Box>
           ))}
-        </Grid>
+        </Box>
 
         {/* Today strip */}
         <Paper
@@ -355,14 +353,14 @@ const SuperAdminAnalytics = () => {
           <Typography className="super-admin-analytics-today-title" variant="h6" fontWeight={600} gutterBottom>
             Today&apos;s activity
           </Typography>
-          <Grid container className="super-admin-analytics-today-grid">
+          <Box className="super-admin-analytics-today-grid">
             {[
               { label: 'Loans', value: today.loans, icon: <LocalLibrary /> },
               { label: 'Returns', value: today.returns, icon: <Replay /> },
               { label: 'Registrations', value: today.registrations, icon: <PersonAdd /> },
               { label: 'Revenue', value: formatCurrency(today.revenue), icon: <AttachMoney /> }
             ].map((item) => (
-              <Grid item className="super-admin-analytics-today-item" xs={6} md={3} key={item.label}>
+              <Box className="super-admin-analytics-today-item" key={item.label}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                   <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.2)' }}>{item.icon}</Avatar>
                   <Box>
@@ -374,9 +372,9 @@ const SuperAdminAnalytics = () => {
                     </Typography>
                   </Box>
                 </Box>
-              </Grid>
+              </Box>
             ))}
-          </Grid>
+          </Box>
         </Paper>
 
         <Tabs className="super-admin-analytics-tabs" value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }} variant="scrollable" scrollButtons="auto">
@@ -388,8 +386,8 @@ const SuperAdminAnalytics = () => {
 
         {/* Tab: Overview */}
         {tab === 0 && (
-          <Grid container className="super-admin-analytics-overview-grid">
-            <Grid item className="super-admin-analytics-overview-daily" xs={12} lg={8}>
+          <Box className="super-admin-analytics-overview-grid">
+            <Box className="super-admin-analytics-overview-daily">
               <Card>
                 <CardContent>
                   <Typography variant="h6" fontWeight={600} gutterBottom>
@@ -412,8 +410,8 @@ const SuperAdminAnalytics = () => {
                   </Box>
                 </CardContent>
               </Card>
-            </Grid>
-            <Grid item className="super-admin-analytics-overview-performance" xs={12} lg={4}>
+            </Box>
+            <Box className="super-admin-analytics-overview-performance">
               <Card sx={{ height: '100%' }}>
                 <CardContent>
                   <Typography variant="h6" fontWeight={600} gutterBottom>
@@ -438,8 +436,8 @@ const SuperAdminAnalytics = () => {
                   </Box>
                 </CardContent>
               </Card>
-            </Grid>
-            <Grid item className="super-admin-analytics-overview-feed" xs={12} md={6}>
+            </Box>
+            <Box className="super-admin-analytics-overview-feed">
               <Card>
                 <CardContent>
                   <Typography variant="h6" fontWeight={600} gutterBottom>
@@ -473,8 +471,8 @@ const SuperAdminAnalytics = () => {
                   </List>
                 </CardContent>
               </Card>
-            </Grid>
-            <Grid item className="super-admin-analytics-overview-monthly" xs={12} md={6}>
+            </Box>
+            <Box className="super-admin-analytics-overview-monthly">
               <Card>
                 <CardContent>
                   <Typography variant="h6" fontWeight={600} gutterBottom>
@@ -496,14 +494,14 @@ const SuperAdminAnalytics = () => {
                   </Box>
                 </CardContent>
               </Card>
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
         )}
 
         {/* Tab: Circulation */}
         {tab === 1 && (
-          <Grid container className="super-admin-analytics-circulation-grid">
-            <Grid item className="super-admin-analytics-circulation-chart" xs={12} md={6}>
+          <Box className="super-admin-analytics-circulation-grid">
+            <Box className="super-admin-analytics-circulation-chart">
               <Card>
                 <CardContent>
                   <Typography variant="h6" fontWeight={600} gutterBottom>
@@ -522,8 +520,8 @@ const SuperAdminAnalytics = () => {
                   </Box>
                 </CardContent>
               </Card>
-            </Grid>
-            <Grid item className="super-admin-analytics-circulation-chart" xs={12} md={6}>
+            </Box>
+            <Box className="super-admin-analytics-circulation-chart">
               <Card>
                 <CardContent>
                   <Typography variant="h6" fontWeight={600} gutterBottom>
@@ -542,8 +540,8 @@ const SuperAdminAnalytics = () => {
                   </Box>
                 </CardContent>
               </Card>
-            </Grid>
-            <Grid item className="super-admin-analytics-full-item" xs={12}>
+            </Box>
+            <Box className="super-admin-analytics-full-item">
               <Card>
                 <CardContent>
                   <Typography variant="h6" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -584,14 +582,14 @@ const SuperAdminAnalytics = () => {
                   </TableContainer>
                 </CardContent>
               </Card>
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
         )}
 
         {/* Tab: Members */}
         {tab === 2 && (
-          <Grid container className="super-admin-analytics-members-grid">
-            <Grid item className="super-admin-analytics-members-chart" xs={12} md={5}>
+          <Box className="super-admin-analytics-members-grid">
+            <Box className="super-admin-analytics-members-chart">
               <Card>
                 <CardContent>
                   <Typography variant="h6" fontWeight={600} gutterBottom>
@@ -611,8 +609,8 @@ const SuperAdminAnalytics = () => {
                   </Box>
                 </CardContent>
               </Card>
-            </Grid>
-            <Grid item className="super-admin-analytics-members-chart" xs={12} md={4}>
+            </Box>
+            <Box className="super-admin-analytics-members-chart">
               <Card>
                 <CardContent>
                   <Typography variant="h6" fontWeight={600} gutterBottom>
@@ -641,8 +639,8 @@ const SuperAdminAnalytics = () => {
                   </Box>
                 </CardContent>
               </Card>
-            </Grid>
-            <Grid item className="super-admin-analytics-members-chart" xs={12} md={3}>
+            </Box>
+            <Box className="super-admin-analytics-members-chart">
               <Card sx={{ height: '100%' }}>
                 <CardContent>
                   <Typography variant="h6" fontWeight={600} gutterBottom>
@@ -678,8 +676,8 @@ const SuperAdminAnalytics = () => {
                   </List>
                 </CardContent>
               </Card>
-            </Grid>
-            <Grid item className="super-admin-analytics-full-item" xs={12}>
+            </Box>
+            <Box className="super-admin-analytics-full-item">
               <Card>
                 <CardContent>
                   <Typography variant="h6" fontWeight={600} gutterBottom>
@@ -714,14 +712,14 @@ const SuperAdminAnalytics = () => {
                   </TableContainer>
                 </CardContent>
               </Card>
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
         )}
 
         {/* Tab: Revenue */}
         {tab === 3 && (
-          <Grid container className="super-admin-analytics-revenue-grid">
-            <Grid item className="super-admin-analytics-revenue-chart" xs={12} md={8}>
+          <Box className="super-admin-analytics-revenue-grid">
+            <Box className="super-admin-analytics-revenue-chart">
               <Card>
                 <CardContent>
                   <Typography variant="h6" fontWeight={600} gutterBottom>
@@ -740,8 +738,8 @@ const SuperAdminAnalytics = () => {
                   </Box>
                 </CardContent>
               </Card>
-            </Grid>
-            <Grid item className="super-admin-analytics-revenue-chart" xs={12} md={4}>
+            </Box>
+            <Box className="super-admin-analytics-revenue-chart">
               <Card>
                 <CardContent>
                   <Typography variant="h6" fontWeight={600} gutterBottom>
@@ -777,8 +775,8 @@ const SuperAdminAnalytics = () => {
                   )}
                 </CardContent>
               </Card>
-            </Grid>
-            <Grid item className="super-admin-analytics-full-item" xs={12}>
+            </Box>
+            <Box className="super-admin-analytics-full-item">
               <Card>
                 <CardContent>
                   <Typography variant="h6" fontWeight={600} gutterBottom>
@@ -801,8 +799,8 @@ const SuperAdminAnalytics = () => {
                   </Box>
                 </CardContent>
               </Card>
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
         )}
       </Box>
     </DashboardLayout>

@@ -5,9 +5,7 @@ import {
   Box,
   Card,
   CardContent,
-  Typography,
-  Grid,
-  TextField,
+  Typography,  TextField,
   Button,
   Switch,
   FormControlLabel,
@@ -442,7 +440,7 @@ const SuperAdminSettings = () => {
         </Box>
 
         {/* Health KPIs */}
-        <Grid container className="super-admin-settings-kpis" sx={{ mb: 3 }}>
+        <Box className="super-admin-settings-kpis" sx={{ mb: 3 }}>
           {[
             { label: 'Users', value: totals.total_users, icon: <People />, color: '#1976d2' },
             { label: 'Books', value: totals.total_books, icon: <MenuBook />, color: '#2e7d32' },
@@ -451,7 +449,7 @@ const SuperAdminSettings = () => {
             { label: 'Failed logins (24h)', value: health?.failed_logins_24h ?? 0, icon: <Lock />, color: RED },
             { label: 'DB status', value: health?.database?.status || '—', icon: <MonitorHeart />, color: '#00838f' }
           ].map((k) => (
-            <Grid item className="super-admin-settings-kpi" key={k.label}>
+            <Box className="super-admin-settings-kpi" key={k.label}>
               <Card sx={{ background: `linear-gradient(135deg, ${k.color}22, ${k.color}08)`, border: `1px solid ${k.color}33` }}>
                 <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -467,9 +465,9 @@ const SuperAdminSettings = () => {
                   </Box>
                 </CardContent>
               </Card>
-            </Grid>
+            </Box>
           ))}
-        </Grid>
+        </Box>
 
         <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
           <Tabs
@@ -497,14 +495,14 @@ const SuperAdminSettings = () => {
           <Box className="super-admin-settings-tab-panel" sx={{ p: 3 }}>
             {/* Library */}
             {tab === 0 && (
-              <Grid container className="super-admin-settings-form-grid super-admin-settings-library-grid">
+              <Box className="super-admin-settings-form-grid super-admin-settings-library-grid">
                 {[
                   { key: 'libraryName', label: 'Library name', icon: <Business /> },
                   { key: 'email', label: 'Email', icon: <Email /> },
                   { key: 'phone', label: 'Phone', icon: <Phone /> },
                   { key: 'website', label: 'Website', icon: <Language /> }
                 ].map((f) => (
-                  <Grid item className="super-admin-settings-field" key={f.key}>
+                  <Box className="super-admin-settings-field" key={f.key}>
                     <TextField
                       fullWidth
                       label={f.label}
@@ -512,63 +510,63 @@ const SuperAdminSettings = () => {
                       onChange={(e) => setLibrary((p) => ({ ...p, [f.key]: e.target.value }))}
                       InputProps={{ startAdornment: <Box sx={{ mr: 1, color: RED, display: 'flex' }}>{f.icon}</Box> }}
                     />
-                  </Grid>
+                  </Box>
                 ))}
-                <Grid item className="super-admin-settings-field super-admin-settings-field-wide">
+                <Box className="super-admin-settings-field super-admin-settings-field-wide">
                   <TextField fullWidth multiline rows={2} label="Description" value={library.description || ''} onChange={(e) => setLibrary((p) => ({ ...p, description: e.target.value }))} />
-                </Grid>
-                <Grid item className="super-admin-settings-field super-admin-settings-field-wide">
+                </Box>
+                <Box className="super-admin-settings-field super-admin-settings-field-wide">
                   <TextField fullWidth multiline rows={2} label="Address" value={library.address || ''} onChange={(e) => setLibrary((p) => ({ ...p, address: e.target.value }))} InputProps={{ startAdornment: <LocationOn sx={{ mr: 1, color: RED }} /> }} />
-                </Grid>
-              </Grid>
+                </Box>
+              </Box>
             )}
 
             {/* Policies */}
             {tab === 1 && (
-              <Grid container className="super-admin-settings-form-grid super-admin-settings-policies-grid">
-                <Grid item className="super-admin-settings-field">
+              <Box className="super-admin-settings-form-grid super-admin-settings-policies-grid">
+                <Box className="super-admin-settings-field">
                   <Typography gutterBottom>Max books per user</Typography>
                   <Slider value={policies.max_user_borrow_books || 5} min={1} max={20} marks valueLabelDisplay="on" color="error" onChange={(_, v) => setPolicies((p) => ({ ...p, max_user_borrow_books: v }))} />
-                </Grid>
-                <Grid item className="super-admin-settings-field">
+                </Box>
+                <Box className="super-admin-settings-field">
                   <Typography gutterBottom>Loan period (days)</Typography>
                   <Slider value={policies.max_book_return_days || 14} min={7} max={60} marks valueLabelDisplay="on" color="error" onChange={(_, v) => setPolicies((p) => ({ ...p, max_book_return_days: v }))} />
-                </Grid>
-                <Grid item className="super-admin-settings-field">
+                </Box>
+                <Box className="super-admin-settings-field">
                   <Typography gutterBottom>Fine per day ($)</Typography>
                   <Slider value={policies.due_fines_per_day || 0.5} min={0} max={5} step={0.25} valueLabelDisplay="on" color="error" onChange={(_, v) => setPolicies((p) => ({ ...p, due_fines_per_day: v }))} />
-                </Grid>
-                <Grid item className="super-admin-settings-field super-admin-settings-field-wide">
+                </Box>
+                <Box className="super-admin-settings-field super-admin-settings-field-wide">
                   <Box className="super-admin-settings-switch-grid">
                     <SettingSwitch label="Allow public registration" checked={system.allowRegistration} onChange={(v) => setSystem((p) => ({ ...p, allowRegistration: v }))} />
                     <SettingSwitch label="Maintenance mode (library)" checked={system.maintenanceMode} onChange={(v) => setSystem((p) => ({ ...p, maintenanceMode: v }))} />
                   </Box>
-                </Grid>
-              </Grid>
+                </Box>
+              </Box>
             )}
 
             {/* Notifications */}
             {tab === 2 && (
-              <Grid container className="super-admin-settings-form-grid super-admin-settings-alerts-grid">
-                <Grid item className="super-admin-settings-field">
+              <Box className="super-admin-settings-form-grid super-admin-settings-alerts-grid">
+                <Box className="super-admin-settings-field">
                   <SettingSwitch label="Email notifications" checked={notifications.emailEnabled} onChange={(v) => setNotifications((p) => ({ ...p, emailEnabled: v }))} />
                   <SettingSwitch label="SMS alerts" checked={notifications.smsEnabled} onChange={(v) => setNotifications((p) => ({ ...p, smsEnabled: v }))} />
                   <SettingSwitch label="Push notifications" checked={notifications.pushEnabled} onChange={(v) => setNotifications((p) => ({ ...p, pushEnabled: v }))} />
                   <SettingSwitch label="Overdue reminders" checked={notifications.overdueReminders} onChange={(v) => setNotifications((p) => ({ ...p, overdueReminders: v }))} />
-                </Grid>
-                <Grid item className="super-admin-settings-field">
+                </Box>
+                <Box className="super-admin-settings-field">
                   <SettingSwitch label="System alerts" checked={saNotifications.system_alerts} onChange={(v) => setSaNotifications((p) => ({ ...p, system_alerts: v }))} />
                   <TextField fullWidth label="Admin alert email" sx={{ mt: 2 }} value={saNotifications.admin_email || ''} onChange={(e) => setSaNotifications((p) => ({ ...p, admin_email: e.target.value }))} />
                   <Typography className="super-admin-settings-slider-label">CPU alert threshold (%)</Typography>
                   <Slider value={saNotifications.cpu_usage_alert_threshold || 80} min={50} max={99} color="error" valueLabelDisplay="on" onChange={(_, v) => setSaNotifications((p) => ({ ...p, cpu_usage_alert_threshold: v }))} />
-                </Grid>
-              </Grid>
+                </Box>
+              </Box>
             )}
 
             {/* Security */}
             {tab === 3 && (
-              <Grid container className="super-admin-settings-form-grid super-admin-settings-security-grid">
-                <Grid item className="super-admin-settings-field">
+              <Box className="super-admin-settings-form-grid super-admin-settings-security-grid">
+                <Box className="super-admin-settings-field">
                   <Box className="super-admin-settings-switch-grid super-admin-settings-security-switches">
                     <SettingSwitch label="Two-factor authentication" checked={saSecurity.two_factor_auth} onChange={(v) => setSaSecurity((p) => ({ ...p, two_factor_auth: v }))} />
                     <SettingSwitch label="Login monitoring" checked={saSecurity.login_monitoring} onChange={(v) => setSaSecurity((p) => ({ ...p, login_monitoring: v }))} />
@@ -576,8 +574,8 @@ const SuperAdminSettings = () => {
                     <SettingSwitch label="Audit logging" checked={security.auditLogging} onChange={(v) => setSecurity((p) => ({ ...p, auditLogging: v }))} />
                     <SettingSwitch label="HTTPS only" checked={security.httpsOnly} onChange={(v) => setSecurity((p) => ({ ...p, httpsOnly: v }))} />
                   </Box>
-                </Grid>
-                <Grid item className="super-admin-settings-field">
+                </Box>
+                <Box className="super-admin-settings-field">
                   <Typography gutterBottom>Max login attempts (members)</Typography>
                   <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
                     Regular user accounts auto-suspend after this many failed sign-ins. Remaining attempts are shown on the login page.
@@ -594,20 +592,20 @@ const SuperAdminSettings = () => {
                   <Button sx={{ mt: 1 }} fullWidth variant="contained" color="error" startIcon={<Shield />} onClick={() => navigate('/super-admin/security')}>
                     Open Security Center
                   </Button>
-                </Grid>
-              </Grid>
+                </Box>
+              </Box>
             )}
 
             {/* Appearance */}
             {tab === 4 && (
-              <Grid container className="super-admin-settings-form-grid super-admin-settings-appearance-grid">
-                <Grid item className="super-admin-settings-field">
+              <Box className="super-admin-settings-form-grid super-admin-settings-appearance-grid">
+                <Box className="super-admin-settings-field">
                   <TextField fullWidth label="Primary color" type="color" value={appearance.primaryColor} onChange={(e) => setAppearance((p) => ({ ...p, primaryColor: e.target.value }))} sx={{ '& input': { height: 48 } }} />
-                </Grid>
-                <Grid item className="super-admin-settings-field">
+                </Box>
+                <Box className="super-admin-settings-field">
                   <TextField fullWidth label="Secondary color" type="color" value={appearance.secondaryColor} onChange={(e) => setAppearance((p) => ({ ...p, secondaryColor: e.target.value }))} sx={{ '& input': { height: 48 } }} />
-                </Grid>
-                <Grid item className="super-admin-settings-field">
+                </Box>
+                <Box className="super-admin-settings-field">
                   <FormControl fullWidth>
                     <InputLabel>Theme</InputLabel>
                     <Select value={appearance.theme || 'light'} label="Theme" onChange={(e) => setAppearance((p) => ({ ...p, theme: e.target.value }))}>
@@ -615,11 +613,11 @@ const SuperAdminSettings = () => {
                       <MenuItem value="dark">Dark</MenuItem>
                     </Select>
                   </FormControl>
-                </Grid>
-                <Grid item className="super-admin-settings-field">
+                </Box>
+                <Box className="super-admin-settings-field">
                   <SettingSwitch label="UI animations" checked={appearance.animationsEnabled} onChange={(v) => setAppearance((p) => ({ ...p, animationsEnabled: v }))} />
-                </Grid>
-                <Grid item className="super-admin-settings-field super-admin-settings-field-wide">
+                </Box>
+                <Box className="super-admin-settings-field super-admin-settings-field-wide">
                   <Paper sx={{ p: 3, borderRadius: 2, background: `linear-gradient(135deg, ${appearance.primaryColor}, ${appearance.secondaryColor})`, color: 'white' }}>
                     <Typography variant="h6" fontWeight={700}>
                       Preview — {library.libraryName || 'Digital Library'}
@@ -628,27 +626,27 @@ const SuperAdminSettings = () => {
                       This is how your brand colors will appear across the admin panel.
                     </Typography>
                   </Paper>
-                </Grid>
-              </Grid>
+                </Box>
+              </Box>
             )}
 
             {/* Performance */}
             {tab === 5 && (
-              <Grid container className="super-admin-settings-form-grid super-admin-settings-performance-grid">
-                <Grid item className="super-admin-settings-field">
+              <Box className="super-admin-settings-form-grid super-admin-settings-performance-grid">
+                <Box className="super-admin-settings-field">
                   <Box className="super-admin-settings-switch-grid">
                     <SettingSwitch label="Enable caching" checked={performance.caching_enabled} onChange={(v) => setPerformance((p) => ({ ...p, caching_enabled: v }))} />
                     <SettingSwitch label="Auto optimization" checked={performance.auto_optimization} onChange={(v) => setPerformance((p) => ({ ...p, auto_optimization: v }))} />
                     <SettingSwitch label="Debug mode" checked={performance.debug_mode} onChange={(v) => setPerformance((p) => ({ ...p, debug_mode: v }))} description="Only enable for troubleshooting" />
                   </Box>
-                </Grid>
-                <Grid item className="super-admin-settings-field">
+                </Box>
+                <Box className="super-admin-settings-field">
                   <Typography className="super-admin-settings-slider-label">Memory limit (MB)</Typography>
                   <Slider value={performance.memory_limit_mb || 512} min={128} max={2048} step={128} color="error" valueLabelDisplay="on" onChange={(_, v) => setPerformance((p) => ({ ...p, memory_limit_mb: v }))} />
                   <Typography className="super-admin-settings-slider-label">Max upload size (MB)</Typography>
                   <Slider value={performance.upload_max_size_mb || 50} min={5} max={200} color="error" valueLabelDisplay="on" onChange={(_, v) => setPerformance((p) => ({ ...p, upload_max_size_mb: v }))} />
-                </Grid>
-                <Grid item className="super-admin-settings-field super-admin-settings-field-wide">
+                </Box>
+                <Box className="super-admin-settings-field super-admin-settings-field-wide">
                   <Divider sx={{ my: 2 }} />
                   <Box className="super-admin-settings-switch-grid">
                     <SettingSwitch label="Automatic backups" checked={backupSettings.automatic_backups} onChange={(v) => setBackupSettings((p) => ({ ...p, automatic_backups: v }))} />
@@ -661,8 +659,8 @@ const SuperAdminSettings = () => {
                       <MenuItem value="weekly">Weekly</MenuItem>
                     </Select>
                   </FormControl>
-                </Grid>
-              </Grid>
+                </Box>
+              </Box>
             )}
 
             {/* Tools */}
@@ -673,26 +671,26 @@ const SuperAdminSettings = () => {
                     ? 'Maintenance mode is ON — public users may be blocked from the app.'
                     : 'System is live. Use tools below for backups, cleanup, and diagnostics.'}
                 </Alert>
-                <Grid container className="super-admin-settings-tools-grid" sx={{ mb: 3 }}>
-                  <Grid item className="super-admin-settings-tool-item">
+                <Box className="super-admin-settings-tools-grid" sx={{ mb: 3 }}>
+                  <Box className="super-admin-settings-tool-item">
                     <ActionCard title="Backup database" description="Create SQL backup in /backups" icon={<Backup />} color={RED} loading={actionLoading === 'backup_system'} onClick={() => setConfirmDialog({ action: 'backup_system', title: 'Create backup?' })} />
-                  </Grid>
-                  <Grid item className="super-admin-settings-tool-item">
+                  </Box>
+                  <Box className="super-admin-settings-tool-item">
                     <ActionCard title="System cleanup" description="Prune logs, optimize tables" icon={<CleaningServices />} color="#2e7d32" loading={actionLoading === 'system_cleanup'} onClick={() => runAction('system_cleanup')} />
-                  </Grid>
-                  <Grid item className="super-admin-settings-tool-item">
+                  </Box>
+                  <Box className="super-admin-settings-tool-item">
                     <ActionCard title="Clear cache" description="Remove cached files" icon={<Memory />} color="#1976d2" loading={actionLoading === 'system_maintenance'} onClick={() => runAction('system_maintenance', { maintenance_type: 'clear_cache' })} />
-                  </Grid>
-                  <Grid item className="super-admin-settings-tool-item">
+                  </Box>
+                  <Box className="super-admin-settings-tool-item">
                     <ActionCard title="Export logs" description="Zip log files for download" icon={<Download />} color="#9c27b0" loading={actionLoading === 'export_logs'} onClick={() => runAction('export_logs')} />
-                  </Grid>
-                  <Grid item className="super-admin-settings-tool-item">
+                  </Box>
+                  <Box className="super-admin-settings-tool-item">
                     <ActionCard title="Audit logs" description="Search activity & accountability" icon={<History />} color="#5c6bc0" onClick={() => navigate('/super-admin/audit-logs')} />
-                  </Grid>
-                  <Grid item className="super-admin-settings-tool-item">
+                  </Box>
+                  <Box className="super-admin-settings-tool-item">
                     <ActionCard title="Restart services" description="Clear PHP opcache" icon={<RestartAlt />} color="#ed6c02" loading={actionLoading === 'restart_system'} onClick={() => setConfirmDialog({ action: 'restart_system', title: 'Restart system services?' })} />
-                  </Grid>
-                  <Grid item className="super-admin-settings-tool-item">
+                  </Box>
+                  <Box className="super-admin-settings-tool-item">
                     <ActionCard
                       title={maintenanceMode.enabled ? 'Disable maintenance' : 'Enable maintenance'}
                       description="Block public access during updates"
@@ -701,8 +699,8 @@ const SuperAdminSettings = () => {
                       loading={actionLoading === 'system_maintenance'}
                       onClick={toggleMaintenanceMode}
                     />
-                  </Grid>
-                </Grid>
+                  </Box>
+                </Box>
 
                 <Card>
                   <CardContent>

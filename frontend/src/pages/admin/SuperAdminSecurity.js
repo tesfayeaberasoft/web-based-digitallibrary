@@ -4,9 +4,7 @@ import {
   Box,
   Card,
   CardContent,
-  Typography,
-  Grid,
-  Button,
+  Typography,  Button,
   Alert,
   Chip,
   IconButton,
@@ -243,8 +241,8 @@ const SuperAdminSecurity = () => {
         </Alert>
       )}
 
-      <Grid container className="super-admin-security-metrics-grid" sx={{ mb: 3 }}>
-        <Grid item className="super-admin-security-metric-item" xs={12} sm={6} md={3}>
+      <Box className="super-admin-security-metrics-grid" sx={{ mb: 3 }}>
+        <Box className="super-admin-security-metric-item">
           <StatCard
             title="Failed logins (24h)"
             value={summary.failed_logins_24h ?? 0}
@@ -252,8 +250,8 @@ const SuperAdminSecurity = () => {
             color={summary.failed_logins_24h >= threshold ? '#ed6c02' : RED}
             icon={<Warning sx={{ color: summary.failed_logins_24h >= threshold ? '#ed6c02' : RED }} />}
           />
-        </Grid>
-        <Grid item className="super-admin-security-metric-item" xs={12} sm={6} md={3}>
+        </Box>
+        <Box className="super-admin-security-metric-item">
           <StatCard
             title="Suspicious IPs"
             value={summary.suspicious_ips ?? 0}
@@ -261,8 +259,8 @@ const SuperAdminSecurity = () => {
             color="#9c27b0"
             icon={<Computer sx={{ color: '#9c27b0' }} />}
           />
-        </Grid>
-        <Grid item className="super-admin-security-metric-item" xs={12} sm={6} md={3}>
+        </Box>
+        <Box className="super-admin-security-metric-item">
           <StatCard
             title="Inactive admins"
             value={summary.inactive_admins ?? 0}
@@ -270,8 +268,8 @@ const SuperAdminSecurity = () => {
             color="#1976d2"
             icon={<PersonOff sx={{ color: '#1976d2' }} />}
           />
-        </Grid>
-        <Grid item className="super-admin-security-metric-item" xs={12} sm={6} md={3}>
+        </Box>
+        <Box className="super-admin-security-metric-item">
           <StatCard
             title="Blocked IPs"
             value={summary.blocked_ips ?? 0}
@@ -279,8 +277,8 @@ const SuperAdminSecurity = () => {
             color="#2e7d32"
             icon={<Block sx={{ color: '#2e7d32' }} />}
           />
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
 
       <Paper sx={{ p: 2, mb: 3, display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
         <ToggleButtonGroup
@@ -314,8 +312,8 @@ const SuperAdminSecurity = () => {
         </Button>
       </Paper>
 
-      <Grid container className="super-admin-security-sections-grid">
-        <Grid item className="super-admin-security-section-item" xs={12} lg={6}>
+      <Box className="super-admin-security-sections-grid">
+        <Box className="super-admin-security-section-item">
           <Card>
             <CardContent>
               <Typography variant="h6" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -398,9 +396,9 @@ const SuperAdminSecurity = () => {
               </TableContainer>
             </CardContent>
           </Card>
-        </Grid>
+        </Box>
 
-        <Grid item className="super-admin-security-section-item" xs={12} lg={6}>
+        <Box className="super-admin-security-section-item">
           <Card>
             <CardContent>
               <Typography variant="h6" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -448,9 +446,9 @@ const SuperAdminSecurity = () => {
               </TableContainer>
             </CardContent>
           </Card>
-        </Grid>
+        </Box>
 
-        <Grid item className="super-admin-security-section-item" xs={12} md={6}>
+        <Box className="super-admin-security-section-item">
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Typography variant="h6" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -497,9 +495,9 @@ const SuperAdminSecurity = () => {
               )}
             </CardContent>
           </Card>
-        </Grid>
+        </Box>
 
-        <Grid item className="super-admin-security-section-item" xs={12} md={6}>
+        <Box className="super-admin-security-section-item">
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Typography variant="h6" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -531,9 +529,9 @@ const SuperAdminSecurity = () => {
               )}
             </CardContent>
           </Card>
-        </Grid>
+        </Box>
 
-        <Grid item className="super-admin-security-section-item" xs={12}>
+        <Box className="super-admin-security-section-item">
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1, mb: 1 }}>
@@ -618,8 +616,8 @@ const SuperAdminSecurity = () => {
               )}
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
 
       <Dialog open={confirmClear} onClose={() => setConfirmClear(false)}>
         <DialogTitle>Clear all failed login attempts?</DialogTitle>

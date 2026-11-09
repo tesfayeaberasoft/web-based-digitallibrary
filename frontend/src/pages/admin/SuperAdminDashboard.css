@@ -7,6 +7,7 @@
 .super-admin-dashboard-page .super-admin-hero-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 24px;
 }
 
 .super-admin-hero-identity {
@@ -22,24 +23,29 @@
 }
 
 .super-admin-overview-grid {
-  display: grid !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  gap: 20px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 28px;
   width: 100%;
-  margin: 0 0 32px;
+  min-width: 0;
+  margin-bottom: 32px;
+  align-items: stretch;
 }
 
 .super-admin-overview-grid > .super-admin-overview-item {
-  width: auto;
-  max-width: none;
+  display: flex;
   min-width: 0;
-  padding: 0;
 }
 
-.super-admin-overview-item > .MuiBox-root,
+.super-admin-overview-item > .MuiBox-root {
+  display: flex;
+  width: 100%;
+}
+
 .super-admin-overview-item .MuiCard-root,
 .super-admin-overview-item .MuiCardContent-root {
   height: 100%;
+  width: 100%;
   min-width: 0;
 }
 
@@ -50,7 +56,8 @@
 }
 
 .super-admin-overview-item .MuiCardContent-root {
-  padding: 24px;
+  box-sizing: border-box;
+  padding: 24px !important;
 }
 
 .super-admin-overview-item .MuiTypography-h2 {
@@ -64,7 +71,7 @@
 }
 
 .super-admin-overview-item .MuiCardContent-root > .MuiBox-root {
-  gap: 10px;
+  gap: 16px;
 }
 
 .super-admin-overview-item .MuiCardContent-root > .MuiBox-root > .MuiBox-root {
@@ -75,7 +82,7 @@
   display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   align-items: stretch;
-  gap: 24px;
+  gap: 28px;
   width: 100%;
   margin: 0 0 32px;
 }
@@ -84,7 +91,7 @@
   width: auto !important;
   max-width: none !important;
   min-width: 0;
-  padding: 0;
+  padding: 0 !important;
 }
 
 .super-admin-realtime-item > .MuiBox-root,
@@ -118,7 +125,7 @@
   display: grid !important;
   grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   align-items: stretch;
-  gap: 20px;
+  gap: 28px;
   width: 100%;
   margin: 0 0 32px;
 }
@@ -150,7 +157,7 @@
   flex: 1 1 auto;
   flex-direction: column;
   min-width: 0;
-  padding: 28px !important;
+  padding: 24px !important;
 }
 
 .super-admin-analytics-content > .super-admin-section-title-block {
@@ -184,18 +191,18 @@
 }
 
 .super-admin-top-users-content {
-  padding: 28px !important;
+  padding: 24px !important;
 }
 
 .super-admin-top-users-list {
   display: grid !important;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px !important;
+  gap: 20px !important;
 }
 
 .super-admin-top-user {
   min-width: 0;
-  gap: 12px;
+  gap: 16px;
 }
 
 .super-admin-top-user > .MuiBox-root {
@@ -207,30 +214,8 @@
   overflow-wrap: anywhere;
 }
 
-.super-admin-fines-item {
-  grid-column: 1 / -1;
-}
-
-.super-admin-fines-item .MuiCardContent-root {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  align-items: center;
-  gap: 12px 24px;
-}
-
-.super-admin-fines-item .MuiCardContent-root > .MuiBox-root {
-  grid-row: 1;
-}
-
-.super-admin-fines-item .MuiCardContent-root > .MuiTypography-caption {
-  margin: 0;
-}
-
-.super-admin-fines-item .MuiCardContent-root > .MuiLinearProgress-root {
-  grid-column: 1 / -1;
-}
-
 .super-admin-dashboard-page .super-admin-section-title-block {
+  gap: 16px;
   justify-content: center;
   min-width: 0;
   text-align: center;
@@ -267,28 +252,38 @@
 .super-admin-health-grid {
   display: grid !important;
   grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  gap: 20px;
+  gap: 28px;
   width: 100%;
   margin: 0;
 }
 
 .super-admin-health-grid > .super-admin-health-item {
-  width: auto;
-  max-width: none;
+  display: flex;
+  width: auto !important;
+  max-width: none !important;
   min-width: 0;
-  padding: 0;
+  padding: 0 !important;
 }
 
-.super-admin-health-item > .MuiBox-root,
+.super-admin-health-item > .MuiBox-root {
+  display: flex;
+  width: 100%;
+}
+
 .super-admin-health-item .MuiPaper-root {
+  width: 100%;
   height: 100%;
   min-width: 0;
 }
 
 .super-admin-health-item .MuiPaper-root {
-  padding: 20px;
+  padding: 24px !important;
   border-radius: 12px;
   box-shadow: 0 4px 14px rgba(27, 54, 74, 0.08);
+}
+
+.super-admin-health-item .MuiPaper-root > .MuiBox-root:first-child {
+  gap: 16px;
 }
 
 .super-admin-health-item .MuiTypography-subtitle1,
@@ -299,26 +294,32 @@
 .super-admin-dashboard-page .super-admin-actions-grid {
   display: grid !important;
   grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  gap: 20px;
+  gap: 28px;
   width: 100%;
   margin: 0;
 }
 
 .super-admin-actions-grid > .super-admin-action-item {
-  width: auto;
-  max-width: none;
+  display: flex;
+  width: auto !important;
+  max-width: none !important;
   min-width: 0;
-  padding: 0;
+  padding: 0 !important;
 }
 
-.super-admin-action-item > .MuiBox-root,
+.super-admin-action-item > .MuiBox-root {
+  display: flex;
+  width: 100%;
+}
+
 .super-admin-action-item .MuiPaper-root {
+  width: 100%;
   height: 100%;
   min-width: 0;
 }
 
 .super-admin-action-item .MuiPaper-root {
-  padding: 20px;
+  padding: 24px !important;
   border-radius: 12px;
   box-shadow: 0 4px 14px rgba(27, 54, 74, 0.06);
 }
@@ -363,21 +364,22 @@
 }
 
 .super-admin-admin-metrics > .super-admin-admin-metric {
+  display: flex;
   width: auto;
   max-width: none;
   min-width: 0;
   padding: 0;
 }
 
-.super-admin-admin-metric > .MuiBox-root,
 .super-admin-admin-metric .MuiCard-root {
   height: 100%;
+  width: 100%;
   min-width: 0;
 }
 
 .super-admin-admin-metric .MuiCardContent-root {
   min-height: 104px;
-  padding: 20px;
+  padding: 24px;
 }
 
 .super-admin-admin-metric .MuiTypography-h4,
@@ -461,6 +463,18 @@
   flex: 0 0 auto;
 }
 
+@media (max-width: 1000px) {
+  .super-admin-overview-grid,
+  .super-admin-health-grid,
+  .super-admin-dashboard-page .super-admin-actions-grid,
+  .super-admin-analytics-grid,
+  .super-admin-realtime-grid,
+  .super-admin-admin-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 20px;
+  }
+}
+
 @media (max-width: 700px) {
   .super-admin-dashboard-page .super-admin-hero-layout {
     grid-template-columns: minmax(0, 1fr);
@@ -471,12 +485,8 @@
     grid-column: 1;
   }
 
-  .super-admin-overview-grid {
-    gap: 12px;
-  }
-
   .super-admin-overview-item .MuiCardContent-root {
-    padding: 14px;
+    padding: 18px !important;
   }
 
   .super-admin-overview-item .MuiCard-root {
@@ -487,30 +497,6 @@
     font-size: clamp(20px, 5vw, 36px);
   }
 
-  .super-admin-fines-item .MuiCardContent-root {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 8px;
-  }
-
-  .super-admin-fines-item .MuiCardContent-root > * {
-    grid-column: 1;
-    grid-row: auto;
-  }
-
-  .super-admin-health-grid,
-  .super-admin-dashboard-page .super-admin-actions-grid,
-  .super-admin-admin-metrics {
-    gap: 12px;
-  }
-
-  .super-admin-realtime-grid {
-    gap: 16px;
-  }
-
-  .super-admin-analytics-grid {
-    gap: 12px;
-  }
-
   .super-admin-analytics-content,
   .super-admin-top-users-content {
     padding: 18px !important;
@@ -518,12 +504,12 @@
 
   .super-admin-top-users-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px !important;
+    gap: 16px !important;
   }
 
   .super-admin-health-item .MuiPaper-root,
   .super-admin-action-item .MuiPaper-root {
-    padding: 12px;
+    padding: 18px !important;
   }
 
   .super-admin-health-item .MuiTypography-subtitle1 {
@@ -585,12 +571,18 @@
 }
 
 @media (max-width: 560px) {
-  .super-admin-realtime-grid {
+  .super-admin-overview-grid,
+  .super-admin-health-grid,
+  .super-admin-dashboard-page .super-admin-actions-grid,
+  .super-admin-analytics-grid,
+  .super-admin-admin-metrics {
     grid-template-columns: minmax(0, 1fr) !important;
+    gap: 16px;
   }
 
-  .super-admin-analytics-grid {
-    gap: 8px;
+  .super-admin-realtime-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 16px;
   }
 
   .super-admin-analytics-content,

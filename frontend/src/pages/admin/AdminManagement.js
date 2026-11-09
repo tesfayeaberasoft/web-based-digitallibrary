@@ -409,14 +409,14 @@ const AdminManagement = () => {
         </Fade>
 
         {/* Stats */}
-        <Grid container className="super-admin-admin-metrics" sx={{ mb: 3 }}>
+        <Box className="super-admin-admin-metrics">
           {[
             { label: 'Total Admins', value: stats.total, icon: <Groups />, color: '#d32f2f', bg: '#ffebee' },
             { label: 'Active', value: stats.active, icon: <VerifiedUser />, color: '#2e7d32', bg: '#e8f5e9' },
             { label: 'Suspended', value: stats.suspended, icon: <Block />, color: '#c62828', bg: '#ffcdd2' },
             { label: 'Inactive', value: stats.inactive, icon: <Schedule />, color: '#616161', bg: '#f5f5f5' }
           ].map((s, i) => (
-            <Grid item className="super-admin-admin-metric" key={s.label}>
+            <Box className="super-admin-admin-metric" key={s.label}>
               <Grow in timeout={400 + i * 100}>
                 <Card sx={{ bgcolor: s.bg }}>
                   <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -432,9 +432,9 @@ const AdminManagement = () => {
                   </CardContent>
                 </Card>
               </Grow>
-            </Grid>
+            </Box>
           ))}
-        </Grid>
+        </Box>
 
         <Alert severity="info" sx={{ mb: 3 }} icon={<Shield />}>
           Super administrators cannot be modified or removed from this panel. Use librarian view to promote staff to admin.

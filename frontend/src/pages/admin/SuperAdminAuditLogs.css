@@ -41,14 +41,14 @@
 }
 
 .super-admin-audit-filters > .MuiCardContent-root {
-  padding: 20px;
+  padding: 24px;
 }
 
 .super-admin-audit-filter-grid {
   display: grid !important;
   grid-template-columns: 1.2fr 1.2fr 1.8fr 1.2fr 1.2fr;
   align-items: end;
-  gap: 16px 20px;
+  gap: 20px 24px !important;
   width: 100%;
   margin: 0;
 }
@@ -86,7 +86,7 @@
   display: grid !important;
   grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   align-items: stretch;
-  gap: 20px;
+  gap: 24px !important;
   width: 100%;
   margin: 0 0 20px !important;
 }
@@ -113,7 +113,7 @@
 }
 
 .super-admin-audit-table-card > .MuiCardContent-root {
-  padding: 20px;
+  padding: 24px;
 }
 
 .super-admin-audit-table-card .MuiTableContainer-root {
@@ -128,6 +128,7 @@
 @media (max-width: 900px) {
   .super-admin-audit-filter-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px !important;
   }
 
   .super-admin-audit-filter-actions {
@@ -167,7 +168,8 @@
   }
 
   .super-admin-audit-summary-grid {
-    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 16px !important;
   }
 
   .super-admin-audit-summary-card > .MuiCardContent-root {

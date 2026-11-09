@@ -347,14 +347,14 @@ export default function SuperAdminDashboard() {
           )}
 
           {/* ── STAT CARDS ── */}
-          <Grid container className="super-admin-overview-grid" sx={{ mb:4 }}>
+          <Box className="super-admin-overview-grid">
             {[
               { title:'Total Users',        value:fmt(totals.total_users),     sub1:`Active: ${fmt(totals.active_users)}`,     sub2:`Staff: ${fmt(totals.total_staff)}`,            icon:<People sx={{ fontSize:56, opacity:.8, color:'white' }} />,           grad:`linear-gradient(135deg,${C.primary},${C.secondary})`, progress:null },
               { title:'Library Collection', value:fmt(totals.total_books),     sub1:`Copies: ${fmt(totals.total_book_copies)}`,sub2:`Available: ${fmt(totals.available_book_copies)}`,icon:<LibraryBooks sx={{ fontSize:56, opacity:.8, color:'white' }} />,       grad:'linear-gradient(135deg,#3b82f6,#60a5fa)',             progress:totals.borrowed_percentage||0 },
               { title:'Active Sessions',    value:D.active_sessions?.online_users||0, sub1:`Today: ${totals.users_today||0}`,  sub2:`This Week: ${totals.users_this_week||0}`,        icon:<SignalCellularAlt sx={{ fontSize:56, opacity:.8, color:'white' }} />, grad:'linear-gradient(135deg,#8b5cf6,#a78bfa)',             progress:null },
               { title:'Pending Fines',      value:`$${Number(totals.total_pending_fine_amount||0).toFixed(2)}`, sub1:`Count: ${fmt(totals.pending_fines)}`, sub2:`Collected: $${Number(totals.total_collected_fines||0).toFixed(2)}`, icon:<AttachMoney sx={{ fontSize:56, opacity:.8, color:'white' }} />, grad:'linear-gradient(135deg,#f59e0b,#fbbf24)', progress:null },
             ].map((s,i)=>(
-              <Grid item className={s.title === 'Pending Fines' ? 'super-admin-overview-item super-admin-fines-item' : 'super-admin-overview-item'} key={i}>
+              <Box className="super-admin-overview-item" key={i}>
                 <Grow in timeout={400+i*150}>
                   <Card elevation={0} sx={{ height:'100%', background:s.grad, color:'white', borderRadius:3, position:'relative', overflow:'hidden',
                     transition:'all .3s', '&:hover':{ transform:'translateY(-6px)', boxShadow:'0 20px 40px rgba(0,0,0,.2)' },
@@ -376,14 +376,14 @@ export default function SuperAdminDashboard() {
                     </CardContent>
                   </Card>
                 </Grow>
-              </Grid>
+              </Box>
             ))}
-          </Grid>
+          </Box>
 
           {/* ── REAL-TIME + ALERTS ── */}
-          <Grid container className="super-admin-realtime-grid" sx={{ mb:4 }}>
+          <Box className="super-admin-realtime-grid">
             {/* Real-time */}
-            <Grid item className="super-admin-realtime-item">
+            <Box className="super-admin-realtime-item">
               <Card className="super-admin-realtime-card" elevation={0} sx={{ border:`2px solid ${C.light}`, borderRadius:3, height:'100%' }}>
                 <CardContent className="super-admin-realtime-content" sx={{ p:3 }}>
                   <Box sx={{ display:'flex', justifyContent:'space-between', alignItems:'center', mb:2.5 }}>
@@ -445,10 +445,10 @@ export default function SuperAdminDashboard() {
                   )}
                 </CardContent>
               </Card>
-            </Grid>
+            </Box>
 
             {/* System Alerts */}
-            <Grid item className="super-admin-realtime-item">
+            <Box className="super-admin-realtime-item">
               <Card className="super-admin-realtime-card" elevation={0} sx={{ border:`2px solid ${C.light}`, borderRadius:3, height:'100%' }}>
                 <CardContent className="super-admin-realtime-content" sx={{ p:3 }}>
                   <Box sx={{ display:'flex', justifyContent:'space-between', alignItems:'center', mb:2.5 }}>
@@ -496,8 +496,8 @@ export default function SuperAdminDashboard() {
                   )}
                 </CardContent>
               </Card>
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
 
           {/* ── SYSTEM HEALTH ── */}
           <Card elevation={0} sx={{ border:`2px solid ${C.light}`, borderRadius:3, mb:4 }}>
@@ -516,7 +516,7 @@ export default function SuperAdminDashboard() {
                   </IconButton>
                 </Tooltip>
               </Box>
-              <Grid container className="super-admin-health-grid">
+              <Box className="super-admin-health-grid">
                 {[
                   { label:'Database', data:sh.database||{}, icon:<Storage sx={{ fontSize:26,color:C.primary}} />,   bg:C.lighter,  border:C.light,     fields:[['Status','status'],['Size','db_size'],['Tables','tables_count'],['Connections','connections']] },
                   { label:'Storage',  data:sh.storage||{},  icon:<DataUsage sx={{ fontSize:26,color:'#3b82f6'}} />, bg:'#eff6ff',  border:'#bfdbfe',   fields:[['Total','total_formatted'],['Used','used_formatted'],['Free','free_formatted'],['Usage %','usage_percent']] },
@@ -525,7 +525,7 @@ export default function SuperAdminDashboard() {
                 ].map((h,i)=>{
                   const st = h.data?.status || h.data?.health_status;
                   return (
-                    <Grid item className="super-admin-health-item" key={i}>
+                    <Box className="super-admin-health-item" key={i}>
                       <Grow in timeout={300+i*100}>
                         <Paper elevation={0} sx={{ p:2.5, borderRadius:3, bgcolor:h.bg, border:`2px solid ${h.border}`, transition:'all .3s', '&:hover':{ transform:'translateY(-4px)', boxShadow:'0 8px 20px rgba(0,0,0,.08)' } }}>
                           <Box sx={{ display:'flex', justifyContent:'space-between', alignItems:'center', mb:2 }}>
@@ -545,17 +545,17 @@ export default function SuperAdminDashboard() {
                           )}
                         </Paper>
                       </Grow>
-                    </Grid>
+                    </Box>
                   );
                 })}
-              </Grid>
+              </Box>
             </CardContent>
           </Card>
 
           {/* ── CHARTS ── */}
-          <Grid container className="super-admin-analytics-grid" sx={{ mb:4 }}>
+          <Box className="super-admin-analytics-grid">
             {/* Registration trend */}
-            <Grid item className="super-admin-analytics-item">
+            <Box className="super-admin-analytics-item">
               <Card className="super-admin-analytics-card" elevation={0} sx={{ border:`2px solid ${C.light}`, borderRadius:3 }}>
                 <CardContent className="super-admin-analytics-content" sx={{ p:3 }}>
                   <Box className="super-admin-section-title-block" sx={{ display:'flex', alignItems:'center', gap:1.5, mb:3 }}>
@@ -573,10 +573,10 @@ export default function SuperAdminDashboard() {
                   ) : <Box className="super-admin-chart-empty" sx={{ height:260, display:'flex', alignItems:'center', justifyContent:'center' }}><Typography color="text.secondary">No data</Typography></Box>}
                 </CardContent>
               </Card>
-            </Grid>
+            </Box>
 
             {/* Books by category */}
-            <Grid item className="super-admin-analytics-item">
+            <Box className="super-admin-analytics-item">
               <Card className="super-admin-analytics-card" elevation={0} sx={{ border:`2px solid ${C.light}`, borderRadius:3 }}>
                 <CardContent className="super-admin-analytics-content" sx={{ p:3 }}>
                   <Box className="super-admin-section-title-block" sx={{ display:'flex', alignItems:'center', gap:1.5, mb:3 }}>
@@ -596,10 +596,10 @@ export default function SuperAdminDashboard() {
                   ) : <Box className="super-admin-chart-empty" sx={{ height:260, display:'flex', alignItems:'center', justifyContent:'center' }}><Typography color="text.secondary">No data</Typography></Box>}
                 </CardContent>
               </Card>
-            </Grid>
+            </Box>
 
             {/* Loan trends */}
-            <Grid item className="super-admin-analytics-item">
+            <Box className="super-admin-analytics-item">
               <Card className="super-admin-analytics-card" elevation={0} sx={{ border:`2px solid ${C.light}`, borderRadius:3 }}>
                 <CardContent className="super-admin-analytics-content" sx={{ p:3 }}>
                   <Box className="super-admin-section-title-block" sx={{ display:'flex', alignItems:'center', gap:1.5, mb:3 }}>
@@ -618,10 +618,10 @@ export default function SuperAdminDashboard() {
                   ) : <Box className="super-admin-chart-empty" sx={{ height:260, display:'flex', alignItems:'center', justifyContent:'center' }}><Typography color="text.secondary">No data</Typography></Box>}
                 </CardContent>
               </Card>
-            </Grid>
+            </Box>
 
             {/* Top users */}
-            <Grid item className="super-admin-top-users-item">
+            <Box className="super-admin-top-users-item">
               <Card className="super-admin-top-users-card" elevation={0} sx={{ border:`2px solid ${C.light}`, borderRadius:3 }}>
                 <CardContent className="super-admin-top-users-content" sx={{ p:3 }}>
                   <Box className="super-admin-section-title-block" sx={{ display:'flex', alignItems:'center', gap:1.5, mb:3 }}>
@@ -648,8 +648,8 @@ export default function SuperAdminDashboard() {
                   ) : <Box sx={{ display:'flex', alignItems:'center', justifyContent:'center', height:200 }}><Typography color="text.secondary">No data</Typography></Box>}
                 </CardContent>
               </Card>
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
 
           {/* ── RECENT ACTIVITIES ── */}
           <Card elevation={0} sx={{ border:`2px solid ${C.light}`, borderRadius:3, mb:4 }}>
@@ -710,7 +710,7 @@ export default function SuperAdminDashboard() {
                 <Avatar sx={{ bgcolor:C.lighter, width:44, height:44 }}><Build sx={{ color:C.primary }} /></Avatar>
                 <Box><Typography variant="h6" fontWeight={700} sx={{ color:C.dark }}>System Management</Typography><Typography variant="caption" color="text.secondary">Maintenance, backups &amp; utilities</Typography></Box>
               </Box>
-              <Grid container className="super-admin-actions-grid">
+              <Box className="super-admin-actions-grid">
                 {[
                   { label:'Create Backup',     icon:<Backup/>,           action:()=>handleAction('create_backup'),     color:C.primary,   desc:'Back up database now' },
                   { label:'Restore Backup',    icon:<RestartAlt/>,       action:openRestoreDialog,                     color:'#8b5cf6',   desc:'Restore from backup file' },
@@ -721,7 +721,7 @@ export default function SuperAdminDashboard() {
                   { label:'System Settings',   icon:<Settings/>,         action:()=>setOpenDialog('settings'),         color:C.dark,      desc:'Edit system config' },
                   { label:'Emergency Actions', icon:<PowerSettingsNew/>, action:()=>setOpenDialog('emergency'),        color:'#ef4444',   desc:'Maintenance &amp; shutdown' },
                 ].map((a,i)=>(
-                  <Grid item className="super-admin-action-item" key={i}>
+                  <Box className="super-admin-action-item" key={i}>
                     <Grow in timeout={300+i*60}>
                       <Paper elevation={0} onClick={a.action} sx={{ p:2.5, borderRadius:3, cursor:'pointer', bgcolor:C.lighter, border:`2px solid ${C.light}`,
                         transition:'all .3s', '&:hover':{ transform:'translateY(-5px)', bgcolor:'white', borderColor:a.color, boxShadow:`0 12px 24px ${a.color}20` } }}>
@@ -732,9 +732,9 @@ export default function SuperAdminDashboard() {
                         <Typography variant="caption" color="text.secondary">{a.desc}</Typography>
                       </Paper>
                     </Grow>
-                  </Grid>
+                  </Box>
                 ))}
-              </Grid>
+              </Box>
             </CardContent>
           </Card>
 
