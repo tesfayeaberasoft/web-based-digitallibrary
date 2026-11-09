@@ -937,9 +937,9 @@ export default function HomePage() {
           </Fade>
 
           {/* Enhanced Stat Cards Grid */}
-          <Grid container className="home-live-stats-grid">
+          <Box className="home-live-stats-grid">
             {statCards.map((s, i) => (
-              <Grid item className="home-live-stats-item" xs={6} sm={3} key={i}>
+              <Box className="home-live-stats-item" key={i}>
                 <Grow in={visible} timeout={700 + i * 150}>
                   <Card
                     className="home-live-stats-card"
@@ -1091,9 +1091,9 @@ export default function HomePage() {
                     </Box>
                   </Card>
                 </Grow>
-              </Grid>
+              </Box>
             ))}
-          </Grid>
+          </Box>
 
           {/* Additional Metrics Row */}
           <Fade in={visible} timeout={1200}>
