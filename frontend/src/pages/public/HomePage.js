@@ -18,6 +18,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../../components/layout/LanguageSwitcher';
+import './HomePage.css';
 
 /* ─── Sticky hide-on-scroll helper ─────────────────────────────── */
 function HideOnScroll({ children }) {
@@ -392,6 +393,7 @@ export default function HomePage() {
           2. HERO SECTION
       ══════════════════════════════════════════════════════════ */}
       <Box
+        className="home-hero"
         sx={{
           minHeight: { xs: '92vh', md: '88vh' },
           background: `linear-gradient(135deg, #0a2e1f 0%, #1a4d35 40%, #2d6a4f 100%)`,
@@ -402,7 +404,7 @@ export default function HomePage() {
         }}
       >
         {/* Background library image with parallax */}
-        <Box sx={{
+        <Box className="home-live-stats" sx={{
           position: 'absolute', 
           inset: 0,
           backgroundImage: `url(${IMG.hero})`,
@@ -442,14 +444,15 @@ export default function HomePage() {
           </Fade>
         ))}
 
-        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2, py: { xs: 8, md: 4 } }}>
-          <Grid container spacing={{ xs: 6, md: 10 }} alignItems="center">
+        <Container maxWidth={false} className="home-hero-container" sx={{ position: 'relative', zIndex: 2, py: { xs: 8, md: 8 } }}>
+          <Grid container className="home-hero-grid" alignItems="center">
             {/* Left — text */}
-            <Grid item xs={12} md={6}>
+            <Grid item className="home-hero-copy" xs={12}>
               <Fade in={visible} timeout={800}>
-                <Box>
+                <Box className="home-hero-content">
                   <Chip label={t('home.nowDigitalBooks')} sx={{ mb: 3, background: 'rgba(82,183,136,0.2)', color: '#86efac', border: '1px solid rgba(82,183,136,0.3)', fontWeight: 600 }} />
                   <Typography
+                    className="home-hero-title"
                     variant={isMobile ? 'h3' : 'h2'}
                     fontWeight={900}
                     sx={{ color: 'white', lineHeight: 1.15, mb: 3, letterSpacing: '-1px' }}
@@ -459,7 +462,7 @@ export default function HomePage() {
                       {t('home.knowledge')}
                     </Box>
                   </Typography>
-                  <Typography variant={isMobile ? 'body1' : 'h6'} sx={{ color: 'rgba(255,255,255,0.8)', mb: 5, lineHeight: 1.7, maxWidth: 480 }}>
+                  <Typography className="home-hero-description" variant={isMobile ? 'body1' : 'h6'} sx={{ color: 'rgba(255,255,255,0.8)', mb: 5, lineHeight: 1.7, maxWidth: 480 }}>
                     {t('home.description', {
                       books: stats ? stats.total_books.toLocaleString() : '—',
                       categories: stats ? stats.total_categories : '—',
@@ -468,8 +471,9 @@ export default function HomePage() {
 
                   {/* Advanced Search Bar with Autocomplete */}
                   <ClickAwayListener onClickAway={() => setShowSuggestions(false)}>
-                    <Box sx={{ position: 'relative', maxWidth: 580, mb: 4 }}>
+                    <Box className="home-hero-search-wrap" sx={{ position: 'relative', maxWidth: 580, mb: 4 }}>
                       <Box 
+                        className="home-hero-search"
                         component="form" 
                         onSubmit={handleSearch} 
                         sx={{ 
@@ -551,7 +555,7 @@ export default function HomePage() {
                         </Box>
 
                         {/* Search Type Filter Chips */}
-                        <Box sx={{ 
+                        <Box className="home-hero-filter-pills" sx={{
                           display: 'flex', 
                           gap: 1, 
                           px: 2.5, 
@@ -769,7 +773,7 @@ export default function HomePage() {
                     </Box>
                   </ClickAwayListener>
 
-                  <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                  <Box className="home-hero-actions" sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                     <Button
                       variant="contained"
                       size="large"
@@ -804,7 +808,7 @@ export default function HomePage() {
                   </Box>
 
                   {/* Trust row */}
-                  <Box sx={{ display: 'flex', gap: 3, mt: 5, flexWrap: 'wrap' }}>
+                  <Box className="home-hero-trust" sx={{ display: 'flex', gap: 3, mt: 5, flexWrap: 'wrap' }}>
                     {[
                       { v: stats ? stats.total_books.toLocaleString() : '—', l: t('home.books') },
                       { v: stats ? stats.total_members.toLocaleString() : '—', l: t('home.members') },
@@ -821,7 +825,7 @@ export default function HomePage() {
             </Grid>
 
             {/* Right — image collage */}
-            <Grid item xs={12} md={6} sx={{ display: { xs: 'none', md: 'block' } }}>
+            <Grid item className="home-hero-collage" xs={12} md={6} sx={{ display: { xs: 'none', md: 'block' } }}>
               <Fade in={visible} timeout={1200}>
                 <Box sx={{ position: 'relative', height: 500 }}>
                   {/* Main image */}
@@ -902,7 +906,7 @@ export default function HomePage() {
           />
         ))}
         
-        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2 }}>
+        <Container maxWidth={false} className="home-live-stats-container" sx={{ position: 'relative', zIndex: 2 }}>
           {/* Section Header */}
           <Fade in={visible} timeout={800}>
             <Box sx={{ textAlign: 'center', mb: { xs: 4, md: 6 } }}>
@@ -933,11 +937,12 @@ export default function HomePage() {
           </Fade>
 
           {/* Enhanced Stat Cards Grid */}
-          <Grid container spacing={{ xs: 2, md: 3 }} justifyContent="center">
+          <Grid container className="home-live-stats-grid">
             {statCards.map((s, i) => (
-              <Grid item xs={6} sm={3} key={i}>
+              <Grid item className="home-live-stats-item" xs={6} sm={3} key={i}>
                 <Grow in={visible} timeout={700 + i * 150}>
                   <Card
+                    className="home-live-stats-card"
                     elevation={0}
                     sx={{ 
                       textAlign: 'center',
@@ -1245,7 +1250,7 @@ export default function HomePage() {
           }
         }} />
         
-        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
+        <Container maxWidth={false} className="home-features-container" sx={{ position: 'relative', zIndex: 1 }}>
           {/* Section header with animation */}
           <Fade in={visible} timeout={800}>
             <Box sx={{ textAlign: 'center', mb: { xs: 6, md: 10 } }}>
@@ -1298,8 +1303,8 @@ export default function HomePage() {
             </Box>
           </Fade>
 
-          {/* Enhanced Feature Cards Grid - 2 per row */}
-          <Grid container spacing={{ xs: 3, md: 4 }}>
+          {/* Feature cards in a uniform three-column grid */}
+          <Box className="home-features-grid">
             {FEATURES.map((f, i) => {
               const featureKeys = [
                 ['featureSearchTitle', 'featureSearchDesc'],
@@ -1310,9 +1315,10 @@ export default function HomePage() {
                 ['featureSecureTitle', 'featureSecureDesc'],
               ][i];
               return (
-              <Grid item xs={12} sm={6} md={6} key={i}>
+              <Box className="home-feature-item" key={i}>
                 <Grow in={visible} timeout={500 + i * 150}>
                   <Card
+                    className="home-feature-card"
                     elevation={0}
                     onClick={() => setActiveFeature(activeFeature === i ? null : i)}
                     sx={{
@@ -1471,12 +1477,12 @@ export default function HomePage() {
                     }} />
                   </Card>
                 </Grow>
-              </Grid>
+              </Box>
             );})}
-          </Grid>
+          </Box>
 
           {/* Enhanced Image gallery strip with better animations */}
-          <Box sx={{ mt: { xs: 8, md: 12 } }}>
+          <Box className="home-experience-gallery" sx={{ mt: { xs: 8, md: 12 } }}>
             <Fade in={visible} timeout={1200}>
               <Typography 
                 variant="h5" 
@@ -1508,20 +1514,20 @@ export default function HomePage() {
               </Typography>
             </Fade>
             
-            <Grid container spacing={2}>
+            <Box className="home-experience-grid">
               {[
                 { src: IMG.shelves, label: 'Vast Collection', gradient: 'linear-gradient(135deg, #667eea99, #764ba299)', count: '10K+', desc: 'Books' },
                 { src: IMG.reader,  label: 'Comfortable Reading', gradient: 'linear-gradient(135deg, #f093fb99, #f5576c99)', count: '24/7', desc: 'Access' },
                 { src: IMG.student, label: 'Study Together', gradient: 'linear-gradient(135deg, #ffa75199, #ffe25999)', count: '5K+', desc: 'Members' },
                 { src: IMG.digital, label: 'Digital Access', gradient: 'linear-gradient(135deg, #43e97b99, #38f9d799)', count: '100%', desc: 'Cloud' }
               ].map((item, i) => (
-                <Grid item xs={6} sm={3} key={i}>
+                <Box className="home-experience-item" key={i}>
                   <Fade in={visible} timeout={1000 + i * 200}>
                     <Box 
+                      className="home-experience-card"
                       sx={{ 
                         borderRadius: 4, 
                         overflow: 'hidden', 
-                        height: { xs: 180, md: 240 }, 
                         position: 'relative',
                         cursor: 'pointer',
                         boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
@@ -1653,22 +1659,22 @@ export default function HomePage() {
                       </Box>
                     </Box>
                   </Fade>
-                </Grid>
+                </Box>
               ))}
-            </Grid>
+            </Box>
 
             {/* Interactive Feature Stats Row */}
-            <Box sx={{ mt: 6, p: { xs: 3, md: 5 }, borderRadius: 4, background: 'linear-gradient(135deg, #667eea15, #f5576c15)', border: '2px solid', borderColor: '#667eea30' }}>
-              <Grid container spacing={{ xs: 2, md: 4 }} alignItems="center">
+            <Box className="home-feature-stats" sx={{ mt: 6, p: { xs: 3, md: 5 }, borderRadius: 4, background: 'linear-gradient(135deg, #667eea15, #f5576c15)', border: '2px solid', borderColor: '#667eea30' }}>
+              <Box className="home-feature-stats-grid">
                 {[
                   { icon: <CheckCircle />, label: 'Instant Access', value: '100%', color: '#43e97b' },
                   { icon: <TrendingUp />, label: 'User Satisfaction', value: '4.8★', color: '#667eea' },
                   { icon: <Security />, label: 'Secure Platform', value: '256-bit', color: '#f5576c' },
                   { icon: <Cloud />, label: 'Uptime', value: '99.9%', color: '#ffa751' }
                 ].map((stat, i) => (
-                  <Grid item xs={6} sm={3} key={i}>
+                  <Box className="home-feature-stat-item" key={i}>
                     <Fade in={visible} timeout={1400 + i * 150}>
-                      <Box sx={{ textAlign: 'center', transition: 'all 0.3s ease', '&:hover': { transform: 'scale(1.1)' } }}>
+                      <Box className="home-feature-stat-content" sx={{ textAlign: 'center', transition: 'all 0.3s ease', '&:hover': { transform: 'translateY(-3px)' } }}>
                         <Box sx={{ display: 'inline-flex', p: 1.5, borderRadius: 3, background: `${stat.color}20`, mb: 1 }}>
                           {React.cloneElement(stat.icon, { sx: { fontSize: 28, color: stat.color } })}
                         </Box>
@@ -1676,9 +1682,9 @@ export default function HomePage() {
                         <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>{stat.label}</Typography>
                       </Box>
                     </Fade>
-                  </Grid>
+                  </Box>
                 ))}
-              </Grid>
+              </Box>
             </Box>
           </Box>
         </Container>
@@ -1728,7 +1734,7 @@ export default function HomePage() {
           </Fade>
         ))}
 
-        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
+        <Container maxWidth={false} className="home-categories-container" sx={{ position: 'relative', zIndex: 1 }}>
           {/* Enhanced Section Header */}
           <Fade in={visible} timeout={800}>
             <Box sx={{ textAlign: 'center', mb: { xs: 6, md: 10 } }}>
@@ -1792,7 +1798,7 @@ export default function HomePage() {
           </Fade>
 
           {/* Enhanced Category Grid */}
-          <Grid container spacing={{ xs: 2, md: 3 }}>
+          <Box className="home-categories-grid">
             {(categories.length > 0 ? categories : [
               { name: 'Fiction',      color_code: '#9b59b6', book_count: 45, icon: '📖' },
               { name: 'Science',      color_code: '#3498db', book_count: 38, icon: '🔬' },
@@ -1811,9 +1817,10 @@ export default function HomePage() {
               const lightBg = `${cat.color_code}12`;
               
               return (
-                <Grid item xs={6} sm={4} md={2} key={i}>
+                <Box className="home-category-item" key={i}>
                   <Grow in={visible} timeout={500 + i * 100}>
                     <Card
+                      className="home-category-card"
                       onClick={() => navigate(`/browse?category=${encodeURIComponent(cat.name)}`)}
                       elevation={0}
                       sx={{
@@ -1987,14 +1994,14 @@ export default function HomePage() {
                       }} />
                     </Card>
                   </Grow>
-                </Grid>
+                </Box>
               );
             })}
-          </Grid>
+          </Box>
 
           {/* Category Stats Bar */}
           <Fade in={visible} timeout={1500}>
-            <Box sx={{ 
+            <Box className="home-category-stats-panel" sx={{
               mt: { xs: 8, md: 10 }, 
               p: { xs: 3, md: 5 }, 
               borderRadius: 5, 
@@ -2015,76 +2022,76 @@ export default function HomePage() {
                 }
               }} />
 
-              <Grid container spacing={{ xs: 3, md: 4 }} alignItems="center" sx={{ position: 'relative', zIndex: 1 }}>
-                <Grid item xs={12} md={4}>
-                  <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
-                    <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight={900} sx={{ 
+              <Box className="home-category-stats-content">
+                <Box className="home-category-stats-heading">
+                  <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight={900} sx={{
                       color: C.primary, 
                       mb: 1,
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: { xs: 'center', md: 'flex-start' },
+                      justifyContent: 'center',
                       gap: 1
                     }}>
                       <EmojiEvents sx={{ fontSize: { xs: 28, md: 36 }, color: C.accent }} />
                       {stats ? stats.total_categories : '12'}+ Categories
-                    </Typography>
-                    <Typography variant="body1" color="text.secondary" fontWeight={600}>
-                      Find exactly what you're looking for
-                    </Typography>
-                  </Box>
-                </Grid>
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary" fontWeight={600}>
+                    Find exactly what you're looking for
+                  </Typography>
+                </Box>
 
-                {[
+                <Box className="home-category-stats-grid">
+                  {[
                   { icon: <TrendingUp />, label: 'Most Popular', value: 'Technology', color: '#2ecc71' },
                   { icon: <Star />, label: 'Top Rated', value: 'Academic', color: '#e74c3c' },
                   { icon: <MenuBook />, label: 'Most Books', value: '50+', color: C.primary }
                 ].map((stat, i) => (
-                  <Grid item xs={4} md={2.66} key={i}>
+                  <Box className="home-category-stat-item" key={i}>
                     <Fade in={visible} timeout={1600 + i * 150}>
-                      <Box sx={{ 
+                      <Box className="home-category-stat" sx={{
                         textAlign: 'center',
                         transition: 'all 0.3s ease',
                         cursor: 'pointer',
-                        p: { xs: 1, md: 2 },
+                        p: { xs: 2, md: 3 },
                         borderRadius: 3,
                         '&:hover': { 
-                          transform: 'scale(1.1)',
+                          transform: 'translateY(-4px)',
                           background: 'rgba(255,255,255,0.8)'
                         }
                       }}>
                         <Box sx={{ 
                           display: 'inline-flex', 
-                          p: 1.5, 
+                          p: 2,
                           borderRadius: 3, 
                           background: `${stat.color}20`,
-                          mb: 1
+                          mb: 1.5
                         }}>
                           {React.cloneElement(stat.icon, { 
-                            sx: { fontSize: { xs: 24, md: 28 }, color: stat.color } 
+                            sx: { fontSize: { xs: 28, md: 34 }, color: stat.color }
                           })}
                         </Box>
                         <Typography 
-                          variant="subtitle2" 
+                          variant="h6"
                           fontWeight={900} 
-                          sx={{ color: C.dark, mb: 0.5, fontSize: { xs: 13, md: 15 } }}
+                          sx={{ color: C.dark, mb: 0.75, fontSize: { xs: 15, md: 18 } }}
                         >
                           {stat.value}
                         </Typography>
                         <Typography 
-                          variant="caption" 
-                          sx={{ color: 'text.secondary', fontWeight: 600, fontSize: { xs: 10, md: 11 } }}
+                          variant="body2"
+                          sx={{ color: 'text.secondary', fontWeight: 600, fontSize: { xs: 12, md: 14 } }}
                         >
                           {stat.label}
                         </Typography>
                       </Box>
                     </Fade>
-                  </Grid>
+                  </Box>
                 ))}
-              </Grid>
+                </Box>
+              </Box>
 
               {/* Quick browse button */}
-              <Box sx={{ textAlign: 'center', mt: 3 }}>
+              <Box className="home-category-stats-action">
                 <Button
                   variant="contained"
                   onClick={() => navigate('/browse')}
@@ -2125,7 +2132,7 @@ export default function HomePage() {
         {/* Decorative background pattern */}
         <Box sx={{ position: 'absolute', inset: 0, backgroundImage: `url(${IMG.hero})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.03 }} />
 
-        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
+        <Container maxWidth={false} className="home-testimonials-container" sx={{ position: 'relative', zIndex: 1 }}>
           {/* Header Section */}
           <Fade in={visible} timeout={800}>
             <Box sx={{ textAlign: 'center', mb: { xs: 6, md: 8 } }}>
@@ -2209,9 +2216,9 @@ export default function HomePage() {
                         boxShadow: `0 8px 20px ${stat.color}30`
                       }
                     }}>
-                      <Box sx={{ 
-                        width: 50, 
-                        height: 50, 
+                      <Box sx={{
+                        width: 40,
+                        height: 40,
                         borderRadius: 2, 
                         background: `${stat.color}20`, 
                         display: 'flex', 
@@ -2241,11 +2248,12 @@ export default function HomePage() {
               <CircularProgress sx={{ color: C.secondary }} size={60} />
             </Box>
           ) : (
-            <Grid container spacing={3}>
+            <Box className="home-testimonials-grid">
               {testimonials.slice(0, 6).map((testimonial, i) => (
-                <Grid item xs={12} sm={6} lg={4} key={testimonial.id || i}>
+                <Box className="home-testimonial-item" key={testimonial.id || i}>
                   <Grow in={visible} timeout={600 + i * 150}>
                     <Card
+                      className="home-testimonial-card"
                       elevation={0}
                       onClick={() => setSelectedTestimonial(testimonial)}
                       sx={{
@@ -2260,7 +2268,7 @@ export default function HomePage() {
                         transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                         '&:hover': { 
                           background: 'rgba(255,255,255,0.1)', 
-                          transform: 'translateY(-8px) scale(1.02)',
+                          transform: 'translateY(-8px)',
                           borderColor: `${C.secondary}60`,
                           boxShadow: `0 20px 40px rgba(82,183,136,0.2)`
                         },
@@ -2280,7 +2288,7 @@ export default function HomePage() {
                         }
                       }}
                     >
-                      <CardContent sx={{ p: 4 }}>
+                      <CardContent className="home-testimonial-content">
                         {/* Quote Icon */}
                         <Box sx={{ 
                           width: 50, 
@@ -2290,7 +2298,7 @@ export default function HomePage() {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          mb: 3
+                          mb: 1.5
                         }}>
                           <Typography variant="h3" sx={{ color: C.secondary, fontFamily: 'Georgia, serif', lineHeight: 1 }}>
                             "
@@ -2303,7 +2311,7 @@ export default function HomePage() {
                           readOnly 
                           size="small" 
                           sx={{ 
-                            mb: 2, 
+                            mb: 1.25,
                             '& .MuiRating-iconFilled': { color: '#fbbf24' },
                             '& .MuiRating-icon': { fontSize: 20 }
                           }} 
@@ -2311,31 +2319,31 @@ export default function HomePage() {
                         
                         {/* Review Text */}
                         <Typography 
+                          className="home-testimonial-review"
                           variant="body1" 
                           sx={{ 
                             color: 'rgba(255,255,255,0.9)', 
-                            lineHeight: 1.8, 
-                            mb: 3, 
+                            lineHeight: 1.6,
+                            mb: 2,
                             fontStyle: 'italic',
                             display: '-webkit-box',
-                            WebkitLineClamp: 4,
+                            WebkitLineClamp: 3,
                             WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden',
-                            minHeight: 110
+                            overflow: 'hidden'
                           }}
                         >
                           {testimonial.review_text}
                         </Typography>
                         
-                        <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)', mb: 3 }} />
+                        <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)', mb: 2 }} />
                         
                         {/* User Info */}
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Box className="home-testimonial-author" sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                           <Avatar 
                             src={testimonial.avatar} 
                             sx={{ 
-                              width: 56, 
-                              height: 56, 
+                              width: 44,
+                              height: 44,
                               border: `3px solid ${C.secondary}`,
                               boxShadow: `0 4px 12px ${C.secondary}40`
                             }} 
@@ -2368,7 +2376,7 @@ export default function HomePage() {
 
                         {/* Book Tag */}
                         {testimonial.book_title && (
-                          <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                          <Box className="home-testimonial-book" sx={{ mt: 1.5, pt: 1.5, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
                             <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)', display: 'block', mb: 0.5 }}>
                               About
                             </Typography>
@@ -2380,9 +2388,9 @@ export default function HomePage() {
                       </CardContent>
                     </Card>
                   </Grow>
-                </Grid>
+                </Box>
               ))}
-            </Grid>
+            </Box>
           )}
 
           {/* View All Reviews Button */}
@@ -2459,14 +2467,15 @@ export default function HomePage() {
           POPULAR BOOKS (live DB data)
       ══════════════════════════════════════════════════════════ */}
       <Box id="popular" sx={{ py: { xs: 8, md: 10 }, background: '#fafafa' }}>
-        <Container maxWidth="lg">
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', mb: 5, flexWrap: 'wrap', gap: 2 }}>
-            <Box>
+        <Container maxWidth={false} className="home-popular-container">
+          <Box className="home-popular-header">
+            <Box className="home-popular-heading">
               <Chip label="🔥 Trending Now" sx={{ mb: 1.5, background: `${C.orange}15`, color: C.orange, fontWeight: 700, border: `1px solid ${C.orange}` }} />
               <Typography variant={isMobile ? 'h5' : 'h4'} fontWeight={800} sx={{ color: C.dark }}>{t('home.popularTitle')}</Typography>
               <Typography color="text.secondary">{t('home.popularSubtitle')}</Typography>
             </Box>
             <Button 
+              className="home-popular-view-all"
               endIcon={<ArrowForward />} 
               onClick={() => navigate('/browse')} 
               sx={{ 
@@ -2484,7 +2493,7 @@ export default function HomePage() {
             </Button>
           </Box>
 
-          <Grid container spacing={3}>
+          <Box className="home-popular-grid">
             {(popularBooks.length > 0 ? popularBooks.slice(0, 4) : [
               { title: 'The Great Gatsby',        author: 'F. Scott Fitzgerald', loan_count: 15, book_id: 1 },
               { title: '1984',                    author: 'George Orwell',       loan_count: 12, book_id: 2 },
@@ -2494,9 +2503,10 @@ export default function HomePage() {
               const bookColors = [C.blue, C.purple, C.orange, C.pink];
               const color = bookColors[i % 4];
               return (
-                <Grid item xs={12} sm={6} md={3} key={i}>
+                <Box className="home-popular-item" key={book.book_id || i}>
                   <Grow in={visible} timeout={500 + i * 150}>
                     <Card
+                      className="home-popular-card"
                       onClick={() => navigate(`/browse?search=${encodeURIComponent(book.title)}`)}
                       elevation={0}
                       sx={{
@@ -2580,10 +2590,10 @@ export default function HomePage() {
                       </CardContent>
                     </Card>
                   </Grow>
-                </Grid>
+                </Box>
               );
             })}
-          </Grid>
+          </Box>
         </Container>
       </Box>
 
