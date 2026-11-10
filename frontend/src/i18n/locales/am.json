@@ -101,6 +101,7 @@
       "warning": "ማስጠንቀቂያ፦",
       "attemptsRemaining": "ከ{{max}} ሙከራዎች {{remaining}} ቀርተዋል",
       "quickAccess": "ፈጣን መግቢያ (ለልማት ብቻ)፦",
+      "quickAccessPassword": "ለሁሉም ሚናዎች የሙከራ ይለፍ ቃል፦ {{password}}",
       "success": "በተሳካ ሁኔታ ገብተዋል!",
       "googleSuccess": "በGoogle በተሳካ ሁኔታ ገብተዋል!",
       "googleFailed": "የGoogle መግቢያ አልተሳካም። እባክዎ እንደገና ይሞክሩ።",

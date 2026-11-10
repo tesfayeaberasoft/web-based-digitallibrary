@@ -101,6 +101,7 @@
       "warning": "Warning:",
       "attemptsRemaining": "{{remaining}} of {{max}} attempts remaining",
       "quickAccess": "Quick Access (Dev Only):",
+      "quickAccessPassword": "Demo password for all roles: {{password}}",
       "success": "Login successful!",
       "googleSuccess": "Signed in with Google!",
       "googleFailed": "Google sign-in failed. Please try again.",

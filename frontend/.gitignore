@@ -11,6 +11,10 @@
 # production
 /build
 
+# Generated from pdfjs-dist during dependency installation/build
+/public/pdf.worker.min.js
+/public/pdf.worker.min.js.LICENSE.txt
+
 # misc
 .DS_Store
 .env

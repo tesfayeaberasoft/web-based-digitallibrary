@@ -47,6 +47,8 @@ const C = {
   dark: '#1a1a2e'
 };
 
+const DEVELOPMENT_DEMO_PASSWORD = 'DemoLibrary2026!';
+
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -158,16 +160,16 @@ const Login = () => {
 
   const handleQuickAccess = (role) => {
     const credentials = {
-      admin: { email: 'admin@digitallibrary.com', password: 'password' },
-      librarian: { email: 'sarah@library.com', password: 'password' },
-      user: { email: 'john.doe@example.com', password: 'password' },
-      'super-admin': { email: 'superadmin@digitallibrary.com', password: 'password' }
+      admin: { email: 'admin@digitallibrary.com' },
+      librarian: { email: 'sarah@library.com' },
+      user: { email: 'john.doe@example.com' },
+      'super-admin': { email: 'superadmin@digitallibrary.com' }
     };
 
     setFormData(prev => ({
       ...prev,
       email: credentials[role].email,
-      password: credentials[role].password
+      password: DEVELOPMENT_DEMO_PASSWORD
     }));
   };
 
@@ -510,6 +512,9 @@ const Login = () => {
                     <Box sx={{ mt: 4, pt: 3, borderTop: '1px solid #e0e0e0' }}>
                       <Typography variant="caption" sx={{ color: 'text.secondary', mb: 1, display: 'block' }}>
                         {t('auth.login.quickAccess')}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'text.secondary', mb: 1, display: 'block' }}>
+                        {t('auth.login.quickAccessPassword', { password: DEVELOPMENT_DEMO_PASSWORD })}
                       </Typography>
                       <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                         {['user', 'librarian', 'admin', 'super-admin'].map((role) => (
